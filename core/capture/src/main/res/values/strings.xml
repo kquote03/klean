@@ -5,4 +5,6 @@
     <string name="capture_move_to">Move to %1$s</string>
     <string name="capture_no_module">Turn on a module in Settings to save this.</string>
     <string name="capture_repeats_label">Log again</string>
+    <string name="tile_label">Log food</string>
+    <string name="tile_label_universal">Capture</string>
 </resources>
