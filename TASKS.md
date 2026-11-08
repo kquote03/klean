@@ -8,7 +8,7 @@ Legend:
 - `[~]` partially done or unverified (see the note)
 - `[ ]` not started
 
-Everything ticked is merged on `main` (milestones M0–M5 and M9 are tagged).
+Everything ticked is merged on `main` (milestones M0–M7 and M9 are tagged).
 
 
 ## M0 — Tooling and empty runnable app
@@ -187,6 +187,17 @@ Verified on the phone on 2026-11-08 (M5):
 - [x] 3.12: quick-repeat chips go away after their entry is deleted on another screen; fixed in `3db8bed`, checked on device
 - Reboot: covered by Robolectric `RebootRescheduleTest` (BOOT_COMPLETED through the real Hilt graph arms the alarm); `adb reboot` not run because it drops wireless adb
 
+Verified on Waydroid (LineageOS, Android 13 / API 33, 540×1212, `192.168.240.112:5555`) on 2026-11-08 (M6/M7):
+- [x] `connectedDebugAndroidTest`: 3/3 pass (`BackupRoundTripTest` ×2, `InlineReplySaveTest`)
+- [x] 6.1: first mic tap shows the system RECORD_AUDIO dialog with the one-line rationale under the field; "Don't allow" → "Mic access is off…"
+- [x] 6.1: with the permission, the mic starts the recogniser (`KleanVoice: voice start mode=ON_DEVICE`). On Waydroid the on-device service fails to bind (`Bind to system recognition service failed with error 10`) and never calls back, so the screen hung on "Listening…". Fixed in `278b35b`: after 3 s it falls back to the default recogniser (Google offline "Soda" became ready), and a watchdog ends listening calmly. With no audio input it ends with "Didn't catch that…"
+- [x] 6.1: Today's mic opens the capture sheet already listening (same path as the widget's mic)
+- [x] 6.2: the photo menu (Take photo / Choose from gallery) opens on the capture sheet and the entry screen. The gallery opens the system photo picker; backing out changes nothing. "Take photo" launched the camera app (Aperture), but Waydroid has no camera: the camera hung and then took Waydroid's window system down (`DEAD_OBJECT`), which needed a `waydroid session` restart. Klean didn't crash (crash buffer empty)
+- [x] 6.3: chips read "Log … again" and are 48 dp tall (a Compose test caught them at 36 dp)
+- [x] 7.1: History (calendar icon) shows a neutral month grid: today outlined, "1" under days with entries, nothing on empty days, next month disabled. Tapping a day opens the pager; swiping moves between days; past-day gaps are closed ("No entries 8:00 AM–12:00 AM")
+- [x] 7.2: "Add something" on a gap opens the sheet with "For around 2:45 PM · Change" (the time picker opens on 2:45). Saving logs at 2:45 PM. From a past day it reads "For around Nov 7, 2026, 4:00 PM", and History then shows "November 7, 2026, 1 entry"
+- [x] Polish: Delete on the entry screen returns to the list, which shows "Entry removed · Undo". Undo restores the entry. The first try showed no snackbar; fixed in `f262c5a`
+
 Still needs hands-on checks by the user (airplane mode or a reboot would drop wireless adb):
 - [ ] 4.3: inline reply from the lock screen in airplane mode (needs adb over USB or no adb), under 5 s
 - [ ] 4.7: compact widget size (resize the widget to one row)
@@ -195,4 +206,7 @@ Still needs hands-on checks by the user (airplane mode or a reboot would drop wi
 - [ ] 5.7: set quiet hours over now, wait for a scheduled check-in → nothing shown (debug "Fire" deliberately skips quiet hours)
 - [ ] 5.2: after a real reboot, `adb shell dumpsys alarm | grep -A3 app.klean.debug` shows the check-in alarm
 - [ ] Polish: the app uses the default Android launcher icon; none has been designed yet
+- [ ] 6.1: on a real phone, speak "two manakish" (also in airplane mode) → saved with `via_voice=1`, and Undo shows for 5 s; where offline voice is missing → "Voice isn't available offline on this phone"
+- [ ] 6.2: take a real camera photo (capture sheet and entry screen) → thumbnail in the row, EXIF stripped; log one without a photo too
+- [ ] Polish: the bottom bar doesn't highlight Diet on History / Day / Entry screens (pre-existing for Entry)
 - [x] Polish: after deleting from the entry screen it now goes back to the list, which shows "Entry removed · Undo" for 5 s
