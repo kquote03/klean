@@ -8,9 +8,7 @@ Legend:
 - `[~]` partially done or unverified (see the note)
 - `[ ]` not started
 
-Where it lives:
-- `main`: merged
-- `m4-work` / `m9-work`: unmerged branches with worktrees at `../klean-m4` and `../klean-m9`
+Everything ticked is merged on `main` (milestones M0–M4 and M9 are tagged).
 
 
 ## M0 — Tooling and empty runnable app
@@ -73,14 +71,14 @@ Where it lives:
 
 ## M4 — Notification, inline reply, capture sheet, QS tile, widget
 
-- [x] Task 4.1 — Channels + notification IDs — `m4-work`
-- [x] Task 4.2 — DietStatusNotifier — `m4-work`
-- [x] Task 4.3 — DietReplyReceiver (instrumented test first) — `m4-work`
-- [x] Task 4.4 — CaptureActivity + CaptureSheet + UniversalCaptureService — `m4-work`
-- [x] Task 4.5 — Universal capture bar on Today — `m4-work`
-- [x] Task 4.6 — Quick Settings tile — `m4-work`
-- [x] Task 4.7 — Glance widget — `m4-work`
-- [~] Task 4.8 — Module disable plumbing — `m4-work` WIP `adce112`
+- [x] Task 4.1 — Channels + notification IDs
+- [x] Task 4.2 — DietStatusNotifier
+- [x] Task 4.3 — DietReplyReceiver (instrumented test first)
+- [x] Task 4.4 — CaptureActivity + CaptureSheet + UniversalCaptureService
+- [x] Task 4.5 — Universal capture bar on Today
+- [x] Task 4.6 — Quick Settings tile
+- [x] Task 4.7 — Glance widget
+- [x] Task 4.8 — Module disable plumbing
 
 ## M5 — Prompts: quiet hours, scheduling, rotation, learning, reboot
 
@@ -112,11 +110,11 @@ Where it lives:
 
 ## M9 — Backup and restore
 
-- [x] Task 9.1 — BackupManager.export (instrumented test first) — `m9-work`
-- [x] Task 9.2 — inspect + restore — `m9-work`
-- [x] Task 9.3 — Instrumented backup round-trip test — `m9-work`
-- [~] Task 9.4 — Backup screen — `m9-work` WIP `cf04d02`
-- [x] Task 9.5 — AutoBackupWorker — `m9-work`
+- [x] Task 9.1 — BackupManager.export (instrumented test first)
+- [x] Task 9.2 — inspect + restore
+- [x] Task 9.3 — Instrumented backup round-trip test
+- [x] Task 9.4 — Backup screen
+- [x] Task 9.5 — AutoBackupWorker
 
 ## M10 — AI providers, enrichment, routing
 
@@ -169,5 +167,5 @@ Code and JVM/Robolectric tests stand in for these until a phone is available:
 - [ ] 1.8 / 3.11: bottom bar shows Today / Diet / Settings on device
 - [ ] 4.3: `InlineReplySaveTest` via `connectedDebugAndroidTest`; inline reply from the shade and the lock screen in airplane mode
 - [ ] 4.4 / 4.6 / 4.7: capture sheet over the home screen, QS tile, widget update after an inline reply
-- [ ] 9.3: `BackupRoundTripTest` via `connectedDebugAndroidTest`; a Robolectric equivalent passes on `m9-work`
+- [ ] 9.3: `BackupRoundTripTest` via `connectedDebugAndroidTest`; the Robolectric `BackupRestoreTest` stands in
 
