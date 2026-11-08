@@ -53,3 +53,13 @@ dependencies {
     testImplementation(libs.compose.ui.test.junit4)
     debugImplementation(libs.compose.ui.test.manifest)
 }
+
+// ForbiddenCopyTest reads every module's res/ and manifest; declare them so the test is never stale.
+tasks.withType<Test>().configureEach {
+    inputs.files(
+        fileTree(rootDir) {
+            include("**/src/main/res/**/*.xml", "**/src/main/AndroidManifest.xml")
+            exclude("**/build/**", ".gradle/**")
+        },
+    ).withPathSensitivity(PathSensitivity.RELATIVE).withPropertyName("userFacingResources")
+}
