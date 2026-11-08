@@ -8,10 +8,10 @@
         inherit system;
         config = { allowUnfree = true; android_sdk.accept_license = true; };
       };
-      buildTools = "37.0.0";
+      buildTools = "36.0.0"; # AGP 9.5 default build-tools
       android = pkgs.androidenv.composeAndroidPackages {
         platformVersions = [ "37.0" "36" ];
-        buildToolsVersions = [ buildTools "36.1.0" ];
+        buildToolsVersions = [ buildTools ];
         includeEmulator = false;
         includeSystemImages = false;
         includeNDK = false;
