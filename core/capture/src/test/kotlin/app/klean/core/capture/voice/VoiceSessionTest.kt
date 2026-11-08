@@ -127,4 +127,36 @@ class VoiceSessionTest {
         assertNull(s.state.value.messageRes)
         assertTrue(s.state.value.listening)
     }
+
+    /** Found on Waydroid: the on-device service failed to bind and no callback ever came. */
+    @Test fun recogniserThatNeverGetsReadyEndsCalmly() = runTest {
+        val s = session()
+        s.onMic()
+        advanceTimeBy(VoiceSession.START_TIMEOUT_MS + 1)
+        assertFalse(s.state.value.listening)
+        assertEquals(R.string.voice_unavailable_offline, s.state.value.messageRes)
+        assertEquals(1, rec.cancels)
+    }
+
+    @Test fun readyRecogniserKeepsListening() = runTest {
+        val s = session()
+        s.onMic()
+        rec.ready()
+        advanceTimeBy(VoiceSession.START_TIMEOUT_MS + 1)
+        assertTrue(s.state.value.listening)
+        rec.final("tea")
+        runCurrent()
+        assertEquals(listOf("tea"), saved)
+    }
+
+    @Test fun stopWithNoResultStillEndsListening() = runTest {
+        val s = session()
+        s.onMic()
+        rec.ready()
+        s.onMic()
+        assertTrue(s.state.value.listening)
+        advanceTimeBy(VoiceSession.STOP_TIMEOUT_MS + 1)
+        assertFalse(s.state.value.listening)
+        assertEquals(1, rec.cancels)
+    }
 }

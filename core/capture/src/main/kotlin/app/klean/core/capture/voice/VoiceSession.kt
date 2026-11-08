@@ -42,11 +42,25 @@ class VoiceSession(
     private val _state = MutableStateFlow(VoiceUiState())
     val state: StateFlow<VoiceUiState> = _state.asStateFlow()
     private var undoJob: Job? = null
+    private var watchdog: Job? = null
+
+    /** Ends listening calmly if the recogniser goes quiet (e.g. a service that fails to bind never calls back). */
+    private fun arm(timeoutMs: Long) {
+        watchdog?.cancel()
+        watchdog = scope.launch {
+            delay(timeoutMs)
+            if (_state.value.listening) {
+                recognizer.cancel()
+                _state.update { it.copy(listening = false, partial = "", messageRes = R.string.voice_unavailable_offline) }
+            }
+        }
+    }
 
     /** Mic tapped with the permission granted: start, or stop when already listening. */
     fun onMic() {
         if (_state.value.listening) {
             recognizer.stop()
+            arm(STOP_TIMEOUT_MS)
             return
         }
         if (recognizer.mode() == VoiceMode.NONE) {
@@ -54,6 +68,7 @@ class VoiceSession(
             return
         }
         _state.update { it.copy(listening = true, partial = "", messageRes = null, askingPermission = false) }
+        arm(START_TIMEOUT_MS)
         recognizer.start(listener)
     }
 
@@ -75,14 +90,23 @@ class VoiceSession(
 
     /** Stops any recognition; call from the owner's onCleared. */
     fun close() {
+        watchdog?.cancel()
         if (_state.value.listening) recognizer.cancel()
         _state.update { it.copy(listening = false, partial = "") }
     }
 
     private val listener = object : VoiceRecognizer.Listener {
-        override fun onPartial(text: String) = _state.update { it.copy(partial = text) }
+        override fun onReady() {
+            watchdog?.cancel()
+        }
+
+        override fun onPartial(text: String) {
+            watchdog?.cancel()
+            _state.update { it.copy(partial = text) }
+        }
 
         override fun onFinal(text: String) {
+            watchdog?.cancel()
             val clean = text.trim()
             if (clean.isEmpty()) {
                 _state.update { it.copy(listening = false, partial = "", messageRes = R.string.voice_no_match) }
@@ -102,13 +126,20 @@ class VoiceSession(
             }
         }
 
-        override fun onError(error: VoiceError) = _state.update {
-            it.copy(listening = false, partial = "", messageRes = messageFor(error))
+        override fun onError(error: VoiceError) {
+            watchdog?.cancel()
+            _state.update { it.copy(listening = false, partial = "", messageRes = messageFor(error)) }
         }
     }
 
     companion object {
         const val UNDO_MS = 5_000L
+
+        /** No sign of life from the recogniser after starting (it includes the on-device → default fallback). */
+        const val START_TIMEOUT_MS = 8_000L
+
+        /** No result after the user tapped stop. */
+        const val STOP_TIMEOUT_MS = 3_000L
 
         @StringRes
         fun messageFor(error: VoiceError): Int = when (error) {

@@ -43,6 +43,8 @@ interface VoiceRecognizer {
     fun cancel()
 
     interface Listener {
+        /** The recogniser is bound and listening. */
+        fun onReady() {}
         fun onPartial(text: String)
         fun onFinal(text: String)
         fun onError(error: VoiceError)

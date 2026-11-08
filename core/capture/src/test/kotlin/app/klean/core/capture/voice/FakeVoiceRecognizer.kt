@@ -17,6 +17,7 @@ class FakeVoiceRecognizer(var mode: VoiceMode = VoiceMode.ON_DEVICE) : VoiceReco
         listener = null
     }
 
+    fun ready() = listener!!.onReady()
     fun partial(text: String) = listener!!.onPartial(text)
     fun final(text: String) = listener!!.onFinal(text)
     fun error(e: VoiceError) = listener!!.onError(e)
