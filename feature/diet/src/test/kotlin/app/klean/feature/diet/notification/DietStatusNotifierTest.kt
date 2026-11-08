@@ -108,6 +108,14 @@ class DietStatusNotifierTest {
         assertTrue(action.allowGeneratedReplies.not())
     }
 
+    @Test fun captureActionOpensTheSheet() = runBlocking {
+        notifier.refresh()
+        val action = posted()!!.actions.single { it.title.toString() == "Capture…" }
+        val intent = shadowOf(action.actionIntent).savedIntent
+        assertEquals("app.klean.core.capture.CaptureActivity", intent.component?.className)
+        assertEquals("diet", intent.getStringExtra("target_module"))
+    }
+
     @Test fun savedTextIsShownAfterReply() = runBlocking {
         notifier.refresh(savedText = "shawarma and fries")
         assertEquals("Saved: shawarma and fries", posted()!!.text())

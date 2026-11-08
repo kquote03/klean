@@ -38,4 +38,5 @@
     </plurals>
     <string name="diet_status_action_log">Log food</string>
     <string name="diet_status_reply_hint">What did you eat?</string>
+    <string name="diet_status_action_capture">Capture…</string>
 </resources>

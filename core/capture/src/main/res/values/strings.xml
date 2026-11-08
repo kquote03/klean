@@ -1,0 +1,8 @@
+<resources>
+    <string name="capture_placeholder">Write something down</string>
+    <string name="capture_saved">Saved</string>
+    <string name="capture_saved_to">Saved to %1$s</string>
+    <string name="capture_move_to">Move to %1$s</string>
+    <string name="capture_no_module">Turn on a module in Settings to save this.</string>
+    <string name="capture_repeats_label">Log again</string>
+</resources>
