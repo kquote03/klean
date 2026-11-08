@@ -8,4 +8,6 @@ dependencies {
     implementation(libs.core.ktx)
     testImplementation(libs.androidx.junit)
     testImplementation(libs.datastore.preferences)
+    testImplementation(libs.hilt.android.testing)
+    kspTest(libs.hilt.compiler)
 }

@@ -13,7 +13,7 @@ android {
         targetSdk = KleanSdk.TARGET
         versionCode = 1
         versionName = "0.1.0"
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "app.klean.HiltTestRunner"
     }
     buildTypes {
         debug { applicationIdSuffix = ".debug" }
@@ -52,6 +52,12 @@ dependencies {
     testImplementation(platform(libs.compose.bom))
     testImplementation(libs.compose.ui.test.junit4)
     debugImplementation(libs.compose.ui.test.manifest)
+    androidTestImplementation(libs.hilt.android.testing)
+    kspAndroidTest(libs.hilt.compiler)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.core)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.core.ktx)
 }
 
 // ForbiddenCopyTest reads every module's res/ and manifest; declare them so the test is never stale.

@@ -4,5 +4,8 @@
         <receiver
             android:name=".notification.StatusRepostReceiver"
             android:exported="false" />
+        <receiver
+            android:name=".notification.DietReplyReceiver"
+            android:exported="false" />
     </application>
 </manifest>

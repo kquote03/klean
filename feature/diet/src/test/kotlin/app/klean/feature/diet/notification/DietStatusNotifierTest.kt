@@ -99,6 +99,15 @@ class DietStatusNotifierTest {
         assertNull(n.publicVersion.extras.getCharSequence(Notification.EXTRA_TEXT))
     }
 
+    @Test fun logFoodActionIsAnInlineReplyThatNeedsNoUnlock() = runBlocking {
+        notifier.refresh()
+        val action = posted()!!.actions.single { it.title.toString() == "Log food" }
+        assertEquals(DietReplyReceiver.KEY_TEXT, action.remoteInputs.single().resultKey)
+        assertEquals("What did you eat?", action.remoteInputs.single().label.toString())
+        assertTrue(!action.isAuthenticationRequired)
+        assertTrue(action.allowGeneratedReplies.not())
+    }
+
     @Test fun savedTextIsShownAfterReply() = runBlocking {
         notifier.refresh(savedText = "shawarma and fries")
         assertEquals("Saved: shawarma and fries", posted()!!.text())

@@ -36,4 +36,6 @@
         <item quantity="one">%1$d entry today</item>
         <item quantity="other">%1$d entries today</item>
     </plurals>
+    <string name="diet_status_action_log">Log food</string>
+    <string name="diet_status_reply_hint">What did you eat?</string>
 </resources>
