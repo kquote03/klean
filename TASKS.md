@@ -167,12 +167,17 @@ Verified on the phone on 2026-11-08:
 - [x] 0.8: the app installs and launches (`am start`, about 1.1 s cold).
 - [x] 4.2: the status notification is posted (ongoing, silent, 2 actions, private + public version).
 - [x] Lock screen shows "What did you eat? · Nothing logged yet today". This first failed: Pixel hides LOW-importance notifications on the lock screen. Fixed in `2bd24a5` (channel `diet_status_v2`).
+- [x] 4.3: the user's inline reply from the notification saved with source `NOTIFICATION_REPLY` and sync columns stamped. Not yet repeated in airplane mode, because adb is wireless.
+- [x] 1.8 / 3.11: bottom bar Today / Diet / Settings, dark pastel theme, Cantarell.
+- [x] 3.12: logging from the Diet screen updates the list, the quick-repeat chips and the status notification ("2 today · last: … at 7:30 PM"). Neutral gap marker shown.
+- [x] 3.13: entry edit screen; delete shows "Entry removed · Undo" and leaves a tombstone (`deleted=1`).
+- [x] 4.4 / 4.6: QS tile opens the capture sheet over the launcher with the keyboard up; the save has source `QS_TILE` and the sheet closes itself.
+- [x] 4.8: Diet off removes the nav item, dashboard card and status notification; on brings them back. Two bugs found and fixed in `28bf4cd`: the toggle reset navigation to Today, and tapping the disabled module's Settings row crashed (route not found).
 
-Still needs hands-on checks by the user (the phone stays locked; the agent never unlocks it):
-- [ ] 1.8 / 3.11: bottom bar shows Today / Diet / Settings
-- [ ] 4.3: inline reply from the shade and from the lock screen, in airplane mode, under 5 s, app doesn't open
-- [ ] 4.4 / 4.6: capture sheet over the home screen; QS tile opens it
+Still needs hands-on checks by the user (adding a widget needs a confirmation tap; airplane mode would drop wireless adb):
+- [ ] 4.3: inline reply from the lock screen in airplane mode (needs adb over USB or no adb), under 5 s
 - [ ] 4.7: widget shows today's entries and updates within seconds after an inline reply; compact size
-- [ ] 4.8: Settings → Modules → Diet off removes nav item, card, notification, widget content; tile unavailable
+- [ ] 4.8: with Diet off, the widget shows its disabled state and the QS tile shows unavailable
 - [ ] 9.4: export a backup through the picker, restore it, check the confirmation text
 - [ ] Polish: the app uses the default Android launcher icon; none has been designed yet
+- [ ] Polish: after deleting from the entry screen it stays on the greyed-out entry; it should go back to the list and show Undo there
