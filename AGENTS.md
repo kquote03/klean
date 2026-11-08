@@ -76,12 +76,12 @@ build-logic/         convention plugins: klean.android.library / .compose / .fea
 | M1 | Design system (pastel tokens, Cantarell, M3 Expressive theme, components), module registry, registry-driven shell, settings skeleton, copy guard | ✅ tag `m1` |
 | M2 | `:shared` domain logic, 78 JVM tests | ✅ tag `m2` |
 | M3 | Room data layer, sync stamping, settings repo, module gate, photo store, DietRepository, diet screens, dashboard card | ✅ tag `m3` |
-| M4 | Status notification + inline reply, capture sheet, universal capture, QS tile, Glance widget, module-disable plumbing | 🚧 in progress (worktree `../klean-m4`, branch `m4-work`) |
+| M4 | Status notification + inline reply, capture sheet, universal capture, QS tile, Glance widget, module-disable plumbing | 🚧 Tasks 4.1–4.7 committed on branch `m4-work` (worktree `../klean-m4`); 4.8 is a WIP commit (`adce112`), unverified, not merged |
 | M5 | Prompt engine: quiet hours service, exact alarms, rotation, meal-time learning, reboot | ⏳ |
 | M6 | Voice, photo attach, quick-repeat chips | ⏳ |
 | M7 | Day history, gap affordance | ⏳ |
 | M8 | Onboarding + permissions | ⏳ |
-| M9 | Single-file SQLite backup/restore, auto backup | 🚧 in progress, parallel with M4 (worktree `../klean-m9`, branch `m9-work`) |
+| M9 | Single-file SQLite backup/restore, auto backup | 🚧 Tasks 9.1, 9.2, 9.3, 9.5 committed on branch `m9-work` (worktree `../klean-m9`); 9.4 (backup screen) is a WIP commit (`cf04d02`), unverified, not merged |
 | M10 | AI providers (Gemini, OpenAI-compatible), enrichment queue, AI items UI | ⏳ |
 | M11 | Unlock sheet | ⏳ |
 | M12 | Delivery-app listener | ⏳ |
@@ -109,3 +109,21 @@ build-logic/         convention plugins: klean.android.library / .compose / .fea
 ### Not yet verified on a device
 
 No phone has been connected so far. On-device checks (bottom bar, inline reply from the lock screen, widget) are pending, and Robolectric tests stand in for them where possible: `ShellSmokeTest` checks the Today / Diet / Settings bar, and `DietDashboardViewModelTest.loggingFromDashboardAppearsOnDietScreen` checks that a dashboard log reaches the Diet screen through the shared Room flow.
+
+## Resume here (work paused 2026-11-08: API usage limit until 2026-12-01)
+
+Both parallel branches stopped mid-milestone. Neither is merged into `main`.
+
+1. **M4 (`m4-work`):**
+   - Check the WIP commit `adce112` for Task 4.8. It adds `DietEnablement`, `DietModule` changes and a stub `prompt/DietPromptEngine.kt`, and edits `ShellSmokeTest`.
+   - Finish Task 4.8, then run `nix develop -c ./gradlew assembleDebug :app:assembleDebugAndroidTest :shared:jvmTest testDebugUnitTest --console=plain` from `../klean-m4`.
+   - Squash or reword the wip commit and tag `m4`.
+2. **M9 (`m9-work`):**
+   - Check the WIP commit `cf04d02` for Task 9.4 (`BackupSettingsScreen`, `BackupViewModel` and its test, edits to `BackupManager`/`BackupContracts`).
+   - Finish 9.4 and run the same command from `../klean-m9`, then tag `m9`.
+3. **Merge:**
+   - Run `git merge m4-work`, then `git merge m9-work` on `main`.
+   - Expect conflicts in `app/build.gradle.kts`, `app/src/main/AndroidManifest.xml`, `KleanApp.kt` (WorkManager `Configuration.Provider` from M9 plus channel or status setup from M4) and possibly `HiltTestRunner.kt` (both branches were told to use identical content).
+   - Re-run the full build and tests.
+   - Update this table, then `git worktree remove ../klean-m4 ../klean-m9`.
+4. **Next:** M5 (prompt engine). The `DietPromptEngine` stub from M4 is its starting point.
