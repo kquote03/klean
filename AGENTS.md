@@ -76,12 +76,12 @@ build-logic/         convention plugins: klean.android.library / .compose / .fea
 | M1 | Design system (pastel tokens, Cantarell, M3 Expressive theme, components), module registry, registry-driven shell, settings skeleton, copy guard | ✅ tag `m1` |
 | M2 | `:shared` domain logic, 78 JVM tests | ✅ tag `m2` |
 | M3 | Room data layer, sync stamping, settings repo, module gate, photo store, DietRepository, diet screens, dashboard card | ✅ tag `m3` |
-| M4 | Status notification + inline reply, capture sheet, universal capture, QS tile, Glance widget, module-disable plumbing | ⏳ |
+| M4 | Status notification + inline reply, capture sheet, universal capture, QS tile, Glance widget, module-disable plumbing | 🚧 in progress (worktree `../klean-m4`, branch `m4-work`) |
 | M5 | Prompt engine: quiet hours service, exact alarms, rotation, meal-time learning, reboot | ⏳ |
 | M6 | Voice, photo attach, quick-repeat chips | ⏳ |
 | M7 | Day history, gap affordance | ⏳ |
 | M8 | Onboarding + permissions | ⏳ |
-| M9 | Single-file SQLite backup/restore, auto backup | ⏳ |
+| M9 | Single-file SQLite backup/restore, auto backup | 🚧 in progress, parallel with M4 (worktree `../klean-m9`, branch `m9-work`) |
 | M10 | AI providers (Gemini, OpenAI-compatible), enrichment queue, AI items UI | ⏳ |
 | M11 | Unlock sheet | ⏳ |
 | M12 | Delivery-app listener | ⏳ |
