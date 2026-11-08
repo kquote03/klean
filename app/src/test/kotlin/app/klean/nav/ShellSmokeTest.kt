@@ -14,7 +14,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** Stand-in for the on-device check: with no modules the shell shows Today + Settings. */
+/** Stand-in for the on-device check: with no modules the shell shows Today + Settings,
+ * and the settings skeleton navigates to the modules screen. */
 @RunWith(AndroidJUnit4::class)
 class ShellSmokeTest {
     @get:Rule val compose = createComposeRule()
@@ -27,5 +28,9 @@ class ShellSmokeTest {
         compose.onAllNodesWithText("Settings")[0].performClick()
         compose.waitForIdle()
         assertTrue(compose.onAllNodesWithText("Settings").fetchSemanticsNodes().size >= 2)
+        compose.onNodeWithText("Quiet hours").assertIsDisplayed()
+        compose.onNodeWithText("Turn modules on or off").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithText("No modules are installed yet.").assertIsDisplayed()
     }
 }

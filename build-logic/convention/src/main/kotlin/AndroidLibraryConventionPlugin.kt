@@ -22,7 +22,11 @@ class AndroidLibraryConventionPlugin : Plugin<Project> {
                 targetCompatibility = JavaVersion.VERSION_17
             }
             testOptions.unitTests.isIncludeAndroidResources = true
-            testOptions.unitTests.all { it.jvmArgs(KleanSdk.ROBOLECTRIC_JVM_ARGS) }
+            testOptions.unitTests.all {
+                it.jvmArgs(KleanSdk.ROBOLECTRIC_JVM_ARGS)
+                // Hilt generates test sources in modules without tests; Gradle 9 would fail those.
+                it.failOnNoDiscoveredTests.set(false)
+            }
         }
         extensions.configure<KotlinAndroidProjectExtension> {
             compilerOptions {

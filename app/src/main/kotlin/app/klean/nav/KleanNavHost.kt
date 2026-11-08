@@ -14,8 +14,8 @@ import app.klean.today.TodayScreen
 fun KleanNavHost(nav: NavHostController, registry: ModuleRegistry, enabled: List<KleanModule>) {
     NavHost(navController = nav, startDestination = TodayRoute) {
         composable<TodayRoute> { TodayScreen(registry = registry, onOpen = { nav.navigate(it) }) }
-        composable<SettingsRoute> { SettingsScreen(onOpen = { nav.navigate(it) }) }
-        settingsGraph(nav)
+        composable<SettingsRoute> { SettingsScreen(modules = registry.all, onOpen = { nav.navigate(it) }) }
+        settingsGraph(nav, registry)
         registry.all.forEach { if (it in enabled) it.registerGraph(this, nav) }
     }
 }

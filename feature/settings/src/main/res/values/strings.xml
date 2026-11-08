@@ -1,3 +1,14 @@
 <resources>
     <string name="settings_title">Settings</string>
+    <string name="settings_back">Back</string>
+    <string name="settings_section_modules">Modules</string>
+    <string name="settings_modules_toggle">Turn modules on or off</string>
+    <string name="settings_modules_empty">No modules are installed yet.</string>
+    <string name="settings_section_general">General</string>
+    <string name="settings_quiet_hours">Quiet hours</string>
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_ai_providers">AI providers</string>
+    <string name="settings_backup">Backup</string>
+    <string name="settings_permissions">Permissions</string>
+    <string name="settings_about">About</string>
 </resources>
