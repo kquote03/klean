@@ -59,6 +59,11 @@ class FakeDietRepository(private val clock: FakeClock) : DietRepository {
         entries.value = entries.value.map { if (it.id == id) it.copy(sync = it.sync.copy(deleted = true)) else it }
     }
 
+    override suspend fun restore(id: String) {
+        restores += id
+        entries.value = entries.value.map { if (it.id == id) it.copy(sync = it.sync.copy(deleted = false)) else it }
+    }
+
     override suspend fun get(id: String) = entries.value.firstOrNull { it.id == id }
     override fun observeEntry(id: String): Flow<FoodEntryEntity?> = entries.map { l -> l.firstOrNull { it.id == id } }
     override fun observeDay(date: LocalDate): Flow<List<FoodEntryEntity>> {

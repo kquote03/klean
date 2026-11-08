@@ -10,4 +10,17 @@
     <string name="diet_gap_ongoing">Nothing since %1$s</string>
     <string name="diet_has_photo">Has a photo</string>
     <string name="diet_repeats_label">Log again</string>
+    <string name="diet_entry_title">Entry</string>
+    <string name="diet_entry_text_label">What you ate</string>
+    <string name="diet_entry_eaten_at">Eaten at</string>
+    <string name="diet_entry_missing">This entry is no longer here.</string>
+    <string name="diet_entry_deleted">Entry removed</string>
+    <string name="diet_undo">Undo</string>
+    <string name="diet_save">Save</string>
+    <string name="diet_delete">Delete</string>
+    <string name="diet_ok">OK</string>
+    <string name="diet_cancel">Cancel</string>
+    <string name="diet_photo_add">Add a photo</string>
+    <string name="diet_photo_replace">Replace photo</string>
+    <string name="diet_photo_remove">Remove photo</string>
 </resources>

@@ -13,6 +13,8 @@ import app.klean.feature.diet.tempDevicePrefs
 import app.klean.shared.ai.AiTask
 import app.klean.shared.diet.CaptureSource
 import app.klean.shared.diet.EnrichmentStatus
+import app.klean.shared.diet.FoodItemState
+import app.klean.core.data.db.entity.FoodItemEntity
 import app.klean.shared.time.atMinute
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -111,6 +113,26 @@ class DietRepositoryTest {
         assertNotNull(row)
         assertTrue(row!!.sync.deleted)
         assertEquals(DietChange.Deleted(id), changes.last())
+    }
+
+    @Test fun restoreUndoesDeleteIncludingItems() = runBlocking {
+        val id = repo.logEntry("toast", CaptureSource.MODULE_SCREEN)
+        val seq = db.foodEntryDao().get(id)!!.sync
+        db.foodItemDao().upsertAll(
+            listOf(
+                FoodItemEntity("i1", id, 0, "toast", null, null, "gemini", null, FoodItemState.ACCEPTED, seq),
+                FoodItemEntity("i0", id, 1, "old", null, null, "gemini", null, FoodItemState.ACCEPTED, seq.copy(deleted = true)),
+            ),
+        )
+        clock.nowMs += 1_000
+        repo.delete(id)
+        assertTrue(db.foodItemDao().forEntry(id).all { it.sync.deleted })
+        clock.nowMs += 1_000
+        repo.restore(id)
+        assertEquals(false, db.foodEntryDao().get(id)!!.sync.deleted)
+        assertEquals(listOf("i1"), db.foodItemDao().forEntry(id).filterNot { it.sync.deleted }.map { it.id })
+        assertEquals(listOf(id), repo.today().map { it.id })
+        assertEquals(DietChange.Edited(id), changes.last())
     }
 
     @Test fun observeDayUsesLogicalDay() = runBlocking {

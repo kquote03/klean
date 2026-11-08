@@ -66,6 +66,9 @@ interface DietRepository {
     /** Tombstones the entry and its items. */
     suspend fun delete(id: String)
 
+    /** Undoes [delete]: clears the tombstone on the entry and on the items that delete tombstoned. */
+    suspend fun restore(id: String)
+
     suspend fun get(id: String): FoodEntryEntity?
     fun observeEntry(id: String): Flow<FoodEntryEntity?>
     fun observeDay(date: LocalDate): Flow<List<FoodEntryEntity>>
@@ -153,6 +156,21 @@ class DefaultDietRepository @Inject constructor(
             true
         }
         if (deleted) dispatcher.dispatch(DietChange.Deleted(id))
+    }
+
+    override suspend fun restore(id: String) {
+        val restored = db.transact {
+            val prev = db.foodEntryDao().get(id) ?: return@transact false
+            if (!prev.sync.deleted) return@transact false
+            // Items tombstoned by delete() were stamped right after the entry; older tombstones stay.
+            val items = db.foodItemDao().forEntry(id).filter { it.sync.deleted && it.sync.updatedAt >= prev.sync.updatedAt }
+            db.foodEntryDao().upsert(prev.copy(sync = stamper.stamp(prev.sync, deleted = false)))
+            if (items.isNotEmpty()) {
+                db.foodItemDao().upsertAll(items.map { it.copy(sync = stamper.stamp(it.sync, deleted = false)) })
+            }
+            true
+        }
+        if (restored) dispatcher.dispatch(DietChange.Edited(id))
     }
 
     override suspend fun get(id: String): FoodEntryEntity? = db.foodEntryDao().get(id)

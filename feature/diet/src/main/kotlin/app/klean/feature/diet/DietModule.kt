@@ -8,6 +8,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import app.klean.core.ui.module.DashboardSlot
 import app.klean.core.ui.module.KleanModule
+import app.klean.feature.diet.ui.entry.FoodEntryScreen
 import app.klean.feature.diet.ui.settings.DietSettingsScreen
 import app.klean.feature.diet.ui.today.DietScreen
 import app.klean.shared.module.ModuleId
@@ -31,8 +32,8 @@ class DietKleanModule @Inject constructor() : KleanModule {
     override val settingsRoute: Any = DietSettingsRoute
 
     override fun registerGraph(builder: NavGraphBuilder, nav: NavController) = with(builder) {
-        // Entry editing is wired in the next task.
-        composable<DietRoute> { DietScreen(onOpenEntry = {}) }
+        composable<DietRoute> { DietScreen(onOpenEntry = { nav.navigate(FoodEntryRoute(it)) }) }
+        composable<FoodEntryRoute> { FoodEntryScreen(onBack = { nav.popBackStack() }) }
         composable<DietSettingsRoute> { DietSettingsScreen(onBack = { nav.popBackStack() }) }
     }
 }
