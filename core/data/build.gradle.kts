@@ -1,6 +1,7 @@
 plugins {
     id("klean.android.library")
     id("klean.hilt")
+    id("klean.sqlite.jvmtest")
     alias(libs.plugins.room)
     alias(libs.plugins.kotlin.serialization)
 }

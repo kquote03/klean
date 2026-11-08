@@ -11,5 +11,6 @@ gradlePlugin {
         register("androidCompose") { id = "klean.android.compose"; implementationClass = "AndroidComposeConventionPlugin" }
         register("hilt") { id = "klean.hilt"; implementationClass = "HiltConventionPlugin" }
         register("androidFeature") { id = "klean.android.feature"; implementationClass = "AndroidFeatureConventionPlugin" }
+        register("sqliteJvmTest") { id = "klean.sqlite.jvmtest"; implementationClass = "SqliteJvmTestConventionPlugin" }
     }
 }
