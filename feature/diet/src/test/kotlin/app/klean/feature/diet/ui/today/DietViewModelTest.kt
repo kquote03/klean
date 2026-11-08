@@ -54,6 +54,22 @@ class DietViewModelTest {
         assertEquals("coffee", repo.logs.last().text)
     }
 
+    /** Found on device: after deleting an entry elsewhere, its text stayed as a one-tap chip here. */
+    @Test fun repeatChipsFollowEntryChangesMadeElsewhere() = runTest {
+        val t = atMinute(nov9, 12 * 60, Dubai)
+        repo.entries.value = listOf(repo.entry("a", "widget test", t), repo.entry("b", "tea", t + 60_000))
+        repo.repeats = listOf("widget test", "tea")
+        val vm = vm()
+        vm.uiState.test {
+            var s = awaitItem()
+            while (s.repeats != listOf("widget test", "tea")) s = awaitItem()
+            repo.repeats = listOf("tea")
+            repo.delete("a") // e.g. from the entry screen or the capture sheet's undo
+            while (s.repeats != listOf("tea")) s = awaitItem()
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
     @Test fun rowsInterleaveNeutralGapBetweenEntries() = runTest {
         val a = atMinute(nov9, 10 * 60 + 30, Dubai)
         val b = atMinute(nov9, 17 * 60, Dubai)

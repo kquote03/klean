@@ -17,7 +17,6 @@ import javax.inject.Inject
 import kotlin.time.Clock
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -64,8 +63,6 @@ class DietViewModel @Inject constructor(
     private val fmt: DietFormatter,
     private val ticker: MinuteTicker,
 ) : ViewModel() {
-    private val repeats = MutableStateFlow<List<String>>(emptyList())
-
     private fun now() = clock.now().toEpochMilliseconds()
 
     private val nowFlow: Flow<Long> get() = ticker.ticks().map { now() }
@@ -74,30 +71,22 @@ class DietViewModel @Inject constructor(
         .map { repo.todayDate() }
         .distinctUntilChanged()
         .flatMapLatest { date ->
-            combine(entriesWithItems(date), repo.observeViewPrefs(), nowFlow, repeats) { (entries, items), prefs, now, reps ->
+            // Chips are re-ranked whenever today's entries change, from any surface (delete, undo, widget, tile).
+            val dayWithRepeats = entriesWithItems(date).map { it to repo.quickRepeats() }
+            combine(dayWithRepeats, repo.observeViewPrefs(), nowFlow) { (day, reps), prefs, now ->
+                val (entries, items) = day
                 DietUiState(date, buildRows(date, entries, items, prefs, now), reps, prefs.showCalories, loaded = true)
             }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DietUiState())
 
-    init {
-        refreshRepeats()
-    }
-
     fun onSubmit(text: String) {
         val clean = text.trim()
         if (clean.isEmpty()) return
-        viewModelScope.launch {
-            repo.logEntry(clean, CaptureSource.MODULE_SCREEN)
-            refreshRepeats()
-        }
+        viewModelScope.launch { repo.logEntry(clean, CaptureSource.MODULE_SCREEN) }
     }
 
     fun onRepeat(text: String) = onSubmit(text)
-
-    private fun refreshRepeats() {
-        viewModelScope.launch { repeats.value = repo.quickRepeats() }
-    }
 
     private fun entriesWithItems(date: LocalDate): Flow<Pair<List<FoodEntryEntity>, List<FoodItemEntity>>> =
         repo.observeDay(date).flatMapLatest { entries ->
