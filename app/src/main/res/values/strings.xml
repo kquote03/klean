@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Klean</string>
+    <string name="nav_today">Today</string>
+    <string name="nav_settings">Settings</string>
+    <string name="today_capture_placeholder">Write something down</string>
+    <string name="today_empty">Nothing here yet. Turn on a module in Settings.</string>
 </resources>
