@@ -114,6 +114,7 @@ class DietViewModelTest {
             assertTrue(rows[0] is DietRow.Entry && (rows[0] as DietRow.Entry).id == "a")
             val gap = rows[1] as DietRow.GapRow
             assertEquals(a, gap.startMs)
+            assertEquals(atMinute(nov9, 13 * 60 + 45, Dubai), gap.midpointMs) // 10:30–17:00
             assertTrue(rows[2] is DietRow.Entry && (rows[2] as DietRow.Entry).hasPhoto)
             assertEquals("/photos/p.jpg", (rows[2] as DietRow.Entry).photoPath)
             assertEquals(null, (rows[0] as DietRow.Entry).photoPath)

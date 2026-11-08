@@ -4,6 +4,8 @@ import androidx.lifecycle.SavedStateHandle
 import app.klean.core.capture.voice.FakeVoiceRecognizer
 import app.klean.core.capture.voice.VoiceSession
 import app.klean.core.ui.module.ModuleRegistry
+import app.klean.core.common.ZoneProvider
+import kotlinx.datetime.TimeZone
 import app.klean.shared.capture.DefaultCaptureRouter
 import app.klean.shared.diet.CaptureSource
 import app.klean.shared.module.ModuleId
@@ -24,6 +26,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
+object DubaiZone : ZoneProvider {
+    override fun current(): TimeZone = TimeZone.of("Asia/Dubai")
+}
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class CaptureViewModelTest {
     private val dispatcher = StandardTestDispatcher()
@@ -41,6 +47,7 @@ class CaptureViewModelTest {
         clock,
         rec,
         FakePhotoStorage(),
+        DubaiZone,
         SavedStateHandle(mapOf(*extras)),
     )
 
@@ -120,6 +127,28 @@ class CaptureViewModelTest {
         vm.submit(vm.state.value.text)
         runCurrent()
         assertFalse(diet.executed.single().viaVoice)
+    }
+
+    @Test fun gapPresetTravelsWithTheSaveAndTheTimeCanChange() = runTest(dispatcher) {
+        // 2026-11-09 14:05 in Dubai (UTC+4) = 10:05 UTC.
+        val preset = 1_794_218_700_000L
+        val vm = vm(CaptureActivity.EXTRA_EATEN_AT to preset, CaptureActivity.EXTRA_TARGET_MODULE to "diet")
+        assertEquals(preset, vm.state.value.eatenAt)
+        assertEquals(14, vm.state.value.eatenHour)
+        assertEquals(5, vm.state.value.eatenMinute)
+        vm.onEatenTimePicked(13, 30)
+        assertEquals(preset - 35 * 60_000L, vm.state.value.eatenAt)
+        vm.submit("falafel")
+        runCurrent()
+        assertEquals(preset - 35 * 60_000L, diet.executed.single().eatenAt)
+    }
+
+    @Test fun withoutPresetTheEntryIsForNow() = runTest(dispatcher) {
+        val vm = vm()
+        assertEquals(null, vm.state.value.eatenAt)
+        vm.submit("tea")
+        runCurrent()
+        assertEquals(null, diet.executed.single().eatenAt)
     }
 
     @Test fun noModuleStaysOpen() = runTest(dispatcher) {

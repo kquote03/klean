@@ -1,8 +1,17 @@
 package app.klean.shared.diet
 
 import app.klean.shared.time.DayWindow
+import app.klean.shared.time.MINUTE_MS
 
-data class Gap(val start: Long, val end: Long, val ongoing: Boolean)
+data class Gap(val start: Long, val end: Long, val ongoing: Boolean) {
+    /** Middle of the gap on a 5-minute step: where "Add something" presets the time. */
+    val midpoint: Long
+        get() {
+            val step = 5 * MINUTE_MS
+            val mid = start + (end - start) / 2
+            return ((mid + step / 2) / step) * step
+        }
+}
 
 /** Neutral gap detection: reports long stretches without entries inside the wake window. No judgement. */
 object GapDetector {

@@ -21,8 +21,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -40,6 +38,7 @@ import app.klean.feature.diet.ui.dietRows
 fun DietScreen(
     onOpenEntry: (String) -> Unit,
     onOpenHistory: () -> Unit = {},
+    onAddForGap: (DietRow.GapRow) -> Unit = {},
     backStackEntry: NavBackStackEntry? = null,
     vm: DietViewModel = hiltViewModel(),
 ) {
@@ -57,6 +56,7 @@ fun DietScreen(
         onRepeat = vm::onRepeat,
         onOpenEntry = onOpenEntry,
         onOpenHistory = onOpenHistory,
+        onAddForGap = onAddForGap,
         onMic = rememberVoiceInput(vm.voice),
         onUndoVoice = vm.voice::undoLast,
         snackbar = snackbar,
@@ -74,11 +74,11 @@ fun DietScreenContent(
     onRepeat: (String) -> Unit,
     onOpenEntry: (String) -> Unit,
     onOpenHistory: () -> Unit,
+    onAddForGap: (DietRow.GapRow) -> Unit,
     onMic: () -> Unit,
     onUndoVoice: () -> Unit,
     snackbar: SnackbarHostState = remember { SnackbarHostState() },
 ) {
-    val focus = remember { FocusRequester() }
     Scaffold(snackbarHost = { SnackbarHost(snackbar) }, topBar = {
         TopAppBar(
             title = { Text(stringResource(R.string.diet_today_title)) },
@@ -99,7 +99,7 @@ fun DietScreenContent(
                 onPhoto = null,
                 placeholder = stringResource(R.string.diet_capture_placeholder),
                 listening = voice.listening,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).focusRequester(focus),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             )
             VoiceStatus(voice, onUndo = onUndoVoice, modifier = Modifier.padding(horizontal = 16.dp))
             RepeatChips(state.repeats, onRepeat = onRepeat, modifier = Modifier.padding(horizontal = 16.dp))
@@ -110,7 +110,7 @@ fun DietScreenContent(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(bottom = 16.dp),
             ) {
-                dietRows(state.rows, onOpenEntry = onOpenEntry, onGapAdd = { focus.requestFocus() })
+                dietRows(state.rows, onOpenEntry = onOpenEntry, onGapAdd = onAddForGap)
             }
         }
     }

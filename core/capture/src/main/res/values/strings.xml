@@ -21,4 +21,8 @@
     <string name="photo_attached">Photo attached</string>
     <string name="photo_remove">Remove photo</string>
     <string name="photo_no_camera">No camera app found. You can choose a photo from the gallery.</string>
+    <string name="capture_for_around">For around %1$s</string>
+    <string name="capture_change_time">Change</string>
+    <string name="capture_ok">OK</string>
+    <string name="capture_cancel">Cancel</string>
 </resources>

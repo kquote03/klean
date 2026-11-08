@@ -23,6 +23,15 @@ class DietCaptureHandlerTest {
         assertEquals(listOf(id), repo.deletes)
     }
 
+    @Test fun presetEatenAtAndVoiceAndPhotoReachTheRepository() = runBlocking {
+        val input = CaptureInput("rice", CaptureSource.MODULE_SCREEN, clock.nowMs, viaVoice = true, photoFile = "p.jpg", eatenAt = 1_799_990_000_000)
+        handler.execute(input, handler.defaultAction(input))
+        assertEquals(
+            listOf(FakeDietRepository.LogCall("rice", CaptureSource.MODULE_SCREEN, 1_799_990_000_000, viaVoice = true, photoFile = "p.jpg")),
+            repo.logs,
+        )
+    }
+
     @Test fun suggestionsAreQuickRepeats() = runBlocking {
         repo.repeats = listOf("tea", "toast")
         assertEquals(listOf("tea", "toast"), handler.suggestions())

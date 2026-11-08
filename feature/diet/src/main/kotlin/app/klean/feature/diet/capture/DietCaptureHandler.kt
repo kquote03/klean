@@ -21,7 +21,7 @@ class DietCaptureHandler @Inject constructor(private val repo: DietRepository) :
     override fun defaultAction(input: CaptureInput) = CandidateAction(moduleId, LOG_FOOD, 1f)
 
     override suspend fun execute(input: CaptureInput, action: CandidateAction): String =
-        repo.logEntry(input.text, input.source, photoFile = input.photoFile, viaVoice = input.viaVoice)
+        repo.logEntry(input.text, input.source, eatenAt = input.eatenAt, photoFile = input.photoFile, viaVoice = input.viaVoice)
 
     override suspend fun undo(recordId: String) = repo.delete(recordId)
 

@@ -46,7 +46,7 @@ sealed interface DietRow {
     }
 
     /** A long stretch without entries. Shown neutrally; never a judgement. */
-    data class GapRow(val label: String, val startMs: Long) : DietRow {
+    data class GapRow(val label: String, val startMs: Long, val midpointMs: Long) : DietRow {
         override val key get() = "gap-$startMs"
     }
 }

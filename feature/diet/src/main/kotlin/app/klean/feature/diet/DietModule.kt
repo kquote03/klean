@@ -13,7 +13,9 @@ import app.klean.feature.diet.notification.DietStatusNotifier
 import app.klean.core.ui.module.DashboardSlot
 import app.klean.core.ui.module.KleanModule
 import app.klean.feature.diet.ui.dashboard.DietDashboardCard
+import android.content.Context
 import androidx.compose.ui.platform.LocalContext
+import app.klean.feature.diet.ui.today.DietRow
 import app.klean.core.capture.CaptureActivity
 import app.klean.feature.diet.ui.entry.FoodEntryScreen
 import app.klean.feature.diet.ui.history.DietDayScreen
@@ -44,9 +46,11 @@ class DietKleanModule @Inject constructor(private val enablement: DietEnablement
 
     override fun registerGraph(builder: NavGraphBuilder, nav: NavController) = with(builder) {
         composable<DietRoute>(deepLinks = listOf(navDeepLink { uriPattern = DietStatusNotifier.DEEP_LINK_DIET })) { entry ->
+            val ctx = LocalContext.current
             DietScreen(
                 onOpenEntry = { nav.navigate(FoodEntryRoute(it)) },
                 onOpenHistory = { nav.navigate(DietHistoryRoute) },
+                onAddForGap = { gap -> ctx.startActivity(gapCaptureIntent(ctx, gap)) },
                 backStackEntry = entry,
             )
         }
@@ -58,7 +62,7 @@ class DietKleanModule @Inject constructor(private val enablement: DietEnablement
             DietDayScreen(
                 onBack = { nav.popBackStack() },
                 onOpenEntry = { nav.navigate(FoodEntryRoute(it)) },
-                onAddForGap = { ctx.startActivity(CaptureActivity.intent(ctx, CaptureSource.MODULE_SCREEN, ModuleId.DIET)) },
+                onAddForGap = { gap -> ctx.startActivity(gapCaptureIntent(ctx, gap)) },
                 backStackEntry = entry,
             )
         }
@@ -73,6 +77,10 @@ class DietKleanModule @Inject constructor(private val enablement: DietEnablement
 
     override suspend fun onEnabledChanged(enabled: Boolean) = enablement.onEnabledChanged(enabled)
 }
+
+/** "Add something" on a gap: the capture sheet, preset to the middle of the gap ("For around 14:00 · Change"). */
+private fun gapCaptureIntent(ctx: Context, gap: DietRow.GapRow) =
+    CaptureActivity.intent(ctx, CaptureSource.MODULE_SCREEN, ModuleId.DIET, eatenAt = gap.midpointMs)
 
 @Module
 @InstallIn(SingletonComponent::class)

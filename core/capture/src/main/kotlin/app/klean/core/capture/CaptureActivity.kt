@@ -32,14 +32,25 @@ class CaptureActivity : ComponentActivity() {
         const val EXTRA_START_VOICE = "start_voice"
         /** [CaptureSource] name. */
         const val EXTRA_SOURCE = "source"
+        /** UTC ms the entry is for (e.g. the middle of a gap); absent = now. */
+        const val EXTRA_EATEN_AT = "eaten_at"
 
         /** Used when a caller passes no source, e.g. a manual `adb shell am start`. */
         val DEFAULT_SOURCE = CaptureSource.DASHBOARD
 
-        fun intent(context: Context, source: CaptureSource, target: ModuleId? = null, startVoice: Boolean = false): Intent =
+        fun intent(
+            context: Context,
+            source: CaptureSource,
+            target: ModuleId? = null,
+            startVoice: Boolean = false,
+            eatenAt: Long? = null,
+        ): Intent =
             Intent(context, CaptureActivity::class.java)
                 .putExtra(EXTRA_SOURCE, source.name)
                 .putExtra(EXTRA_START_VOICE, startVoice)
-                .apply { target?.let { putExtra(EXTRA_TARGET_MODULE, it.value) } }
+                .apply {
+                    target?.let { putExtra(EXTRA_TARGET_MODULE, it.value) }
+                    eatenAt?.let { putExtra(EXTRA_EATEN_AT, it) }
+                }
     }
 }

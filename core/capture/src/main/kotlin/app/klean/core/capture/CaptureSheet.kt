@@ -42,6 +42,9 @@ import app.klean.core.design.component.PhotoThumbnail
 import app.klean.core.design.component.RepeatChips
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.launch
@@ -70,6 +73,7 @@ fun CaptureSheet(vm: CaptureViewModel, onDismiss: () -> Unit) {
             onUndoVoice = vm.voice::undoLast,
             photoPicker = photoPicker,
             onRemovePhoto = vm::removePhoto,
+            onEatenTimePicked = vm::onEatenTimePicked,
             modifier = Modifier.navigationBarsPadding().imePadding(),
         )
     }
@@ -86,8 +90,10 @@ internal fun CaptureSheetContent(
     onUndoVoice: () -> Unit,
     photoPicker: PhotoPicker?,
     onRemovePhoto: () -> Unit,
+    onEatenTimePicked: (Int, Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var pickTime by remember { mutableStateOf(false) }
     val text = state.text
     var photoMenu by remember { mutableStateOf(false) }
     val focus = remember { FocusRequester() }
@@ -127,6 +133,17 @@ internal fun CaptureSheetContent(
                         }
                     }
                 }
+                if (state.eatenAt != null) {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
+                        Text(
+                            stringResource(R.string.capture_for_around, state.eatenAtLabel),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Text(" · ", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        TextButton(onClick = { pickTime = true }) { Text(stringResource(R.string.capture_change_time)) }
+                    }
+                }
                 state.photoPath?.let { path -> AttachedPhoto(path, onRemovePhoto) }
                 if (photoPicker?.noCamera == true) Note(stringResource(R.string.photo_no_camera))
                 VoiceStatus(voice, onUndo = onUndoVoice)
@@ -147,6 +164,26 @@ internal fun CaptureSheetContent(
             }
         }
     }
+    if (pickTime) {
+        EatenTimeDialog(state.eatenHour, state.eatenMinute, onPicked = onEatenTimePicked, onDismiss = { pickTime = false })
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun EatenTimeDialog(hour: Int, minute: Int, onPicked: (Int, Int) -> Unit, onDismiss: () -> Unit) {
+    val picker = rememberTimePickerState(initialHour = hour, initialMinute = minute)
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = {
+                onPicked(picker.hour, picker.minute)
+                onDismiss()
+            }) { Text(stringResource(R.string.capture_ok)) }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.capture_cancel)) } },
+        text = { TimePicker(picker) },
+    )
 }
 
 @Composable

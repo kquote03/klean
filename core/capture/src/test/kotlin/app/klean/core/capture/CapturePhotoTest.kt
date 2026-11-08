@@ -42,6 +42,7 @@ class CapturePhotoTest {
         clock,
         FakeVoiceRecognizer(),
         photos,
+        DubaiZone,
         SavedStateHandle(),
     )
 

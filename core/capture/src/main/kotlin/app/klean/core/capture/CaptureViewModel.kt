@@ -1,6 +1,14 @@
 package app.klean.core.capture
 
 import android.net.Uri
+import app.klean.core.common.ZoneProvider
+import app.klean.shared.time.toLocal
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.toInstant
 import android.util.Log
 import androidx.annotation.StringRes
 import app.klean.core.data.photo.PhotoStorage
@@ -46,6 +54,11 @@ data class CaptureUiState(
     val photoPath: String? = null,
     val phase: CapturePhase = CapturePhase.Editing,
     val startVoice: Boolean = false,
+    /** Preset time for the entry (UTC ms), shown as "For around …"; null = now. */
+    val eatenAt: Long? = null,
+    val eatenHour: Int = 0,
+    val eatenMinute: Int = 0,
+    val eatenAtLabel: String = "",
     /** The sheet should close. */
     val finished: Boolean = false,
 )
@@ -57,6 +70,7 @@ class CaptureViewModel @Inject constructor(
     private val clock: Clock,
     recognizer: VoiceRecognizer,
     private val photos: PhotoStorage,
+    private val zone: ZoneProvider,
     savedState: SavedStateHandle,
 ) : ViewModel() {
     private val target: ModuleId? = savedState.get<String>(CaptureActivity.EXTRA_TARGET_MODULE)?.let(::ModuleId)
@@ -66,6 +80,10 @@ class CaptureViewModel @Inject constructor(
 
     private val _state = MutableStateFlow(CaptureUiState(startVoice = savedState.get<Boolean>(CaptureActivity.EXTRA_START_VOICE) == true))
     val state: StateFlow<CaptureUiState> = _state.asStateFlow()
+
+    init {
+        savedState.get<Long>(CaptureActivity.EXTRA_EATEN_AT)?.let(::setEatenAt)
+    }
 
     private var lastSaved: CaptureResult.Saved? = null
     private var closeJob: Job? = null
@@ -83,6 +101,27 @@ class CaptureViewModel @Inject constructor(
             val s = service.suggestions(target)
             _state.update { it.copy(suggestions = s) }
         }
+    }
+
+    /** "Change" on the "For around …" line: same local day, new time. */
+    fun onEatenTimePicked(hour: Int, minute: Int) {
+        val current = _state.value.eatenAt ?: return
+        val date = current.toLocal(zone.current()).date
+        setEatenAt(LocalDateTime(date, LocalTime(hour, minute)).toInstant(zone.current()).toEpochMilliseconds())
+    }
+
+    private fun setEatenAt(at: Long) {
+        val tz = zone.current()
+        val local = at.toLocal(tz)
+        val zoneId = ZoneId.of(tz.id)
+        val instant = java.time.Instant.ofEpochMilli(at)
+        val sameDay = local.date == clock.now().toEpochMilliseconds().toLocal(tz).date
+        val label = if (sameDay) {
+            DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withZone(zoneId).format(instant)
+        } else {
+            DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT).withZone(zoneId).format(instant)
+        }
+        _state.update { it.copy(eatenAt = at, eatenHour = local.hour, eatenMinute = local.minute, eatenAtLabel = label) }
     }
 
     fun onTextChange(text: String) = _state.update { it.copy(text = text) }
@@ -109,7 +148,7 @@ class CaptureViewModel @Inject constructor(
     private suspend fun finish(clean: String, viaVoice: Boolean): CaptureResult.Saved? {
         val input = CaptureInput(
             clean, source, clock.now().toEpochMilliseconds(),
-            viaVoice = viaVoice, photoFile = _state.value.photoFile, targetModule = target,
+            viaVoice = viaVoice, photoFile = _state.value.photoFile, targetModule = target, eatenAt = _state.value.eatenAt,
         )
         return when (val r = service.submit(input)) {
             CaptureResult.NoModule -> {

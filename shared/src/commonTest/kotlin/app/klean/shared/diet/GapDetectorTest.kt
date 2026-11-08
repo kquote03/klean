@@ -33,4 +33,11 @@ class GapDetectorTest {
         listOf(Gap(t(10, 30), t(17), ongoing = false)),
         find(listOf(t(17), t(6), t(10, 30), t(9), t(23, day = 10)), now = t(20)),
     )
+
+    /** "Add something" presets the time to the middle of the gap, on a 5-minute step. */
+    @Test fun midpointIsRoundedToFiveMinutes() {
+        assertEquals(t(13, 45), Gap(t(10, 30), t(17), ongoing = false).midpoint) // 13:45 exactly
+        assertEquals(t(11, 5), Gap(t(9), t(13, 13), ongoing = true).midpoint) // 11:06:30 -> 11:05
+        assertEquals(t(11, 10), Gap(t(9), t(13, 17), ongoing = true).midpoint) // 11:08:30 -> 11:10
+    }
 }

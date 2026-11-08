@@ -6,6 +6,8 @@ import app.klean.shared.module.ModuleId
 data class CaptureInput(
     val text: String, val source: CaptureSource, val capturedAt: Long,
     val viaVoice: Boolean = false, val photoFile: String? = null, val targetModule: ModuleId? = null,
+    /** When the thing happened, if not now (e.g. "Add something" on a gap). UTC ms. */
+    val eatenAt: Long? = null,
 )
 data class ActionSpec(val type: String, val description: String)
 data class CaptureOption(val moduleId: ModuleId, val action: ActionSpec)

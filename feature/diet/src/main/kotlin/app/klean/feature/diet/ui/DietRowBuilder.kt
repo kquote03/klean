@@ -46,7 +46,7 @@ class DietRowBuilder(
                 photoPath = e.photoFile?.let { photos.file(it).path },
             )
         }
-        val gapRows = gaps.map { g -> g.start to DietRow.GapRow(fmt.gap(g), g.start) }
+        val gapRows = gaps.map { g -> g.start to DietRow.GapRow(fmt.gap(g), g.start, g.midpoint) }
         // At equal times the entry comes first: a gap starts after the entry that opens it.
         return (entryRows.map { Triple(it.first, 0, it.second) } + gapRows.map { Triple(it.first, 1, it.second) })
             .sortedWith(compareBy({ it.first }, { it.second }))
