@@ -34,7 +34,15 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.klean.core.capture.voice.VoiceStatus
 import app.klean.core.capture.voice.VoiceUiState
 import app.klean.core.capture.voice.rememberVoiceInput
+import app.klean.core.capture.photo.PhotoMenu
+import app.klean.core.capture.photo.PhotoPicker
+import app.klean.core.capture.photo.rememberPhotoPicker
 import app.klean.core.design.component.CaptureField
+import app.klean.core.design.component.PhotoThumbnail
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -43,6 +51,7 @@ fun CaptureSheet(vm: CaptureViewModel, onDismiss: () -> Unit) {
     val state by vm.state.collectAsStateWithLifecycle()
     val voice by vm.voice.state.collectAsStateWithLifecycle()
     val onMic = rememberVoiceInput(vm.voice)
+    val photoPicker = rememberPhotoPicker(vm::newCaptureUri, vm::onPhotoTaken, vm::onPhotoPicked)
     LaunchedEffect(Unit) { if (vm.consumeStartVoice()) onMic() }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
@@ -58,6 +67,8 @@ fun CaptureSheet(vm: CaptureViewModel, onDismiss: () -> Unit) {
             onMove = vm::moveTo,
             onMic = onMic,
             onUndoVoice = vm.voice::undoLast,
+            photoPicker = photoPicker,
+            onRemovePhoto = vm::removePhoto,
             modifier = Modifier.navigationBarsPadding().imePadding(),
         )
     }
@@ -72,9 +83,12 @@ internal fun CaptureSheetContent(
     onMove: (MoveOption) -> Unit,
     onMic: () -> Unit,
     onUndoVoice: () -> Unit,
+    photoPicker: PhotoPicker?,
+    onRemovePhoto: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val text = state.text
+    var photoMenu by remember { mutableStateOf(false) }
     val focus = remember { FocusRequester() }
     Column(modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 24.dp)) {
         when (val phase = state.phase) {
@@ -94,17 +108,26 @@ internal fun CaptureSheetContent(
             }
             CapturePhase.Editing, CapturePhase.Saving, CapturePhase.NoModule -> {
                 LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
-                CaptureField(
-                    value = if (voice.listening && voice.partial.isNotBlank()) voice.partial else text,
-                    onValueChange = onTextChange,
-                    onSubmit = { onSubmit(text) },
-                    onMic = onMic,
-                    onPhoto = null, // Photo attach arrives in 6.2.
-                    placeholder = stringResource(R.string.capture_placeholder),
-                    enabled = phase != CapturePhase.Saving,
-                    listening = voice.listening,
-                    modifier = Modifier.focusRequester(focus),
-                )
+                Box {
+                    CaptureField(
+                        value = if (voice.listening && voice.partial.isNotBlank()) voice.partial else text,
+                        onValueChange = onTextChange,
+                        onSubmit = { onSubmit(text) },
+                        onMic = onMic,
+                        onPhoto = photoPicker?.let { { photoMenu = true } },
+                        placeholder = stringResource(R.string.capture_placeholder),
+                        enabled = phase != CapturePhase.Saving,
+                        listening = voice.listening,
+                        modifier = Modifier.focusRequester(focus),
+                    )
+                    if (photoPicker != null) {
+                        Box(Modifier.align(Alignment.TopEnd)) {
+                            PhotoMenu(expanded = photoMenu, onDismiss = { photoMenu = false }, picker = photoPicker)
+                        }
+                    }
+                }
+                state.photoPath?.let { path -> AttachedPhoto(path, onRemovePhoto) }
+                if (photoPicker?.noCamera == true) Note(stringResource(R.string.photo_no_camera))
                 VoiceStatus(voice, onUndo = onUndoVoice)
                 if (phase == CapturePhase.NoModule) {
                     Text(
@@ -138,6 +161,24 @@ private fun SavedLine(text: String) {
         Icon(Icons.Rounded.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
         Text(text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(start = 12.dp))
     }
+}
+
+@Composable
+private fun AttachedPhoto(path: String, onRemove: () -> Unit) {
+    Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        PhotoThumbnail(path, contentDescription = stringResource(R.string.photo_attached), size = 56.dp)
+        TextButton(onClick = onRemove, modifier = Modifier.padding(start = 8.dp)) { Text(stringResource(R.string.photo_remove)) }
+    }
+}
+
+@Composable
+private fun Note(text: String) {
+    Text(
+        text,
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(top = 8.dp),
+    )
 }
 
 @Composable

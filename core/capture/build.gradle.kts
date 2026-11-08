@@ -15,4 +15,7 @@ dependencies {
     implementation(libs.lifecycle.viewmodel.compose)
     testImplementation(libs.coroutines.test)
     testImplementation(libs.turbine)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.core)
+    testImplementation(libs.androidx.junit)
 }

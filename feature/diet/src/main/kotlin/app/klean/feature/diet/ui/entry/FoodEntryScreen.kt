@@ -1,20 +1,13 @@
 package app.klean.feature.diet.ui.entry
 
-import android.graphics.BitmapFactory
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -41,27 +34,25 @@ import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.foundation.layout.Box
+import app.klean.core.capture.photo.PhotoMenu
+import app.klean.core.capture.photo.PhotoPicker
+import app.klean.core.capture.photo.rememberPhotoPicker
 import app.klean.core.design.component.NeutralEmpty
+import app.klean.core.design.component.PhotoThumbnail
 import app.klean.feature.diet.R
 import java.io.File
 import kotlin.time.Instant
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
@@ -79,9 +70,7 @@ fun FoodEntryScreen(onBack: () -> Unit, vm: FoodEntryViewModel = hiltViewModel()
     var showTime by remember { mutableStateOf(false) }
     val deletedMsg = stringResource(R.string.diet_entry_deleted)
     val undoLabel = stringResource(R.string.diet_undo)
-    val pickPhoto = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-        if (uri != null) vm.replacePhoto(uri)
-    }
+    val photoPicker = rememberPhotoPicker(vm::newCaptureUri, vm::onPhotoTaken, vm::replacePhoto)
     val leave = {
         vm.save()
         onBack()
@@ -125,7 +114,7 @@ fun FoodEntryScreen(onBack: () -> Unit, vm: FoodEntryViewModel = hiltViewModel()
             PhotoSection(
                 photo = state.photo,
                 enabled = !state.deleted,
-                onPick = { pickPhoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+                picker = photoPicker,
                 onRemove = vm::removePhoto,
             )
             // AI items section appears with the provider layer (M10).
@@ -178,29 +167,27 @@ fun FoodEntryScreen(onBack: () -> Unit, vm: FoodEntryViewModel = hiltViewModel()
 }
 
 @Composable
-private fun PhotoSection(photo: File?, enabled: Boolean, onPick: () -> Unit, onRemove: () -> Unit) {
-    val bitmap by produceState<ImageBitmap?>(null, photo) {
-        value = photo?.let { f ->
-            withContext(Dispatchers.IO) {
-                val opts = BitmapFactory.Options().apply { inSampleSize = 4 }
-                BitmapFactory.decodeFile(f.path, opts)?.asImageBitmap()
+private fun PhotoSection(photo: File?, enabled: Boolean, picker: PhotoPicker, onRemove: () -> Unit) {
+    var menu by remember { mutableStateOf(false) }
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            photo?.let { PhotoThumbnail(it.path, contentDescription = stringResource(R.string.diet_has_photo), size = 96.dp) }
+            Box {
+                TextButton(onClick = { menu = true }, enabled = enabled) {
+                    Text(stringResource(if (photo == null) R.string.diet_photo_add else R.string.diet_photo_replace))
+                }
+                PhotoMenu(expanded = menu, onDismiss = { menu = false }, picker = picker)
+            }
+            if (photo != null) {
+                TextButton(onClick = onRemove, enabled = enabled) { Text(stringResource(R.string.diet_photo_remove)) }
             }
         }
-    }
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        bitmap?.let {
-            Image(
-                it,
-                contentDescription = stringResource(R.string.diet_has_photo),
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.size(96.dp).clip(RoundedCornerShape(12.dp)),
+        if (picker.noCamera) {
+            Text(
+                stringResource(app.klean.core.capture.R.string.photo_no_camera),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-        }
-        TextButton(onClick = onPick, enabled = enabled) {
-            Text(stringResource(if (photo == null) R.string.diet_photo_add else R.string.diet_photo_replace))
-        }
-        if (photo != null) {
-            TextButton(onClick = onRemove, enabled = enabled) { Text(stringResource(R.string.diet_photo_remove)) }
         }
     }
 }

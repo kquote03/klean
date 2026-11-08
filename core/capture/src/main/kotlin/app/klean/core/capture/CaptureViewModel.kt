@@ -1,6 +1,9 @@
 package app.klean.core.capture
 
+import android.net.Uri
+import android.util.Log
 import androidx.annotation.StringRes
+import app.klean.core.data.photo.PhotoStorage
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -38,6 +41,9 @@ data class CaptureUiState(
     /** What is in the field. Lives here so voice can fill it and Undo can put it back. */
     val text: String = "",
     val suggestions: List<String> = emptyList(),
+    /** Stored photo file name attached to the next save, and its path for the thumbnail. */
+    val photoFile: String? = null,
+    val photoPath: String? = null,
     val phase: CapturePhase = CapturePhase.Editing,
     val startVoice: Boolean = false,
     /** The sheet should close. */
@@ -50,6 +56,7 @@ class CaptureViewModel @Inject constructor(
     private val registry: ModuleRegistry,
     private val clock: Clock,
     recognizer: VoiceRecognizer,
+    private val photos: PhotoStorage,
     savedState: SavedStateHandle,
 ) : ViewModel() {
     private val target: ModuleId? = savedState.get<String>(CaptureActivity.EXTRA_TARGET_MODULE)?.let(::ModuleId)
@@ -100,7 +107,10 @@ class CaptureViewModel @Inject constructor(
         begin(text)?.let { finish(it, viaVoice) }
 
     private suspend fun finish(clean: String, viaVoice: Boolean): CaptureResult.Saved? {
-        val input = CaptureInput(clean, source, clock.now().toEpochMilliseconds(), viaVoice = viaVoice, targetModule = target)
+        val input = CaptureInput(
+            clean, source, clock.now().toEpochMilliseconds(),
+            viaVoice = viaVoice, photoFile = _state.value.photoFile, targetModule = target,
+        )
         return when (val r = service.submit(input)) {
             CaptureResult.NoModule -> {
                 _state.update { it.copy(phase = CapturePhase.NoModule) }
@@ -116,6 +126,35 @@ class CaptureViewModel @Inject constructor(
         service.undo(saved)
         lastSaved = null
         _state.update { it.copy(phase = CapturePhase.Editing, text = u.text) }
+    }
+
+    fun newCaptureUri(): Pair<String, Uri> = photos.newCaptureUri()
+
+    /** The camera finished. Normalises the full-size original into the store, then drops the original. */
+    fun onPhotoTaken(name: String, uri: Uri, success: Boolean) {
+        viewModelScope.launch {
+            if (success) importAndAttach(uri)
+            photos.delete(name)
+        }
+    }
+
+    fun onPhotoPicked(uri: Uri) {
+        viewModelScope.launch { importAndAttach(uri) }
+    }
+
+    fun removePhoto() {
+        val name = _state.value.photoFile ?: return
+        photos.delete(name)
+        _state.update { it.copy(photoFile = null, photoPath = null) }
+    }
+
+    private suspend fun importAndAttach(uri: Uri) {
+        runCatching { photos.import(uri) }
+            .onSuccess { name ->
+                _state.value.photoFile?.let(photos::delete)
+                _state.update { it.copy(photoFile = name, photoPath = photos.file(name).path) }
+            }
+            .onFailure { Log.w("Klean", "Photo import failed", it) }
     }
 
     fun moveTo(option: MoveOption) {
@@ -149,6 +188,10 @@ class CaptureViewModel @Inject constructor(
 
     override fun onCleared() {
         voice.close()
+        // A photo attached but never saved would otherwise stay on disk with nothing pointing at it.
+        if (lastSaved == null || lastSaved?.input?.photoFile != _state.value.photoFile) {
+            _state.value.photoFile?.let(photos::delete)
+        }
     }
 
     private fun labelOf(id: ModuleId): Int? = registry.all.firstOrNull { it.id == id }?.labelRes

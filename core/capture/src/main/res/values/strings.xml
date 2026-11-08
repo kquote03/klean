@@ -16,4 +16,9 @@
     <string name="voice_try_again">Voice is busy right now. You can type instead.</string>
     <string name="voice_saved_undo">Saved by voice · Undo</string>
     <string name="voice_undo_description">Undo saving %1$s</string>
+    <string name="photo_take">Take photo</string>
+    <string name="photo_choose">Choose from gallery</string>
+    <string name="photo_attached">Photo attached</string>
+    <string name="photo_remove">Remove photo</string>
+    <string name="photo_no_camera">No camera app found. You can choose a photo from the gallery.</string>
 </resources>

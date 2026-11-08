@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import app.klean.core.capture.voice.VoiceRecognizer
 import app.klean.core.capture.voice.VoiceSession
 import app.klean.core.data.db.entity.FoodEntryEntity
+import app.klean.core.data.photo.PhotoStorage
 import app.klean.core.data.db.entity.FoodItemEntity
 import app.klean.feature.diet.data.DietRepository
 import app.klean.feature.diet.data.DietViewPrefs
@@ -40,9 +41,11 @@ sealed interface DietRow {
         val text: String,
         val itemsSummary: String?,
         val providerName: String?,
-        val hasPhoto: Boolean,
+        /** Absolute path of the photo, for the row thumbnail. */
+        val photoPath: String?,
     ) : DietRow {
         override val key get() = id
+        val hasPhoto: Boolean get() = photoPath != null
     }
 
     /** A long stretch without entries. Shown neutrally; never a judgement. */
@@ -67,6 +70,7 @@ class DietViewModel @Inject constructor(
     private val fmt: DietFormatter,
     private val ticker: MinuteTicker,
     recognizer: VoiceRecognizer,
+    private val photos: PhotoStorage,
 ) : ViewModel() {
     private val _field = MutableStateFlow("")
 
@@ -150,7 +154,7 @@ class DietViewModel @Inject constructor(
                 text = e.rawText,
                 itemsSummary = summary,
                 providerName = its.firstOrNull { it.providerId != "user" }?.providerId,
-                hasPhoto = e.photoFile != null,
+                photoPath = e.photoFile?.let { photos.file(it).path },
             )
         }
         val gapRows = gaps.map { g -> g.start to DietRow.GapRow(fmt.gap(g), g.start) }

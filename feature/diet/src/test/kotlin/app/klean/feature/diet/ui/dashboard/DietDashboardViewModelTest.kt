@@ -88,7 +88,7 @@ class DietDashboardViewModelTest {
             db, stamper, clock, DubaiZone, SettingsRepository(db, stamper), DietChangeDispatcher(emptySet()), noAi, scope,
         )
         val dashboard = DietDashboardViewModel(repo, fmt, oneTick)
-        val diet = DietViewModel(repo, clock, fmt, oneTick, app.klean.feature.diet.FakeVoice())
+        val diet = DietViewModel(repo, clock, fmt, oneTick, app.klean.feature.diet.FakeVoice(), app.klean.feature.diet.FakePhotos())
         diet.uiState.test {
             var s = awaitItem()
             while (!s.loaded) s = awaitItem()

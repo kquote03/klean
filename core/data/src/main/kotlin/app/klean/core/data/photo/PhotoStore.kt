@@ -17,6 +17,19 @@ import kotlin.time.Clock
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+/** What screens need from photo storage. An interface so view models are tested with a fake. */
+interface PhotoStorage {
+    fun file(name: String): File
+
+    /** Imports an image from any readable uri (normalised, EXIF stripped) and returns the stored file name. */
+    suspend fun import(uri: Uri): String
+
+    /** A uri the camera app can write to, and the file name behind it. Import it afterwards, then [delete] it. */
+    fun newCaptureUri(): Pair<String, Uri>
+
+    fun delete(name: String): Boolean
+}
+
 /**
  * Stores entry photos under `filesDir/photos/`. Imports are downsized to a 1600 px long edge,
  * rotated per EXIF and re-encoded as JPEG 85. Re-encoding drops all EXIF (location, device), on purpose.
@@ -25,13 +38,13 @@ import kotlinx.coroutines.withContext
 class PhotoStore @Inject constructor(
     @ApplicationContext private val ctx: Context,
     private val clock: Clock,
-) {
+) : PhotoStorage {
     val photosDir: File get() = File(ctx.filesDir, DIR).apply { mkdirs() }
 
-    fun file(name: String): File = File(photosDir, name)
+    override fun file(name: String): File = File(photosDir, name)
 
     /** Imports an image from any readable [uri] and returns the stored file name. */
-    suspend fun import(uri: Uri): String = withContext(Dispatchers.IO) {
+    override suspend fun import(uri: Uri): String = withContext(Dispatchers.IO) {
         val resolver = ctx.contentResolver
         fun open() = resolver.openInputStream(uri) ?: throw IOException("Cannot open $uri")
 
@@ -64,12 +77,12 @@ class PhotoStore @Inject constructor(
      * A FileProvider URI the camera app can write to, and the file name it maps to.
      * The camera writes full size; call [import] on it afterwards to normalise, then [delete] the original.
      */
-    fun newCaptureUri(): Pair<String, Uri> {
+    override fun newCaptureUri(): Pair<String, Uri> {
         val name = newName()
         return name to FileProvider.getUriForFile(ctx, "${ctx.packageName}.photos", file(name))
     }
 
-    fun delete(name: String): Boolean = file(name).delete()
+    override fun delete(name: String): Boolean = file(name).delete()
 
     private fun newName() = UuidV7.generate(clock.now().toEpochMilliseconds()) + ".jpg"
 
@@ -93,4 +106,10 @@ class PhotoStore @Inject constructor(
             return Math.round(width * scale).toInt().coerceAtLeast(1) to Math.round(height * scale).toInt().coerceAtLeast(1)
         }
     }
+}
+
+@dagger.Module
+@dagger.hilt.InstallIn(dagger.hilt.components.SingletonComponent::class)
+abstract class PhotoModule {
+    @dagger.Binds abstract fun storage(impl: PhotoStore): PhotoStorage
 }

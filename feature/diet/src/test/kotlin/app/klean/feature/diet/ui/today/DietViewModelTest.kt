@@ -9,6 +9,7 @@ import app.klean.feature.diet.DubaiZone
 import app.klean.feature.diet.FakeClock
 import app.klean.feature.diet.FakeDietRepository
 import app.klean.feature.diet.FakeVoice
+import app.klean.feature.diet.FakePhotos
 import app.klean.feature.diet.ui.AndroidDietFormatter
 import app.klean.feature.diet.ui.MinuteTicker
 import app.klean.shared.diet.CaptureSource
@@ -46,7 +47,7 @@ class DietViewModelTest {
 
     private val rec = FakeVoice()
 
-    private fun vm() = DietViewModel(repo, clock, fmt, oneTick, rec)
+    private fun vm() = DietViewModel(repo, clock, fmt, oneTick, rec, FakePhotos())
 
     @Test fun voiceFinalLogsViaVoiceAndUndoDeletesAndRefillsTheField() = runTest {
         val vm = vm()
@@ -108,6 +109,8 @@ class DietViewModelTest {
             val gap = rows[1] as DietRow.GapRow
             assertEquals(a, gap.startMs)
             assertTrue(rows[2] is DietRow.Entry && (rows[2] as DietRow.Entry).hasPhoto)
+            assertEquals("/photos/p.jpg", (rows[2] as DietRow.Entry).photoPath)
+            assertEquals(null, (rows[0] as DietRow.Entry).photoPath)
             assertEquals("No entries ${fmt.time(a)}–${fmt.time(b)}", gap.label)
             assertTrue((rows[0] as DietRow.Entry).timeLabel.isNotBlank())
             rows.filterIsInstance<DietRow.GapRow>().forEach {

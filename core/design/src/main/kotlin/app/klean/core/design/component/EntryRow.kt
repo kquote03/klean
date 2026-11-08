@@ -1,6 +1,7 @@
 package app.klean.core.design.component
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
@@ -22,6 +23,8 @@ fun EntryRow(
     meta: (@Composable () -> Unit)?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    /** E.g. a photo thumbnail at the end of the row. */
+    trailing: (@Composable () -> Unit)? = null,
 ) {
     Row(
         modifier = modifier
@@ -40,6 +43,9 @@ fun EntryRow(
         Column(modifier = Modifier.weight(1f)) {
             Text(text = text, style = MaterialTheme.typography.bodyLarge)
             if (meta != null) meta()
+        }
+        if (trailing != null) {
+            Box(Modifier.padding(start = 12.dp)) { trailing() }
         }
     }
 }

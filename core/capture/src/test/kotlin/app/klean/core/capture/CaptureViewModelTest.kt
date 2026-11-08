@@ -40,6 +40,7 @@ class CaptureViewModelTest {
         ModuleRegistry(emptySet(), gate),
         clock,
         rec,
+        FakePhotoStorage(),
         SavedStateHandle(mapOf(*extras)),
     )
 

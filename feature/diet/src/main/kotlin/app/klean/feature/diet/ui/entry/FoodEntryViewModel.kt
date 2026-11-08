@@ -6,7 +6,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.klean.core.common.ZoneProvider
-import app.klean.core.data.photo.PhotoStore
+import app.klean.core.data.photo.PhotoStorage
 import app.klean.feature.diet.data.DietRepository
 import app.klean.feature.diet.ui.DietFormatter
 import app.klean.shared.time.toLocal
@@ -43,7 +43,7 @@ class FoodEntryViewModel @Inject constructor(
     private val repo: DietRepository,
     private val zone: ZoneProvider,
     private val fmt: DietFormatter,
-    private val photos: PhotoStore,
+    private val photos: PhotoStorage,
 ) : ViewModel() {
     private val id: String = checkNotNull(savedState["entryId"])
     private var savedText: String = ""
@@ -108,6 +108,20 @@ class FoodEntryViewModel @Inject constructor(
 
     fun removePhoto() {
         viewModelScope.launch { repo.edit(id, clearPhoto = true) }
+    }
+
+    fun newCaptureUri(): Pair<String, Uri> = photos.newCaptureUri()
+
+    /** The camera finished: normalise the full-size original into the store, then drop the original. */
+    fun onPhotoTaken(name: String, uri: Uri, success: Boolean) {
+        viewModelScope.launch {
+            if (success) {
+                runCatching { photos.import(uri) }
+                    .onSuccess { stored -> repo.edit(id, photoFile = stored) }
+                    .onFailure { Log.w("Klean", "Photo import failed", it) }
+            }
+            photos.delete(name)
+        }
     }
 
     fun replacePhoto(uri: Uri) {
