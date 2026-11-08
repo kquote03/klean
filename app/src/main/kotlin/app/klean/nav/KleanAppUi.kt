@@ -56,7 +56,7 @@ fun KleanAppUi(vm: ShellViewModel = hiltViewModel(), deepLinks: Flow<Intent> = e
             )
         },
     ) {
-        KleanNavHost(nav = nav, registry = registry, enabled = enabled)
+        KleanNavHost(nav = nav, shell = vm, enabled = enabled)
     }
 }
 
