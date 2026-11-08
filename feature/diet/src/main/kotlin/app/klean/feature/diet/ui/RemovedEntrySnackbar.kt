@@ -6,7 +6,10 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavBackStackEntry
@@ -30,15 +33,29 @@ private const val UNDO_WINDOW_MS = 5_000L
 fun RemovedEntrySnackbar(backStackEntry: NavBackStackEntry, snackbar: SnackbarHostState, onUndo: (String) -> Unit) {
     val handle = backStackEntry.savedStateHandle
     val removed by handle.getStateFlow<String?>(REMOVED_ENTRY_KEY, null).collectAsStateWithLifecycle()
+    RemovedEntrySnackbar(removed, onConsumed = { handle[REMOVED_ENTRY_KEY] = null }, snackbar = snackbar, onUndo = onUndo)
+}
+
+@Composable
+fun RemovedEntrySnackbar(removedId: String?, onConsumed: () -> Unit, snackbar: SnackbarHostState, onUndo: (String) -> Unit) {
     val message = stringResource(R.string.diet_entry_deleted)
     val undo = stringResource(R.string.diet_undo)
     val onUndoNow by rememberUpdatedState(onUndo)
-    LaunchedEffect(removed) {
-        val id = removed ?: return@LaunchedEffect
-        handle[REMOVED_ENTRY_KEY] = null
+    val consume by rememberUpdatedState(onConsumed)
+    // Held here so consuming the back-stack key doesn't re-key (and cancel) the snackbar below.
+    var showing by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(removedId) {
+        if (removedId != null) {
+            showing = removedId
+            consume()
+        }
+    }
+    LaunchedEffect(showing) {
+        val id = showing ?: return@LaunchedEffect
         val result = withTimeoutOrNull(UNDO_WINDOW_MS) {
             snackbar.showSnackbar(message, actionLabel = undo, duration = SnackbarDuration.Indefinite)
         }
         if (result == SnackbarResult.ActionPerformed) onUndoNow(id)
+        showing = null
     }
 }

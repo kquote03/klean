@@ -13,6 +13,9 @@ dependencies {
     testImplementation(libs.datastore.preferences)
     testImplementation(libs.hilt.android.testing)
     kspTest(libs.hilt.compiler)
+    testImplementation(platform(libs.compose.bom))
+    testImplementation(libs.compose.ui.test.junit4)
+    debugImplementation(libs.compose.ui.test.manifest)
 }
 // BuildConfig.DEBUG gates the debug check-in tools in Diet settings.
 android { buildFeatures { buildConfig = true } }
