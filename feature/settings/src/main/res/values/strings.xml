@@ -11,4 +11,28 @@
     <string name="settings_backup">Backup</string>
     <string name="settings_permissions">Permissions</string>
     <string name="settings_about">About</string>
+
+    <string name="backup_section_manual">This phone</string>
+    <string name="backup_export">Export backup</string>
+    <string name="backup_export_summary">One file with your entries, photos and settings.</string>
+    <string name="backup_restore">Restore from backup</string>
+    <string name="backup_restore_summary">Replace what is in Klean with a backup file.</string>
+    <string name="backup_include_keys">Include API keys in backups</string>
+    <string name="backup_include_keys_warning">Keys will be stored unencrypted in the backup file.</string>
+    <string name="backup_section_auto">Automatic backup</string>
+    <string name="backup_auto_daily">Back up every day</string>
+    <string name="backup_auto_daily_summary">Saves a backup to a folder you choose.</string>
+    <string name="backup_auto_folder">Folder: %1$s</string>
+    <string name="backup_auto_folder_change">Change folder</string>
+    <string name="backup_auto_keep">Keep last %1$d</string>
+    <string name="backup_auto_keep_fewer">Keep fewer</string>
+    <string name="backup_auto_keep_more">Keep more</string>
+    <string name="backup_confirm_text">Replace everything on this phone? This deletes the %1$d entries, photos and settings currently in Klean and replaces them with the backup from %2$s (%3$d entries, %4$d photos). This can\'t be undone.</string>
+    <string name="backup_confirm_replace">Replace</string>
+    <string name="backup_confirm_cancel">Cancel</string>
+    <string name="backup_msg_exported">Backup saved.</string>
+    <string name="backup_msg_export_failed">The backup couldn\'t be saved. Try another place.</string>
+    <string name="backup_msg_not_a_backup">This file isn\'t a Klean backup.</string>
+    <string name="backup_msg_newer_version">This backup is from a newer version of Klean. Update the app first.</string>
+    <string name="backup_msg_damaged">This backup couldn\'t be read. Try another file.</string>
 </resources>

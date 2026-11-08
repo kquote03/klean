@@ -100,6 +100,46 @@ class DevicePrefs @Inject constructor(
     val mainPhone: Flow<Boolean> = flow(K.mainPhone, true)
     suspend fun setMainPhone(v: Boolean) = put(K.mainPhone, v)
 
+    /**
+     * Device prefs that travel in a backup, as strings. Leaves out what only makes sense on this
+     * install: `deviceId`, `lastScreenOffAt`, and the auto-backup folder grant (`autoBackupTreeUri`,
+     * plus `autoBackupEnabled`, which is meaningless without that grant).
+     */
+    suspend fun exportable(): Map<String, String> {
+        val p = store.data.first()
+        return buildMap { EXPORTABLE.forEach { (key, _) -> p[key]?.let { put(key.name, it.toString()) } } }
+    }
+
+    /** Replaces every exportable pref with [values]; missing keys fall back to defaults, unknown or unparsable ones are ignored. */
+    suspend fun importAll(values: Map<String, String>) {
+        store.edit { p ->
+            EXPORTABLE.forEach { (key, parse) ->
+                p.remove(key)
+                @Suppress("UNCHECKED_CAST")
+                values[key.name]?.let(parse)?.let { p[key as Preferences.Key<Any>] = it }
+            }
+        }
+    }
+
+    private companion object {
+        private val bool: (String) -> Any? = { it.toBooleanStrictOrNull() }
+        private val int: (String) -> Any? = { it.toIntOrNull() }
+        private val long: (String) -> Any? = { it.toLongOrNull() }
+        private val text: (String) -> Any? = { it }
+        val EXPORTABLE: List<Pair<Preferences.Key<*>, (String) -> Any?>> = listOf(
+            K.onboardingDone to bool,
+            K.dynamicColor to bool,
+            K.nextPromptAt to long,
+            K.highlightPromptId to text,
+            K.autoBackupKeep to int,
+            K.backupIncludeSecrets to bool,
+            K.aiProviders to text,
+            K.aiTaskAssignment to text,
+            K.deliveryOffer to text,
+            K.mainPhone to bool,
+        )
+    }
+
     private fun <T> flow(key: Preferences.Key<T>, default: T): Flow<T> = store.data.map { it[key] ?: default }
     private fun <T> nullable(key: Preferences.Key<T>): Flow<T?> = store.data.map { it[key] }
     private suspend fun <T> put(key: Preferences.Key<T>, value: T?) {

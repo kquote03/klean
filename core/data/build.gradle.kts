@@ -15,6 +15,9 @@ dependencies {
     implementation(libs.datastore.preferences)
     implementation(libs.exifinterface)
     implementation(libs.documentfile)
+    implementation(libs.work.runtime)
+    implementation(libs.hilt.work)
+    ksp(libs.hilt.androidx.compiler)
     implementation(libs.core.ktx)
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)
@@ -23,4 +26,5 @@ dependencies {
     testImplementation(libs.room.testing)
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.androidx.junit)
+    testImplementation(libs.work.testing)
 }

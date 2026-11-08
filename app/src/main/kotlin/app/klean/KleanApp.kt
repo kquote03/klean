@@ -1,6 +1,8 @@
 package app.klean
 
 import android.app.Application
+import androidx.hilt.work.HiltWorkerFactory
+import androidx.work.Configuration
 import app.klean.core.common.ApplicationScope
 import app.klean.core.notifications.ChannelRegistrar
 import app.klean.feature.diet.notification.DietStatusNotifier
@@ -10,9 +12,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 @HiltAndroidApp
-class KleanApp : Application() {
+class KleanApp : Application(), Configuration.Provider {
     @Inject @ApplicationScope lateinit var appScope: CoroutineScope
     @Inject lateinit var dietStatus: DietStatusNotifier
+    @Inject lateinit var workerFactory: HiltWorkerFactory
+
+    /** WorkManager is initialised on demand with Hilt's factory; the default initializer is removed in the manifest. */
+    override val workManagerConfiguration: Configuration
+        get() = Configuration.Builder().setWorkerFactory(workerFactory).build()
 
     override fun onCreate() {
         super.onCreate()
