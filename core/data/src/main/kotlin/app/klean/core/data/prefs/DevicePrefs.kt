@@ -2,14 +2,13 @@ package app.klean.core.data.prefs
 
 import android.content.Context
 import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.preferencesDataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStoreFile
 import app.klean.shared.id.UuidV7
 import dagger.Module
 import dagger.Provides
@@ -151,12 +150,17 @@ class DevicePrefs @Inject constructor(
 @Retention(AnnotationRetention.BINARY)
 annotation class DevicePrefsStore
 
+/**
+ * One DataStore per file per *process*: DataStore throws if two instances open the same file. A Hilt
+ * @Singleton is per component, and a process can have several (each instrumented test builds its own),
+ * so the instance lives in this process-wide delegate instead.
+ */
+private val Context.devicePrefsDataStore: DataStore<Preferences> by preferencesDataStore(name = "device_prefs")
+
 @Module
 @InstallIn(SingletonComponent::class)
 object DevicePrefsModule {
     @Provides
-    @Singleton
     @DevicePrefsStore
-    fun store(@ApplicationContext ctx: Context): DataStore<Preferences> =
-        PreferenceDataStoreFactory.create(produceFile = { ctx.preferencesDataStoreFile("device_prefs") })
+    fun store(@ApplicationContext ctx: Context): DataStore<Preferences> = ctx.applicationContext.devicePrefsDataStore
 }
