@@ -5,4 +5,9 @@
     <string name="diet_today_empty">Nothing yet today. What did you eat?</string>
     <string name="diet_settings_title">Diet</string>
     <string name="diet_settings_later">Check-in and reminder options will appear here.</string>
+    <string name="diet_capture_placeholder">What did you eat?</string>
+    <string name="diet_gap_between">No entries %1$s–%2$s</string>
+    <string name="diet_gap_ongoing">Nothing since %1$s</string>
+    <string name="diet_has_photo">Has a photo</string>
+    <string name="diet_repeats_label">Log again</string>
 </resources>

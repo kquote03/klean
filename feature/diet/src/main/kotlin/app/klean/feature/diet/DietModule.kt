@@ -31,7 +31,8 @@ class DietKleanModule @Inject constructor() : KleanModule {
     override val settingsRoute: Any = DietSettingsRoute
 
     override fun registerGraph(builder: NavGraphBuilder, nav: NavController) = with(builder) {
-        composable<DietRoute> { DietScreen() }
+        // Entry editing is wired in the next task.
+        composable<DietRoute> { DietScreen(onOpenEntry = {}) }
         composable<DietSettingsRoute> { DietSettingsScreen(onBack = { nav.popBackStack() }) }
     }
 }
