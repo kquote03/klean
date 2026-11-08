@@ -6,7 +6,13 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasText
 import app.klean.core.design.theme.KleanTheme
+import app.klean.feature.diet.DietKleanModule
+import org.junit.Assert.assertEquals
 import app.klean.core.ui.module.ModuleRegistry
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -31,5 +37,15 @@ class ShellSmokeTest {
         compose.onNodeWithText("Turn modules on or off").performClick()
         compose.waitForIdle()
         compose.onNodeWithText("No modules are installed yet.").assertIsDisplayed()
+    }
+
+    @Test fun dietModuleAddsBottomBarItemBetweenTodayAndSettings() {
+        val vm = ShellViewModel(ModuleRegistry(setOf(DietKleanModule()), FakeModuleGate()))
+        compose.setContent { KleanTheme { KleanAppUi(vm) } }
+        compose.waitForIdle()
+        val labels = compose.onAllNodes(hasClickAction() and (hasText("Today") or hasText("Diet") or hasText("Settings")))
+            .fetchSemanticsNodes()
+            .mapNotNull { n -> n.config.getOrNull(SemanticsProperties.Text)?.joinToString { it.text } }
+        assertEquals(listOf("Today", "Diet", "Settings"), labels)
     }
 }

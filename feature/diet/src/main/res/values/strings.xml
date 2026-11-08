@@ -1,0 +1,8 @@
+<resources>
+    <string name="diet_label">Diet</string>
+    <string name="diet_back">Back</string>
+    <string name="diet_today_title">Today\'s food</string>
+    <string name="diet_today_empty">Nothing yet today. What did you eat?</string>
+    <string name="diet_settings_title">Diet</string>
+    <string name="diet_settings_later">Check-in and reminder options will appear here.</string>
+</resources>
