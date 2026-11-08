@@ -50,4 +50,31 @@ class DevicePrefsTest {
         assertEquals(null, prefs.nextPromptAt.first())
         scope.cancel()
     }
+
+    @Test fun exportImportCarriesTypedPrefsButNotPerInstallOnes() = runBlocking {
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        val prefs = open(scope)
+        val id = prefs.deviceId()
+        prefs.setDynamicColor(false)
+        prefs.setAutoBackupKeep(3)
+        prefs.setNextPromptAt(42L)
+        prefs.setAutoBackupEnabled(true)
+        prefs.setAutoBackupTreeUri("content://tree")
+        prefs.setLastScreenOffAt(5L)
+        val exported = prefs.exportable()
+        assertEquals(mapOf("dynamicColor" to "false", "autoBackupKeep" to "3", "nextPromptAt" to "42"), exported)
+
+        prefs.setOnboardingDone(true) // not in the backup, so import resets it to its default
+        prefs.importAll(exported + ("mainPhone" to "not-a-boolean") + ("unknown" to "x"))
+        assertFalse(prefs.dynamicColor.first())
+        assertEquals(3, prefs.autoBackupKeep.first())
+        assertEquals(42L, prefs.nextPromptAt.first())
+        assertFalse(prefs.onboardingDone.first())
+        assertTrue(prefs.mainPhone.first())
+        assertEquals(id, prefs.deviceId())
+        assertTrue(prefs.autoBackupEnabled.first())
+        assertEquals("content://tree", prefs.autoBackupTreeUri.first())
+        assertEquals(5L, prefs.lastScreenOffAt.first())
+        scope.cancel()
+    }
 }
