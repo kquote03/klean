@@ -14,3 +14,5 @@ dependencies {
     testImplementation(libs.hilt.android.testing)
     kspTest(libs.hilt.compiler)
 }
+// BuildConfig.DEBUG gates the debug check-in tools in Diet settings.
+android { buildFeatures { buildConfig = true } }

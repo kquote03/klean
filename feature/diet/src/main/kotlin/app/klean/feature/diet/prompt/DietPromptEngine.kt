@@ -44,6 +44,9 @@ interface DietPrompts {
 
     /** Cancels the pending alarm and any visible check-in. */
     suspend fun cancel()
+
+    /** Debug only: shows a check-in right now, skipping quiet hours and the recently-logged pause. */
+    suspend fun fireNow() = Unit
 }
 
 /**
@@ -77,6 +80,8 @@ class DietPromptEngine @Inject constructor(
     override suspend fun reschedule() = mutex.withLock { rescheduleLocked() }
 
     override suspend fun cancel() = mutex.withLock { cancelLocked() }
+
+    override suspend fun fireNow() = onAlarm(PlannedPrompt(now(), PromptTrigger.CADENCE, null), force = true)
 
     /**
      * The alarm fired. [force] (debug "fire a check-in now") skips the quiet-hours and
