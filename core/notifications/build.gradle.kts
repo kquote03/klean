@@ -1,6 +1,7 @@
 plugins {
     id("klean.android.library")
     id("klean.hilt")
+    id("klean.sqlite.jvmtest")
 }
 dependencies {
     api(project(":shared"))
@@ -10,4 +11,6 @@ dependencies {
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.androidx.junit)
+    testImplementation(libs.datastore.preferences)
+    testImplementation(libs.coroutines.test)
 }

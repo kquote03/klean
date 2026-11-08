@@ -82,7 +82,7 @@ Everything ticked is merged on `main` (milestones M0–M4 and M9 are tagged).
 
 ## M5 — Prompts: quiet hours, scheduling, rotation, learning, reboot
 
-- [ ] Task 5.1 — QuietHoursService
+- [x] Task 5.1 — QuietHoursService
 - [ ] Task 5.2 — AlarmScheduler + Reschedulable + RescheduleReceiver
 - [ ] Task 5.3 — Phrasing pool
 - [ ] Task 5.4 — PromptNotifier
