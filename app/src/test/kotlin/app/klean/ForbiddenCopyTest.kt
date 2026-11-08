@@ -1,0 +1,36 @@
+package app.klean
+
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import java.io.File
+
+/**
+ * Internal design context (AuDHD traits) may appear in code and docs, never in user-facing copy.
+ * Scans every res/ XML and manifest under src/main in the repo.
+ */
+class ForbiddenCopyTest {
+    // "ADD" is matched case-sensitively only, so the everyday verb "Add" stays allowed.
+    private val forbidden = Regex(
+        """(?i)\b(adhd|(?-i:ADD)\b|autis\w*|audhd|neurodiver\w*|neurotypical|executive dysfunction|asperger\w*|spectrum disorder)""",
+    )
+    private val skipDirs = setOf("build", ".gradle", ".git", ".idea", ".hermes")
+
+    @Test fun noForbiddenWordsInUserFacingResources() {
+        val root = File("..").canonicalFile
+        val offenders = root.walkTopDown()
+            .onEnter { it.name !in skipDirs }
+            .filter { it.isFile && it.path.contains("/src/main/") && (it.extension == "xml" && it.path.contains("/res/") || it.name == "AndroidManifest.xml") }
+            .flatMap { f -> f.readLines().mapIndexedNotNull { i, l -> if (forbidden.containsMatchIn(l)) "${f.relativeTo(root)}:${i + 1}: $l" else null } }
+            .toList()
+        assertTrue(offenders.joinToString("\n"), offenders.isEmpty())
+    }
+
+    @Test fun patternCatchesTermsButAllowsTheVerbAdd() {
+        listOf("ADHD", "adhd tips", "Autistic", "AuDHD", "neurodivergent", "ADD").forEach {
+            assertTrue(it, forbidden.containsMatchIn(it))
+        }
+        listOf("Add something", "add a note", "Address", "Spectrum").forEach {
+            assertTrue(it, !forbidden.containsMatchIn(it))
+        }
+    }
+}
