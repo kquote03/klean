@@ -21,4 +21,5 @@ dependencies {
     testImplementation(libs.turbine)
     testImplementation(libs.room.testing)
     testImplementation(libs.androidx.test.core)
+    testImplementation(libs.androidx.junit)
 }
