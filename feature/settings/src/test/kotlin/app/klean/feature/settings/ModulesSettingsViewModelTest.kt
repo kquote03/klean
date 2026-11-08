@@ -7,7 +7,6 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import app.cash.turbine.test
 import app.klean.core.ui.module.DashboardSlot
-import app.klean.core.ui.module.InMemoryModuleGate
 import app.klean.core.ui.module.KleanModule
 import app.klean.core.ui.module.ModuleRegistry
 import app.klean.shared.module.ModuleId
@@ -41,7 +40,7 @@ class ModulesSettingsViewModelTest {
     @Test fun rowsReflectGateAndToggleCallsRegistry() = runTest {
         val diet = FakeModule(ModuleId.DIET, 1)
         val sleep = FakeModule(ModuleId.SLEEP, 2)
-        val vm = ModulesSettingsViewModel(ModuleRegistry(setOf(sleep, diet), InMemoryModuleGate()))
+        val vm = ModulesSettingsViewModel(ModuleRegistry(setOf(sleep, diet), FakeModuleGate()))
         vm.rows.test {
             // The initial empty stateIn value may be conflated away, depending on dispatch timing.
             val first = awaitItem().ifEmpty { awaitItem() }

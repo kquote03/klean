@@ -6,6 +6,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
+import app.klean.core.data.module.ModuleGate
 import app.klean.shared.module.ModuleId
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -28,13 +29,6 @@ interface KleanModule {
     @Composable fun DashboardCard(onOpen: () -> Unit, modifier: Modifier) {}
     /** Cancel alarms/notifications/widgets on disable; reschedule on enable. */
     suspend fun onEnabledChanged(enabled: Boolean) {}
-}
-
-/** Persists which modules are switched off. The real implementation lives in `:core:data` (M3). */
-interface ModuleGate {
-    val disabledIds: Flow<Set<ModuleId>>
-    suspend fun isEnabled(id: ModuleId): Boolean
-    suspend fun setEnabled(id: ModuleId, enabled: Boolean)
 }
 
 @Singleton

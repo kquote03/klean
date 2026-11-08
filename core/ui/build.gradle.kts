@@ -6,7 +6,7 @@ plugins {
 dependencies {
     api(project(":shared"))
     api(project(":core:design"))
-    implementation(project(":core:data"))
+    api(project(":core:data"))
     api(libs.navigation.compose)
     testImplementation(libs.junit)
     testImplementation(libs.coroutines.test)

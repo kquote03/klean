@@ -7,7 +7,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.klean.core.design.theme.KleanTheme
-import app.klean.core.ui.module.InMemoryModuleGate
 import app.klean.core.ui.module.ModuleRegistry
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -21,7 +20,7 @@ class ShellSmokeTest {
     @get:Rule val compose = createComposeRule()
 
     @Test fun shellShowsTodayAndSettingsWithEmptyState() {
-        val vm = ShellViewModel(ModuleRegistry(emptySet(), InMemoryModuleGate()))
+        val vm = ShellViewModel(ModuleRegistry(emptySet(), FakeModuleGate()))
         compose.setContent { KleanTheme { KleanAppUi(vm) } }
         compose.onNodeWithText("Nothing here yet. Turn on a module in Settings.").assertIsDisplayed()
         assertTrue(compose.onAllNodesWithText("Today").fetchSemanticsNodes().isNotEmpty())

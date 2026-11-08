@@ -51,9 +51,14 @@ class SettingsRepository @Inject constructor(
 
     suspend fun <T> get(key: SettingKey<T>): T = observe(key).first()
 
-    suspend fun <T> set(key: SettingKey<T>, value: T) {
+    suspend fun <T> set(key: SettingKey<T>, value: T) = update(key) { value }
+
+    /** Read-modify-write in one transaction, so concurrent updates never lose each other. */
+    suspend fun <T> update(key: SettingKey<T>, transform: (T) -> T) {
         db.transact {
             val prev = db.settingDao().get(key.name)
+            val current = prev?.takeUnless { it.sync.deleted }?.let { decode(key, it.valueJson) } ?: key.default
+            val value = transform(current)
             db.settingDao().upsert(
                 SettingEntity(
                     id = nameUuid(key.name),
