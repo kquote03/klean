@@ -160,12 +160,19 @@ Everything ticked is merged on `main` (milestones M0–M4 and M9 are tagged).
 
 - [ ] Run every acceptance criterion in PLAN.md §8 M16 on a real phone; record results in `docs/acceptance-p1.md`
 
-## Device-only checks still pending (no phone has been connected yet)
+## Device checks (Pixel 9a, Android 17 / API 37, connected wirelessly)
 
-Code and JVM/Robolectric tests stand in for these until a phone is available:
-- [ ] 0.8: app launches on device (`:app:installDebug`)
-- [ ] 1.8 / 3.11: bottom bar shows Today / Diet / Settings on device
-- [ ] 4.3: `InlineReplySaveTest` via `connectedDebugAndroidTest`; inline reply from the shade and the lock screen in airplane mode
-- [ ] 4.4 / 4.6 / 4.7: capture sheet over the home screen, QS tile, widget update after an inline reply
-- [ ] 9.3: `BackupRoundTripTest` via `connectedDebugAndroidTest`; the Robolectric `BackupRestoreTest` stands in
+Verified on the phone on 2026-11-08:
+- [x] `connectedDebugAndroidTest`: 3/3 pass. `InlineReplySaveTest` (the reply saves with no activity in front) and both `BackupRoundTripTest` cases.
+- [x] 0.8: the app installs and launches (`am start`, about 1.1 s cold).
+- [x] 4.2: the status notification is posted (ongoing, silent, 2 actions, private + public version).
+- [x] Lock screen shows "What did you eat? · Nothing logged yet today". This first failed: Pixel hides LOW-importance notifications on the lock screen. Fixed in `2bd24a5` (channel `diet_status_v2`).
 
+Still needs hands-on checks by the user (the phone stays locked; the agent never unlocks it):
+- [ ] 1.8 / 3.11: bottom bar shows Today / Diet / Settings
+- [ ] 4.3: inline reply from the shade and from the lock screen, in airplane mode, under 5 s, app doesn't open
+- [ ] 4.4 / 4.6: capture sheet over the home screen; QS tile opens it
+- [ ] 4.7: widget shows today's entries and updates within seconds after an inline reply; compact size
+- [ ] 4.8: Settings → Modules → Diet off removes nav item, card, notification, widget content; tile unavailable
+- [ ] 9.4: export a backup through the picker, restore it, check the confirmation text
+- [ ] Polish: the app uses the default Android launcher icon; none has been designed yet
