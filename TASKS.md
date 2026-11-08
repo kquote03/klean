@@ -8,7 +8,7 @@ Legend:
 - `[~]` partially done or unverified (see the note)
 - `[ ]` not started
 
-Everything ticked is merged on `main` (milestones M0–M4 and M9 are tagged).
+Everything ticked is merged on `main` (milestones M0–M5 and M9 are tagged).
 
 
 ## M0 — Tooling and empty runnable app
@@ -88,7 +88,7 @@ Everything ticked is merged on `main` (milestones M0–M4 and M9 are tagged).
 - [x] Task 5.4 — PromptNotifier
 - [x] Task 5.5 — DietPromptEngine (TDD with fakes)
 - [x] Task 5.6 — Day rollover
-- [ ] Task 5.7 — Verification on device
+- [x] Task 5.7 — Verification on device (Diet settings screen + debug tools; phone checks below)
 
 ## M6 — Voice, photo, quick repeats
 
@@ -174,10 +174,22 @@ Verified on the phone on 2026-11-08:
 - [x] 4.4 / 4.6: QS tile opens the capture sheet over the launcher with the keyboard up; the save has source `QS_TILE` and the sheet closes itself.
 - [x] 4.8: Diet off removes the nav item, dashboard card and status notification; on brings them back. Two bugs found and fixed in `28bf4cd`: the toggle reset navigation to Today, and tapping the disabled module's Settings row crashed (route not found).
 
+Verified on the phone on 2026-11-08 (M5):
+- [x] 5.2: after `installDebug` (MY_PACKAGE_REPLACED), `dumpsys alarm` shows `PromptAlarmReceiver` at 2026-11-09 09:00 (inexact, 1 h window) and `DayRolloverReceiver` at 04:00
+- [x] 5.2: `appops set app.klean.debug SCHEDULE_EXACT_ALARM allow` re-armed the check-in as exact (`window=0 exactAllowReason=permission`) through the permission-change broadcast
+- [x] 5.2: the debug-only `adb shell am broadcast -a app.klean.debug.RESCHEDULE -p app.klean.debug` is accepted (result=0)
+- [x] 5.7: "Fire a check-in now" #1 → STANDARD on `diet_prompt` (importance 3), "Anything you'd like to jot down?", timeout 2 h, delete intent, Log food + Capture… actions
+- [x] 5.7: firing again (first one unanswered → IGNORED) → HEADS_UP on `diet_prompt_heads_up` (importance 4) with different wording ("What did you eat?")
+- [x] Diet settings screen shows "Next check-in around 9:00 AM"
+- Reboot: covered by Robolectric `RebootRescheduleTest` (BOOT_COMPLETED through the real Hilt graph arms the alarm); `adb reboot` not run because it drops wireless adb
+
 Still needs hands-on checks by the user (adding a widget needs a confirmation tap; airplane mode would drop wireless adb):
 - [ ] 4.3: inline reply from the lock screen in airplane mode (needs adb over USB or no adb), under 5 s
 - [ ] 4.7: widget shows today's entries and updates within seconds after an inline reply; compact size
 - [ ] 4.8: with Diet off, the widget shows its disabled state and the QS tile shows unavailable
 - [ ] 9.4: export a backup through the picker, restore it, check the confirmation text
+- [ ] 5.7: swipe a check-in away, fire again → next format differs (swipe = DISMISSED); fire 3rd/4th → vibrate-only, then widget highlight (no notification, status title + widget pill show the wording)
+- [ ] 5.7: set quiet hours over now, wait for a scheduled check-in → nothing shown (debug "Fire" deliberately skips quiet hours)
+- [ ] 5.2: after a real reboot, `adb shell dumpsys alarm | grep -A3 app.klean.debug` shows the check-in alarm
 - [ ] Polish: the app uses the default Android launcher icon; none has been designed yet
 - [ ] Polish: after deleting from the entry screen it stays on the greyed-out entry; it should go back to the list and show Undo there
