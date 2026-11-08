@@ -39,4 +39,16 @@
     <string name="diet_status_action_log">Log food</string>
     <string name="diet_status_reply_hint">What did you eat?</string>
     <string name="diet_status_action_capture">Capture…</string>
+    <string name="diet_widget_label">Food today</string>
+    <string name="diet_widget_description">Today\'s food at a glance</string>
+    <string name="diet_widget_prompt">What did you eat?</string>
+    <string name="diet_widget_empty">Nothing yet today</string>
+    <string name="diet_widget_add">Log food</string>
+    <string name="diet_widget_speak">Speak</string>
+    <string name="diet_widget_open">Open</string>
+    <string name="diet_widget_disabled_title">Klean</string>
+    <plurals name="diet_widget_summary">
+        <item quantity="one">%1$d entry today · last: %2$s</item>
+        <item quantity="other">%1$d today · last: %2$s</item>
+    </plurals>
 </resources>
