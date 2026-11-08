@@ -181,14 +181,17 @@ Verified on the phone on 2026-11-08 (M5):
 - [x] 5.7: "Fire a check-in now" #1 → STANDARD on `diet_prompt` (importance 3), "Anything you'd like to jot down?", timeout 2 h, delete intent, Log food + Capture… actions
 - [x] 5.7: firing again (first one unanswered → IGNORED) → HEADS_UP on `diet_prompt_heads_up` (importance 4) with different wording ("What did you eat?")
 - [x] Diet settings screen shows "Next check-in around 9:00 AM"
+- [x] 5.7: four more fires in a row rotate SILENT_VIBRATE (`diet_prompt_vibrate`) → WIDGET_HIGHLIGHT (no notification; status title became "Quick food note?") → STANDARD → HEADS_UP, with new wording each time
+- [x] 4.7: the widget the user placed shows today's entries newest first. Saving through its pill showed up within about 2 s. Its card was green (glance `widgetBackground` = `secondaryContainer`); fixed in `c0982fa` to use the token `surfaceContainer` + a lavender pill, checked by screenshot
+- [x] 4.8: with Diet off, the widget shows "Klean · Open" and SystemUI reports the tile as `label=Capture, state=0` (unavailable). After turning it back on: `Log food, state=2`, the status line and alarms return
+- [x] 3.12: quick-repeat chips go away after their entry is deleted on another screen; fixed in `3db8bed`, checked on device
 - Reboot: covered by Robolectric `RebootRescheduleTest` (BOOT_COMPLETED through the real Hilt graph arms the alarm); `adb reboot` not run because it drops wireless adb
 
-Still needs hands-on checks by the user (adding a widget needs a confirmation tap; airplane mode would drop wireless adb):
+Still needs hands-on checks by the user (airplane mode or a reboot would drop wireless adb):
 - [ ] 4.3: inline reply from the lock screen in airplane mode (needs adb over USB or no adb), under 5 s
-- [ ] 4.7: widget shows today's entries and updates within seconds after an inline reply; compact size
-- [ ] 4.8: with Diet off, the widget shows its disabled state and the QS tile shows unavailable
+- [ ] 4.7: compact widget size (resize the widget to one row)
 - [ ] 9.4: export a backup through the picker, restore it, check the confirmation text
-- [ ] 5.7: swipe a check-in away, fire again → next format differs (swipe = DISMISSED); fire 3rd/4th → vibrate-only, then widget highlight (no notification, status title + widget pill show the wording)
+- [ ] 5.7: swipe a check-in away, then fire again → the next format differs (a swipe counts as DISMISSED)
 - [ ] 5.7: set quiet hours over now, wait for a scheduled check-in → nothing shown (debug "Fire" deliberately skips quiet hours)
 - [ ] 5.2: after a real reboot, `adb shell dumpsys alarm | grep -A3 app.klean.debug` shows the check-in alarm
 - [ ] Polish: the app uses the default Android launcher icon; none has been designed yet
