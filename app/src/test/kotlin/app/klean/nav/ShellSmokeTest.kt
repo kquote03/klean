@@ -3,6 +3,8 @@ package app.klean.nav
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.isToggleable
 import app.klean.shared.module.ModuleId
 import androidx.compose.ui.test.junit4.v2.createComposeRule
@@ -74,6 +76,21 @@ class ShellSmokeTest {
         compose.waitForIdle()
         compose.onNodeWithText("Quiet hours").assertIsDisplayed()
         compose.onAllNodesWithText("Diet").assertCountEquals(0)
+    }
+
+    /** Found on Waydroid: History, Day and Entry screens left Diet unselected in the bottom bar. */
+    @Test fun moduleStaysSelectedOnItsInnerScreens() {
+        val module = NestedModule()
+        val vm = shell(setOf(module))
+        compose.setContent { KleanTheme { KleanAppUi(vm) } }
+        compose.waitForIdle()
+        compose.onNode(hasClickAction() and hasText("Diet")).performClick()
+        compose.waitForIdle()
+        compose.onNodeWithText("Open inner").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithText("Inner screen").assertExists()
+        compose.onNode(hasClickAction() and hasText("Diet")).assertIsSelected()
+        compose.onNode(hasClickAction() and hasText("Today")).assertIsNotSelected()
     }
 
     @Test fun settingsPermissionsShowsLiveStatusRows() {

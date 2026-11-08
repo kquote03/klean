@@ -208,5 +208,5 @@ Still needs hands-on checks by the user (airplane mode or a reboot would drop wi
 - [ ] Polish: the app uses the default Android launcher icon; none has been designed yet
 - [ ] 6.1: on a real phone, speak "two manakish" (also in airplane mode) → saved with `via_voice=1`, and Undo shows for 5 s; where offline voice is missing → "Voice isn't available offline on this phone"
 - [ ] 6.2: take a real camera photo (capture sheet and entry screen) → thumbnail in the row, EXIF stripped; log one without a photo too
-- [ ] Polish: the bottom bar doesn't highlight Diet on History / Day / Entry screens (pre-existing for Entry)
+- [x] Polish: the bottom bar highlights Diet on History / Day / Entry screens (diet routes live in a nested `DietGraph`; the bar matches `KleanModule.graphRoute`)
 - [x] Polish: after deleting from the entry screen it now goes back to the list, which shows "Entry removed · Undo" for 5 s

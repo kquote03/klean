@@ -24,6 +24,11 @@ interface KleanModule {
     val navOrder: Int
     val dashboardSlot: DashboardSlot?
     val startRoute: Any
+    /**
+     * The nested graph holding all of this module's screens. The bottom bar marks the module as
+     * selected anywhere inside it (history, day, entry), not just on [startRoute].
+     */
+    val graphRoute: Any get() = startRoute
     val settingsRoute: Any?
     fun registerGraph(builder: NavGraphBuilder, nav: NavController)
     @Composable fun DashboardCard(onOpen: () -> Unit, modifier: Modifier) {}

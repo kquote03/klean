@@ -8,6 +8,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.navigation
 import androidx.navigation.navDeepLink
 import app.klean.feature.diet.notification.DietStatusNotifier
 import app.klean.core.ui.module.DashboardSlot
@@ -42,33 +43,37 @@ class DietKleanModule @Inject constructor(private val enablement: DietEnablement
     override val navOrder: Int = 10
     override val dashboardSlot: DashboardSlot = DashboardSlot.DIET
     override val startRoute: Any = DietRoute
+    override val graphRoute: Any = DietGraph
     override val settingsRoute: Any = DietSettingsRoute
 
     override fun registerGraph(builder: NavGraphBuilder, nav: NavController) = with(builder) {
-        composable<DietRoute>(deepLinks = listOf(navDeepLink { uriPattern = DietStatusNotifier.DEEP_LINK_DIET })) { entry ->
-            val ctx = LocalContext.current
-            DietScreen(
-                onOpenEntry = { nav.navigate(FoodEntryRoute(it)) },
-                onOpenHistory = { nav.navigate(DietHistoryRoute) },
-                onAddForGap = { gap -> ctx.startActivity(gapCaptureIntent(ctx, gap)) },
-                backStackEntry = entry,
-            )
+        navigation<DietGraph>(startDestination = DietRoute) {
+            composable<DietRoute>(deepLinks = listOf(navDeepLink { uriPattern = DietStatusNotifier.DEEP_LINK_DIET })) { entry ->
+                val ctx = LocalContext.current
+                DietScreen(
+                    onOpenEntry = { nav.navigate(FoodEntryRoute(it)) },
+                    onOpenHistory = { nav.navigate(DietHistoryRoute) },
+                    onAddForGap = { gap -> ctx.startActivity(gapCaptureIntent(ctx, gap)) },
+                    backStackEntry = entry,
+                )
+            }
+            composable<DietHistoryRoute> {
+                DietHistoryScreen(onBack = { nav.popBackStack() }, onOpenDay = { nav.navigate(DietDayRoute(it.toString())) })
+            }
+            composable<DietDayRoute> { entry ->
+                val ctx = LocalContext.current
+                DietDayScreen(
+                    onBack = { nav.popBackStack() },
+                    onOpenEntry = { nav.navigate(FoodEntryRoute(it)) },
+                    onAddForGap = { gap -> ctx.startActivity(gapCaptureIntent(ctx, gap)) },
+                    backStackEntry = entry,
+                )
+            }
+            composable<FoodEntryRoute> {
+                FoodEntryScreen(onBack = { nav.popBackStack() }, onRemoved = { nav.popAfterRemove(it) })
+            }
         }
-        composable<DietHistoryRoute> {
-            DietHistoryScreen(onBack = { nav.popBackStack() }, onOpenDay = { nav.navigate(DietDayRoute(it.toString())) })
-        }
-        composable<DietDayRoute> { entry ->
-            val ctx = LocalContext.current
-            DietDayScreen(
-                onBack = { nav.popBackStack() },
-                onOpenEntry = { nav.navigate(FoodEntryRoute(it)) },
-                onAddForGap = { gap -> ctx.startActivity(gapCaptureIntent(ctx, gap)) },
-                backStackEntry = entry,
-            )
-        }
-        composable<FoodEntryRoute> {
-            FoodEntryScreen(onBack = { nav.popBackStack() }, onRemoved = { nav.popAfterRemove(it) })
-        }
+        // Reached from Settings, so it stays outside the diet graph (the bar keeps Settings selected).
         composable<DietSettingsRoute> { DietSettingsScreen(onBack = { nav.popBackStack() }) }
     }
 

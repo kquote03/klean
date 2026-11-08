@@ -42,7 +42,7 @@ fun KleanAppUi(vm: ShellViewModel = hiltViewModel(), deepLinks: Flow<Intent> = e
             )
             enabled.forEach { module ->
                 item(
-                    selected = current.isOn(module.startRoute),
+                    selected = current.isOn(module.graphRoute),
                     onClick = { nav.navigateTopLevel(module.startRoute) },
                     icon = { Icon(module.icon, contentDescription = null) },
                     label = { Text(stringResource(module.labelRes)) },
