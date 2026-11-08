@@ -5,4 +5,17 @@
     <string name="channel_diet_prompt_vibrate">Food check-ins (vibrate only)</string>
     <string name="channel_unlock_sheet">Today so far</string>
     <string name="channel_backup">Backups</string>
+
+    <string name="permission_on">On</string>
+    <string name="permission_off">Off</string>
+    <string name="permission_turn_on">Turn on</string>
+    <string name="permission_notifications_title">Notifications</string>
+    <string name="permission_notifications_why">So Klean can show today\'s food in your status bar and check in now and then.</string>
+    <string name="permission_exact_alarms_title">Alarms and reminders</string>
+    <string name="permission_exact_alarms_why">So check-ins arrive on time instead of hours late.</string>
+    <string name="permission_battery_title">Battery use</string>
+    <string name="permission_battery_why">Some phones stop apps in the background. This keeps check-ins and the widget working. On some phones you also need to allow \'auto-start\'.</string>
+    <string name="permission_battery_help">Tips for this phone</string>
+    <string name="permission_listener_title">Notification access</string>
+    <string name="permission_listener_why">Lets Klean notice when a food delivery arrives. Klean only asks for this when it would help.</string>
 </resources>
