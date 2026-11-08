@@ -87,7 +87,7 @@ Everything ticked is merged on `main` (milestones M0–M4 and M9 are tagged).
 - [x] Task 5.3 — Phrasing pool
 - [x] Task 5.4 — PromptNotifier
 - [x] Task 5.5 — DietPromptEngine (TDD with fakes)
-- [ ] Task 5.6 — Day rollover
+- [x] Task 5.6 — Day rollover
 - [ ] Task 5.7 — Verification on device
 
 ## M6 — Voice, photo, quick repeats
