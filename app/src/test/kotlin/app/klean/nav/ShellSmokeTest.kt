@@ -1,6 +1,10 @@
 package app.klean.nav
 
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.isToggleable
+import app.klean.shared.module.ModuleId
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
@@ -32,9 +36,42 @@ import org.junit.runner.RunWith
 class ShellSmokeTest {
     @get:Rule val compose = createComposeRule()
 
-    private fun shell(modules: Set<KleanModule>): ShellViewModel {
-        val gate = FakeModuleGate()
-        return ShellViewModel(ModuleRegistry(modules, gate), UniversalCaptureService(emptySet(), gate, DefaultCaptureRouter(null)), Clock.System)
+    private fun shell(modules: Set<KleanModule>, gate: FakeModuleGate = FakeModuleGate()): ShellViewModel =
+        ShellViewModel(ModuleRegistry(modules, gate), UniversalCaptureService(emptySet(), gate, DefaultCaptureRouter(null)), Clock.System)
+
+    // The real dashboard card needs Hilt; the shell only needs the module's metadata and routes.
+    private fun diet(): KleanModule = object : KleanModule by DietKleanModule(DietEnablement { }) {
+        @Composable override fun DashboardCard(onOpen: () -> Unit, modifier: Modifier) {}
+    }
+
+    private fun openModulesScreen() {
+        compose.onAllNodes(hasClickAction() and hasText("Settings"))[0].performClick()
+        compose.waitForIdle()
+        compose.onNodeWithText("Turn modules on or off").performClick()
+        compose.waitForIdle()
+    }
+
+    /** Found on device: toggling a module rebuilt the nav graph and dropped the user back on Today. */
+    @Test fun turningAModuleOffKeepsYouOnTheModulesScreen() {
+        val vm = shell(setOf(diet()))
+        compose.setContent { KleanTheme { KleanAppUi(vm) } }
+        compose.waitForIdle()
+        openModulesScreen()
+        compose.onNode(isToggleable()).performClick()
+        compose.waitForIdle()
+        compose.onNode(isToggleable()).assertIsOff()
+        compose.onNodeWithText("Nothing here yet. Turn on a module in Settings.").assertDoesNotExist()
+    }
+
+    /** Found on device: Settings listed a disabled module whose routes were gone, and tapping it crashed. */
+    @Test fun disabledModuleDisappearsFromSettingsList() {
+        val vm = shell(setOf(diet()), FakeModuleGate(setOf(ModuleId.DIET)))
+        compose.setContent { KleanTheme { KleanAppUi(vm) } }
+        compose.waitForIdle()
+        compose.onAllNodes(hasClickAction() and hasText("Settings"))[0].performClick()
+        compose.waitForIdle()
+        compose.onNodeWithText("Quiet hours").assertIsDisplayed()
+        compose.onAllNodesWithText("Diet").assertCountEquals(0)
     }
 
     @Test fun shellShowsTodayAndSettingsWithEmptyState() {
@@ -52,11 +89,7 @@ class ShellSmokeTest {
     }
 
     @Test fun dietModuleAddsBottomBarItemBetweenTodayAndSettings() {
-        // The real dashboard card needs Hilt; the bottom bar only needs the module's metadata.
-        val diet = object : KleanModule by DietKleanModule(DietEnablement { }) {
-            @Composable override fun DashboardCard(onOpen: () -> Unit, modifier: Modifier) {}
-        }
-        val vm = shell(setOf(diet))
+        val vm = shell(setOf(diet()))
         compose.setContent { KleanTheme { KleanAppUi(vm) } }
         compose.waitForIdle()
         val labels = compose.onAllNodes(hasClickAction() and (hasText("Today") or hasText("Diet") or hasText("Settings")))
