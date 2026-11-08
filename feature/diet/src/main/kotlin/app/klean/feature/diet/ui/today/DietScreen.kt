@@ -7,6 +7,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.navigation.NavBackStackEntry
+import app.klean.feature.diet.ui.RemovedEntrySnackbar
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -29,7 +33,13 @@ import app.klean.feature.diet.R
 import app.klean.feature.diet.ui.dietRows
 
 @Composable
-fun DietScreen(onOpenEntry: (String) -> Unit, vm: DietViewModel = hiltViewModel()) {
+fun DietScreen(
+    onOpenEntry: (String) -> Unit,
+    backStackEntry: NavBackStackEntry? = null,
+    vm: DietViewModel = hiltViewModel(),
+) {
+    val snackbar = remember { SnackbarHostState() }
+    backStackEntry?.let { RemovedEntrySnackbar(it, snackbar, onUndo = vm::undoRemove) }
     val state by vm.uiState.collectAsStateWithLifecycle()
     val text by vm.field.collectAsStateWithLifecycle()
     val voice by vm.voice.state.collectAsStateWithLifecycle()
@@ -43,6 +53,7 @@ fun DietScreen(onOpenEntry: (String) -> Unit, vm: DietViewModel = hiltViewModel(
         onOpenEntry = onOpenEntry,
         onMic = rememberVoiceInput(vm.voice),
         onUndoVoice = vm.voice::undoLast,
+        snackbar = snackbar,
     )
 }
 
@@ -58,9 +69,10 @@ fun DietScreenContent(
     onOpenEntry: (String) -> Unit,
     onMic: () -> Unit,
     onUndoVoice: () -> Unit,
+    snackbar: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     val focus = remember { FocusRequester() }
-    Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.diet_today_title)) }) }) { padding ->
+    Scaffold(snackbarHost = { SnackbarHost(snackbar) }, topBar = { TopAppBar(title = { Text(stringResource(R.string.diet_today_title)) }) }) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
             // Pinned under the top bar: logging is always one action away.
             CaptureField(

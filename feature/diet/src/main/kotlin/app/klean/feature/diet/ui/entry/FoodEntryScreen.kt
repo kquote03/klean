@@ -21,10 +21,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
@@ -32,10 +28,10 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -52,24 +48,18 @@ import app.klean.core.design.component.PhotoThumbnail
 import app.klean.feature.diet.R
 import java.io.File
 import kotlin.time.Instant
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
 
-private const val UNDO_WINDOW_MS = 5_000L
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FoodEntryScreen(onBack: () -> Unit, vm: FoodEntryViewModel = hiltViewModel()) {
+fun FoodEntryScreen(onBack: () -> Unit, onRemoved: (String) -> Unit, vm: FoodEntryViewModel = hiltViewModel()) {
     val state by vm.uiState.collectAsStateWithLifecycle()
-    val snackbar = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
     var showDate by remember { mutableStateOf(false) }
     var showTime by remember { mutableStateOf(false) }
-    val deletedMsg = stringResource(R.string.diet_entry_deleted)
-    val undoLabel = stringResource(R.string.diet_undo)
+    val removed = state.removed
+    LaunchedEffect(removed) { if (removed != null) onRemoved(removed) }
     val photoPicker = rememberPhotoPicker(vm::newCaptureUri, vm::onPhotoTaken, vm::replacePhoto)
     val leave = {
         vm.save()
@@ -78,7 +68,6 @@ fun FoodEntryScreen(onBack: () -> Unit, vm: FoodEntryViewModel = hiltViewModel()
     BackHandler(onBack = leave)
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.diet_entry_title)) },
@@ -120,15 +109,8 @@ fun FoodEntryScreen(onBack: () -> Unit, vm: FoodEntryViewModel = hiltViewModel()
             // AI items section appears with the provider layer (M10).
             TextButton(
                 enabled = !state.deleted,
-                onClick = {
-                    vm.delete()
-                    scope.launch {
-                        val result = withTimeoutOrNull(UNDO_WINDOW_MS) {
-                            snackbar.showSnackbar(deletedMsg, actionLabel = undoLabel, duration = SnackbarDuration.Indefinite)
-                        }
-                        if (result == SnackbarResult.ActionPerformed) vm.undoDelete() else onBack()
-                    }
-                },
+                // Goes back to the list, which offers Undo.
+                onClick = vm::delete,
             ) { Text(stringResource(R.string.diet_delete)) }
         }
     }

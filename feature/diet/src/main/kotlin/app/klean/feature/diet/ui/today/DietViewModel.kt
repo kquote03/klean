@@ -122,6 +122,11 @@ class DietViewModel @Inject constructor(
         viewModelScope.launch { repo.logEntry(clean, CaptureSource.MODULE_SCREEN) }
     }
 
+    /** Undo from the "Entry removed" snackbar shown after deleting on the entry screen. */
+    fun undoRemove(id: String) {
+        viewModelScope.launch { repo.restore(id) }
+    }
+
     override fun onCleared() {
         voice.close()
     }

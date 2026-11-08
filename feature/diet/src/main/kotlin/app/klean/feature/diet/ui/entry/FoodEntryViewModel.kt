@@ -35,6 +35,8 @@ data class FoodEntryUiState(
     val timeLabel: String = "",
     val photo: File? = null,
     val deleted: Boolean = false,
+    /** Set once the user deleted this entry: the screen closes and the list offers Undo. */
+    val removed: String? = null,
 )
 
 @HiltViewModel
@@ -133,12 +135,7 @@ class FoodEntryViewModel @Inject constructor(
     }
 
     fun delete() {
-        state.update { it.copy(deleted = true) }
+        state.update { it.copy(deleted = true, removed = id) }
         viewModelScope.launch { repo.delete(id) }
-    }
-
-    fun undoDelete() {
-        state.update { it.copy(deleted = false) }
-        viewModelScope.launch { repo.restore(id) }
     }
 }

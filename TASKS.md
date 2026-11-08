@@ -195,4 +195,4 @@ Still needs hands-on checks by the user (airplane mode or a reboot would drop wi
 - [ ] 5.7: set quiet hours over now, wait for a scheduled check-in → nothing shown (debug "Fire" deliberately skips quiet hours)
 - [ ] 5.2: after a real reboot, `adb shell dumpsys alarm | grep -A3 app.klean.debug` shows the check-in alarm
 - [ ] Polish: the app uses the default Android launcher icon; none has been designed yet
-- [ ] Polish: after deleting from the entry screen it stays on the greyed-out entry; it should go back to the list and show Undo there
+- [x] Polish: after deleting from the entry screen it now goes back to the list, which shows "Entry removed · Undo" for 5 s

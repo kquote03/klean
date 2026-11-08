@@ -60,6 +60,12 @@ class DietViewModelTest {
         assertEquals("two manakish", vm.field.value)
     }
 
+    @Test fun undoForAnEntryRemovedOnTheEntryScreenRestoresIt() = runTest {
+        val vm = vm()
+        vm.undoRemove("e9")
+        assertEquals(listOf("e9"), repo.restores)
+    }
+
     @Test fun typedSubmitClearsTheField() = runTest {
         val vm = vm()
         vm.onTextChange("toast")

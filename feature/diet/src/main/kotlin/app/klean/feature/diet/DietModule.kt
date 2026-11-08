@@ -14,6 +14,7 @@ import app.klean.core.ui.module.DashboardSlot
 import app.klean.core.ui.module.KleanModule
 import app.klean.feature.diet.ui.dashboard.DietDashboardCard
 import app.klean.feature.diet.ui.entry.FoodEntryScreen
+import app.klean.feature.diet.ui.popAfterRemove
 import app.klean.feature.diet.ui.settings.DietSettingsScreen
 import app.klean.feature.diet.ui.today.DietScreen
 import app.klean.shared.module.ModuleId
@@ -37,10 +38,12 @@ class DietKleanModule @Inject constructor(private val enablement: DietEnablement
     override val settingsRoute: Any = DietSettingsRoute
 
     override fun registerGraph(builder: NavGraphBuilder, nav: NavController) = with(builder) {
-        composable<DietRoute>(deepLinks = listOf(navDeepLink { uriPattern = DietStatusNotifier.DEEP_LINK_DIET })) {
-            DietScreen(onOpenEntry = { nav.navigate(FoodEntryRoute(it)) })
+        composable<DietRoute>(deepLinks = listOf(navDeepLink { uriPattern = DietStatusNotifier.DEEP_LINK_DIET })) { entry ->
+            DietScreen(onOpenEntry = { nav.navigate(FoodEntryRoute(it)) }, backStackEntry = entry)
         }
-        composable<FoodEntryRoute> { FoodEntryScreen(onBack = { nav.popBackStack() }) }
+        composable<FoodEntryRoute> {
+            FoodEntryScreen(onBack = { nav.popBackStack() }, onRemoved = { nav.popAfterRemove(it) })
+        }
         composable<DietSettingsRoute> { DietSettingsScreen(onBack = { nav.popBackStack() }) }
     }
 

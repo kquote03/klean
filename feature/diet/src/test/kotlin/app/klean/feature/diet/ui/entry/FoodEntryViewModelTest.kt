@@ -98,13 +98,15 @@ class FoodEntryViewModelTest {
         assertEquals("toast with jam", repo.edits.single().text)
     }
 
-    @Test fun deleteThenUndoRestores() = runTest {
+    /** Found on device: after Delete the screen stayed on the greyed-out entry. It should close. */
+    @Test fun deleteTombstonesAndAsksToClose() = runTest {
         val vm = vm()
         vm.uiState.first { it.loaded }
+        assertEquals(null, vm.uiState.value.removed)
         vm.delete()
         assertEquals(listOf("e1"), repo.deletes)
-        assertTrue(vm.uiState.value.deleted)
-        vm.undoDelete()
-        assertEquals(listOf("e1"), repo.restores)
+        assertEquals("e1", vm.uiState.value.removed)
+        vm.save() // leaving after delete must not write the text back
+        assertTrue(repo.edits.isEmpty())
     }
 }
