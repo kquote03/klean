@@ -7,7 +7,12 @@ import androidx.annotation.StringRes
 
 /** Notification channel ids. Ids never change once shipped; names come from strings.xml. */
 object Channels {
-    const val DIET_STATUS = "diet_status"
+    /**
+     * v2: DEFAULT importance, silenced at the channel. Pixel hides IMPORTANCE_LOW notifications from
+     * the lock screen by default, which defeated the lock-screen count. Importance can't be raised
+     * on an existing channel, hence the new id.
+     */
+    const val DIET_STATUS = "diet_status_v2"
     const val DIET_PROMPT = "diet_prompt"
     const val DIET_PROMPT_HEADS_UP = "diet_prompt_heads_up"
     const val DIET_PROMPT_VIBRATE = "diet_prompt_vibrate"
@@ -30,10 +35,19 @@ object NotificationIds {
 
 /** Creates every channel. Idempotent: safe to call on each app start (names follow the locale). */
 object ChannelRegistrar {
-    internal data class Spec(val id: String, @StringRes val name: Int, val importance: Int, val vibrateOnly: Boolean = false)
+    internal data class Spec(
+        val id: String,
+        @StringRes val name: Int,
+        val importance: Int,
+        val vibrateOnly: Boolean = false,
+        val silent: Boolean = false,
+    )
+
+    /** Ids replaced by a newer channel; deleted so they don't linger in system settings. */
+    internal val retired = listOf("diet_status")
 
     internal val specs = listOf(
-        Spec(Channels.DIET_STATUS, R.string.channel_diet_status, NotificationManager.IMPORTANCE_LOW),
+        Spec(Channels.DIET_STATUS, R.string.channel_diet_status, NotificationManager.IMPORTANCE_DEFAULT, silent = true),
         Spec(Channels.DIET_PROMPT, R.string.channel_diet_prompt, NotificationManager.IMPORTANCE_DEFAULT),
         Spec(Channels.DIET_PROMPT_HEADS_UP, R.string.channel_diet_prompt_heads_up, NotificationManager.IMPORTANCE_HIGH),
         Spec(Channels.DIET_PROMPT_VIBRATE, R.string.channel_diet_prompt_vibrate, NotificationManager.IMPORTANCE_DEFAULT, vibrateOnly = true),
@@ -43,6 +57,7 @@ object ChannelRegistrar {
 
     fun ensure(context: Context) {
         val nm = context.getSystemService(NotificationManager::class.java) ?: return
+        retired.forEach(nm::deleteNotificationChannel)
         nm.createNotificationChannels(
             specs.map { s ->
                 NotificationChannel(s.id, context.getString(s.name), s.importance).apply {
@@ -50,6 +65,10 @@ object ChannelRegistrar {
                         setSound(null, null)
                         enableVibration(true)
                         vibrationPattern = Channels.VIBRATE_PATTERN
+                    }
+                    if (s.silent) {
+                        setSound(null, null)
+                        enableVibration(false)
                     }
                     if (s.id == Channels.DIET_STATUS) setShowBadge(false)
                 }

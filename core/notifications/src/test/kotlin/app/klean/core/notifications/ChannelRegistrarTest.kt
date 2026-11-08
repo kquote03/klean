@@ -1,11 +1,13 @@
 package app.klean.core.notifications
 
+import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -19,7 +21,7 @@ class ChannelRegistrarTest {
     @Test fun createsAllChannelsWithPlannedImportance() {
         ChannelRegistrar.ensure(ctx)
         val byId = nm.notificationChannels.associateBy { it.id }
-        assertEquals(NotificationManager.IMPORTANCE_LOW, byId.getValue(Channels.DIET_STATUS).importance)
+        assertEquals(NotificationManager.IMPORTANCE_DEFAULT, byId.getValue(Channels.DIET_STATUS).importance)
         assertEquals(NotificationManager.IMPORTANCE_DEFAULT, byId.getValue(Channels.DIET_PROMPT).importance)
         assertEquals(NotificationManager.IMPORTANCE_HIGH, byId.getValue(Channels.DIET_PROMPT_HEADS_UP).importance)
         assertEquals(NotificationManager.IMPORTANCE_HIGH, byId.getValue(Channels.UNLOCK_SHEET).importance)
@@ -34,6 +36,25 @@ class ChannelRegistrarTest {
         assertNull(c.sound)
         assertTrue(c.shouldVibrate())
         assertArrayEquals(longArrayOf(0, 80, 120, 80), c.vibrationPattern)
+    }
+
+    /**
+     * Pixel hides IMPORTANCE_LOW ("silent") notifications from the lock screen by default, so the
+     * status line uses DEFAULT importance and makes itself silent at the channel level.
+     */
+    @Test fun statusChannelShowsOnLockScreenButNeverMakesNoise() {
+        ChannelRegistrar.ensure(ctx)
+        val c = nm.getNotificationChannel(Channels.DIET_STATUS)
+        assertEquals(NotificationManager.IMPORTANCE_DEFAULT, c.importance)
+        assertNull(c.sound)
+        assertFalse(c.shouldVibrate())
+        assertFalse(c.canShowBadge())
+    }
+
+    @Test fun retiredChannelsAreDeleted() {
+        nm.createNotificationChannel(NotificationChannel("diet_status", "old", NotificationManager.IMPORTANCE_LOW))
+        ChannelRegistrar.ensure(ctx)
+        assertNull(nm.getNotificationChannel("diet_status"))
     }
 
     @Test fun ensureIsIdempotent() {
