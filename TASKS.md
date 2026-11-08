@@ -100,7 +100,7 @@ Everything ticked is merged on `main` (milestones M0–M5 and M9 are tagged).
 
 - [x] Task 7.1 — Day history
 - [x] Task 7.2 — Gap affordance
-- [ ] Task 7.3 — Patterns placeholder
+- [x] Task 7.3 — Patterns placeholder
 
 ## M8 — Onboarding and permissions
 
