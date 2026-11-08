@@ -21,6 +21,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import app.klean.core.ui.module.KleanModule
 import app.klean.core.ui.module.ModuleRegistry
+import app.klean.feature.settings.backup.BackupSettingsScreen
 
 private data class GeneralRow(@StringRes val label: Int, val route: Any)
 
@@ -80,7 +81,7 @@ fun NavGraphBuilder.settingsGraph(nav: NavController, registry: ModuleRegistry) 
     composable<QuietHoursSettingsRoute> { StubSettingsScreen(R.string.settings_quiet_hours, back) }
     composable<AppearanceSettingsRoute> { StubSettingsScreen(R.string.settings_appearance, back) }
     composable<AiProvidersSettingsRoute> { StubSettingsScreen(R.string.settings_ai_providers, back) }
-    composable<BackupSettingsRoute> { StubSettingsScreen(R.string.settings_backup, back) }
+    composable<BackupSettingsRoute> { BackupSettingsScreen(onBack = back) }
     composable<PermissionsSettingsRoute> { StubSettingsScreen(R.string.settings_permissions, back) }
     composable<AboutSettingsRoute> { StubSettingsScreen(R.string.settings_about, back) }
 }

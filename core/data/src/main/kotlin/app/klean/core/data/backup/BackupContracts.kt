@@ -23,6 +23,14 @@ data class BackupInfo(
     val hasSecrets: Boolean,
 )
 
+/** What the backup screen needs; [BackupManager] is the implementation. */
+interface BackupOperations {
+    suspend fun exportTo(out: java.io.OutputStream, includeSecrets: Boolean? = null)
+    suspend fun inspect(input: java.io.InputStream): BackupInfo
+    suspend fun restore(input: java.io.InputStream)
+    suspend fun currentEntryCount(): Int
+}
+
 /** A file that can't be restored. [reason] maps to a calm message in the UI. */
 class BackupInvalid(val reason: Reason, cause: Throwable? = null) : Exception(reason.name, cause) {
     enum class Reason {
@@ -77,4 +85,5 @@ object DatabaseFileModule {
 @InstallIn(SingletonComponent::class)
 abstract class SecretBackupModule {
     @Binds abstract fun secretBackup(impl: NoSecretBackup): SecretBackup
+    @Binds abstract fun operations(impl: BackupManager): BackupOperations
 }

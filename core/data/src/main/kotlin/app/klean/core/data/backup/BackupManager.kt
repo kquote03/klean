@@ -10,6 +10,7 @@ import app.klean.core.data.photo.PhotoStore
 import app.klean.core.data.prefs.DevicePrefs
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
+import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import javax.inject.Inject
@@ -34,9 +35,9 @@ class BackupManager @Inject constructor(
     private val secrets: SecretBackup,
     private val buildConfig: BuildConfigProvider,
     private val clock: Clock,
-) {
+) : BackupOperations {
     /** Writes a complete backup to [out]; the caller owns and closes the stream. */
-    suspend fun exportTo(out: OutputStream, includeSecrets: Boolean? = null) = withContext(Dispatchers.IO) {
+    override suspend fun exportTo(out: OutputStream, includeSecrets: Boolean?): Unit = withContext(Dispatchers.IO) {
         val withSecrets = includeSecrets ?: prefs.backupIncludeSecrets.first()
         val now = clock.now().toEpochMilliseconds()
         val tmp = File(ctx.cacheDir, "export-$now.db").apply { delete() }
@@ -77,25 +78,35 @@ class BackupManager @Inject constructor(
     }
 
     /** Entries currently in Klean (not deleted), for the restore confirmation. */
-    suspend fun currentEntryCount(): Int = db.foodEntryDao().count()
+    override suspend fun currentEntryCount(): Int = db.foodEntryDao().count()
 
     /** Validates a backup and reads its summary. Never touches live data. */
-    suspend fun inspect(input: InputStream): BackupInfo = withContext(Dispatchers.IO) {
-        val cand = copyToCache(input, "restore-inspect.db")
-        try { validate(cand) } finally { deleteDbFiles(cand) }
+    override suspend fun inspect(input: InputStream): BackupInfo = withContext(Dispatchers.IO) {
+        val cand = File(ctx.cacheDir, "restore-inspect.db")
+        try {
+            copyToCache(input, cand.name)
+            validate(cand)
+        } catch (e: IOException) {
+            throw BackupInvalid(BackupInvalid.Reason.DAMAGED, e)
+        } finally {
+            deleteDbFiles(cand)
+        }
     }
 
     /**
      * Replaces the database, photos and device prefs (and secrets, if the backup has them) with the
      * backup's. Everything that can fail is checked before the live data is touched. Closes the live
      * database, so the caller must restart the process afterwards ([ProcessRestarter]).
+     * Throws [BackupInvalid] for anything that fails before live data is touched; any other exception
+     * means the swap was interrupted and the process must restart too.
      */
-    suspend fun restore(input: InputStream) = withContext(Dispatchers.IO) {
-        val cand = copyToCache(input, "restore-candidate.db")
+    override suspend fun restore(input: InputStream): Unit = withContext(Dispatchers.IO) {
+        val cand = File(ctx.cacheDir, "restore-candidate.db")
         val staging = File(ctx.filesDir, "photos-restore")
         val devicePrefs = mutableMapOf<String, String>()
         var secretMap: Map<String, String>? = null
         try {
+            copyToCache(input, cand.name)
             validate(cand)
             staging.deleteRecursively()
             staging.mkdirs()
