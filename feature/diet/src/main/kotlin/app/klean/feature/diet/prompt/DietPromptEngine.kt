@@ -97,6 +97,8 @@ class DietPromptEngine @Inject constructor(
         }
         // A new check-in replaces any still-open one, which then counts as ignored.
         resolvePending(forceIgnoreAll = true)
+        // Formats don't replace each other (a highlight posts no notification), so clear the old one.
+        presenter.cancelActive()
         val history = db.promptLogDao().recent(HISTORY).map { PromptHistoryItem(it.format, it.phrasingId, it.outcome) }
         val format = FormatRotator.nextFormat(history)
         val pool = if (plan.trigger == PromptTrigger.LEARNED_MEAL && plan.meal != null) {

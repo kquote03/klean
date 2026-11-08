@@ -50,11 +50,13 @@ class FakeScheduler : PromptAlarmScheduling {
 class FakePresenter : PromptPresenter {
     data class Shown(val logId: String, val format: PromptFormat, val phrasingId: String, val trigger: PromptTrigger)
     val shown = mutableListOf<Shown>()
+    val events = mutableListOf<String>()
     var cancels = 0
     override suspend fun present(logId: String, format: PromptFormat, phrasingId: String, trigger: PromptTrigger) {
         shown += Shown(logId, format, phrasingId, trigger)
+        events += "present"
     }
-    override suspend fun cancelActive() { cancels++ }
+    override suspend fun cancelActive() { cancels++; events += "cancel" }
 }
 
 /** Everything real except the alarm and the notification: in-memory Room, real settings, gate and quiet hours. */
@@ -248,5 +250,14 @@ class DietPromptEngineTest {
         r.repo.logEntry("tea", CaptureSource.MODULE_SCREEN)
         r.engine.onAlarm(PlannedPrompt(r.clock.nowMs, PromptTrigger.CADENCE, null), force = true)
         assertEquals(1, r.presenter.shown.size)
+    }
+
+    @Test fun aNewCheckInClearsThePreviousOneFirst() = runBlocking {
+        val r = rig()
+        r.engine.reschedule()
+        r.fireNext()
+        r.fireNext()
+        // Formats differ (a highlight never replaces a notification by id), so the old one is cleared explicitly.
+        assertEquals(listOf("cancel", "present", "cancel", "present"), r.presenter.events)
     }
 }
