@@ -128,7 +128,7 @@ class DefaultDietRepository @Inject constructor(
             val prev = db.foodEntryDao().get(id) ?: return@transact false
             val textChanged = newText != null && newText != prev.rawText
             val next = prev.copy(
-                rawText = if (textChanged) newText!! else prev.rawText,
+                rawText = if (textChanged && newText != null) newText else prev.rawText,
                 eatenAt = eatenAt ?: prev.eatenAt,
                 photoFile = when {
                     clearPhoto -> null

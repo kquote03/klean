@@ -50,7 +50,7 @@ feature/diet         everything diet
 feature/onboarding   setup wizard (M8)
 feature/settings     global settings screens
 app                  KleanApp, MainActivity, NavHost
-build-logic/         convention plugins: klean.android.library / .compose / .feature / klean.hilt
+build-logic/         convention plugins: klean.android.library / .compose / .feature / klean.hilt / klean.sqlite.jvmtest
 ```
 
 ## Conventions
@@ -75,7 +75,7 @@ build-logic/         convention plugins: klean.android.library / .compose / .fea
 | M0 | Nix shell, wrapper, version catalog, convention plugins, module skeletons, empty app | ✅ tag `m0` |
 | M1 | Design system (pastel tokens, Cantarell, M3 Expressive theme, components), module registry, registry-driven shell, settings skeleton, copy guard | ✅ tag `m1` |
 | M2 | `:shared` domain logic, 78 JVM tests | ✅ tag `m2` |
-| M3 | Room data layer, sync stamping, settings repo, module gate, photo store, DietRepository, diet screens, dashboard card | 🚧 in progress (data layer done; repository + UI pending) |
+| M3 | Room data layer, sync stamping, settings repo, module gate, photo store, DietRepository, diet screens, dashboard card | ✅ tag `m3` |
 | M4 | Status notification + inline reply, capture sheet, universal capture, QS tile, Glance widget, module-disable plumbing | ⏳ |
 | M5 | Prompt engine: quiet hours service, exact alarms, rotation, meal-time learning, reboot | ⏳ |
 | M6 | Voice, photo attach, quick-repeat chips | ⏳ |
@@ -97,8 +97,15 @@ build-logic/         convention plugins: klean.android.library / .compose / .fea
 - `failOnNoDiscoveredTests=false` in the library convention, because Hilt generates test sources in modules without tests.
 - Screens get `ModuleRegistry` through `ShellViewModel` instead of calling `hiltViewModel()` themselves, so the shell can be tested without Hilt.
 - `ModuleGate` moved to `:core:data` (`SettingsModuleGate`, stored in the `core.modules.disabled` set). The temporary in-memory gate has been removed.
+- Robolectric tests use the real `BundledSQLiteDriver`. The Android artifact can't find `libsqliteJni` on the host, so the `klean.sqlite.jvmtest` convention plugin extracts the linux-x64 JNI library from `sqlite-bundled-jvm` and puts it on `java.library.path` for unit tests only. Apply it to any module whose tests open a database.
+- `DietRepository` is an interface; `DefaultDietRepository` is bound through Hilt, so view models are tested with `FakeDietRepository`. It also exposes `observeViewPrefs()`, `observeItems()`, `windowFor()` and `restore()` (the undo for delete, plan 3.13). `restore` un-tombstones the items that `delete` tombstoned (those stamped at or after the entry's tombstone).
+- `SettingsRepository.update(key) { … }` does read-modify-write in one transaction; `SettingsModuleGate` uses it. Added the synced key `diet.deliveryMatchWords` from plan §3.
+- `DevicePrefs.deviceId()` and the other device-local keys are exposed as `Flow`s plus suspend setters; the DataStore is provided with the `@DevicePrefsStore` qualifier.
+- Time/gap labels go through an injected `DietFormatter` (`AndroidDietFormatter`), and the minute ticker is an injectable `MinuteTicker`, so view-model tests are deterministic.
+- Diet today screen: the history icon is left out until `DietHistoryRoute` exists (M7). Tapping "Add something" on a gap focuses the capture field. Mic buttons are no-ops until M6. `DietSettingsRoute` is a placeholder screen until M5.
+- Entry edit: the time picker is an `AlertDialog` hosting `TimePicker`; photo replace uses the system photo picker and `PhotoStore.import`.
 - Open questions from the plan use their defaults: applicationId `app.klean`, sleep window 00:00–08:00, gap threshold 4 h, Gemini model `gemini-2.5-flash`, immediate silent re-post of the status notification.
 
 ### Not yet verified on a device
 
-No phone has been connected so far. On-device checks (bottom bar, inline reply from the lock screen, widget) are pending, and Robolectric tests stand in for them where possible.
+No phone has been connected so far. On-device checks (bottom bar, inline reply from the lock screen, widget) are pending, and Robolectric tests stand in for them where possible: `ShellSmokeTest` checks the Today / Diet / Settings bar, and `DietDashboardViewModelTest.loggingFromDashboardAppearsOnDietScreen` checks that a dashboard log reaches the Diet screen through the shared Room flow.

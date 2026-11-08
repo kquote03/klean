@@ -2,12 +2,15 @@ package app.klean.feature.diet
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Restaurant
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import app.klean.core.ui.module.DashboardSlot
 import app.klean.core.ui.module.KleanModule
+import app.klean.feature.diet.ui.dashboard.DietDashboardCard
 import app.klean.feature.diet.ui.entry.FoodEntryScreen
 import app.klean.feature.diet.ui.settings.DietSettingsScreen
 import app.klean.feature.diet.ui.today.DietScreen
@@ -36,6 +39,9 @@ class DietKleanModule @Inject constructor() : KleanModule {
         composable<FoodEntryRoute> { FoodEntryScreen(onBack = { nav.popBackStack() }) }
         composable<DietSettingsRoute> { DietSettingsScreen(onBack = { nav.popBackStack() }) }
     }
+
+    @Composable
+    override fun DashboardCard(onOpen: () -> Unit, modifier: Modifier) = DietDashboardCard(onOpen, modifier)
 }
 
 @Module

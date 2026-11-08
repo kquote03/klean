@@ -23,4 +23,6 @@
     <string name="diet_photo_add">Add a photo</string>
     <string name="diet_photo_replace">Replace photo</string>
     <string name="diet_photo_remove">Remove photo</string>
+    <string name="diet_card_title">Food today</string>
+    <string name="diet_card_empty">Nothing yet today.</string>
 </resources>

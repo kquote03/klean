@@ -10,7 +10,10 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import app.klean.core.design.theme.KleanTheme
+import app.klean.core.ui.module.KleanModule
 import app.klean.feature.diet.DietKleanModule
 import org.junit.Assert.assertEquals
 import app.klean.core.ui.module.ModuleRegistry
@@ -40,7 +43,11 @@ class ShellSmokeTest {
     }
 
     @Test fun dietModuleAddsBottomBarItemBetweenTodayAndSettings() {
-        val vm = ShellViewModel(ModuleRegistry(setOf(DietKleanModule()), FakeModuleGate()))
+        // The real dashboard card needs Hilt; the bottom bar only needs the module's metadata.
+        val diet = object : KleanModule by DietKleanModule() {
+            @Composable override fun DashboardCard(onOpen: () -> Unit, modifier: Modifier) {}
+        }
+        val vm = ShellViewModel(ModuleRegistry(setOf(diet), FakeModuleGate()))
         compose.setContent { KleanTheme { KleanAppUi(vm) } }
         compose.waitForIdle()
         val labels = compose.onAllNodes(hasClickAction() and (hasText("Today") or hasText("Diet") or hasText("Settings")))
