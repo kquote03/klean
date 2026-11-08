@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Debug builds only: `adb shell am broadcast -a app.klean.debug.RESCHEDULE -p app.klean.debug` re-arms every alarm without a reboot. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <receiver
+            android:name="app.klean.core.notifications.RescheduleReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="${applicationId}.RESCHEDULE" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>

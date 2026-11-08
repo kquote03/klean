@@ -14,3 +14,7 @@ dependencies {
     testImplementation(libs.datastore.preferences)
     testImplementation(libs.coroutines.test)
 }
+dependencies {
+    testImplementation(libs.hilt.android.testing)
+    kspTest(libs.hilt.compiler)
+}
