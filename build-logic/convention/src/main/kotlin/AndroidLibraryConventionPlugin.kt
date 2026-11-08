@@ -1,4 +1,6 @@
 import com.android.build.api.dsl.LibraryExtension
+import com.android.build.api.variant.DeviceTestBuilder
+import com.android.build.api.variant.LibraryAndroidComponentsExtension
 import org.gradle.api.JavaVersion
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -26,6 +28,14 @@ class AndroidLibraryConventionPlugin : Plugin<Project> {
                 it.jvmArgs(KleanSdk.ROBOLECTRIC_JVM_ARGS)
                 // Hilt generates test sources in modules without tests; Gradle 9 would fail those.
                 it.failOnNoDiscoveredTests.set(false)
+            }
+        }
+        // Only build a device-test APK where instrumented tests exist. Empty test APKs for every module
+        // cost a parallel D8 run each and pushed connectedDebugAndroidTest out of memory.
+        val hasDeviceTests = file("src/androidTest").exists()
+        extensions.configure<LibraryAndroidComponentsExtension> {
+            beforeVariants { variant ->
+                variant.deviceTests[DeviceTestBuilder.ANDROID_TEST_TYPE]?.enable = hasDeviceTests
             }
         }
         extensions.configure<KotlinAndroidProjectExtension> {
