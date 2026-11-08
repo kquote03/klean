@@ -1,6 +1,10 @@
 package app.klean.nav
 
+import android.content.Intent
 import androidx.compose.material.icons.Icons
+import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Today
 import androidx.compose.material3.Icon
@@ -20,12 +24,13 @@ import androidx.navigation.compose.rememberNavController
 import app.klean.R
 
 @Composable
-fun KleanAppUi(vm: ShellViewModel = hiltViewModel()) {
+fun KleanAppUi(vm: ShellViewModel = hiltViewModel(), deepLinks: Flow<Intent> = emptyFlow()) {
     val registry = vm.registry
     val enabled by registry.enabled.collectAsStateWithLifecycle(initialValue = emptyList())
     val nav = rememberNavController()
     val backStack by nav.currentBackStackEntryAsState()
     val current = backStack?.destination
+    LaunchedEffect(nav, deepLinks) { deepLinks.collect { nav.handleDeepLink(it) } }
 
     NavigationSuiteScaffold(
         navigationSuiteItems = {

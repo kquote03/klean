@@ -4,6 +4,8 @@ plugins {
 }
 dependencies {
     implementation(project(":core:ai"))
+    implementation(project(":core:notifications"))
+    implementation(libs.core.ktx)
     testImplementation(libs.androidx.junit)
     testImplementation(libs.datastore.preferences)
 }

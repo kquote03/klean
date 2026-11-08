@@ -8,6 +8,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
+import androidx.navigation.navDeepLink
+import app.klean.feature.diet.notification.DietStatusNotifier
 import app.klean.core.ui.module.DashboardSlot
 import app.klean.core.ui.module.KleanModule
 import app.klean.feature.diet.ui.dashboard.DietDashboardCard
@@ -35,7 +37,9 @@ class DietKleanModule @Inject constructor() : KleanModule {
     override val settingsRoute: Any = DietSettingsRoute
 
     override fun registerGraph(builder: NavGraphBuilder, nav: NavController) = with(builder) {
-        composable<DietRoute> { DietScreen(onOpenEntry = { nav.navigate(FoodEntryRoute(it)) }) }
+        composable<DietRoute>(deepLinks = listOf(navDeepLink { uriPattern = DietStatusNotifier.DEEP_LINK_DIET })) {
+            DietScreen(onOpenEntry = { nav.navigate(FoodEntryRoute(it)) })
+        }
         composable<FoodEntryRoute> { FoodEntryScreen(onBack = { nav.popBackStack() }) }
         composable<DietSettingsRoute> { DietSettingsScreen(onBack = { nav.popBackStack() }) }
     }
