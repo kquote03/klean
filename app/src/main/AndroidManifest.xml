@@ -6,10 +6,19 @@
         android:label="@string/app_name"
         android:supportsRtl="false"
         android:theme="@style/Theme.Klean">
-        <activity android:name=".MainActivity" android:exported="true">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!-- Notification and widget taps (klean://today, klean://diet, ...). Same package only in practice. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="klean" />
             </intent-filter>
         </activity>
     </application>

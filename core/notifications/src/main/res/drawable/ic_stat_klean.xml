@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Status bar icon: a simple bowl. Monochrome, as the system tints it. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M3,11h18c0,4.4 -3.6,8 -8,8h-2c-4.4,0 -8,-3.6 -8,-8zM8,4c0.6,0.8 0.6,1.7 0,2.5s-0.6,1.7 0,2.5h-1.5c-0.6,-0.8 -0.6,-1.7 0,-2.5s0.6,-1.7 0,-2.5zM12.75,4c0.6,0.8 0.6,1.7 0,2.5s-0.6,1.7 0,2.5h-1.5c-0.6,-0.8 -0.6,-1.7 0,-2.5s0.6,-1.7 0,-2.5zM17.5,4c0.6,0.8 0.6,1.7 0,2.5s-0.6,1.7 0,2.5h-1.5c-0.6,-0.8 -0.6,-1.7 0,-2.5s0.6,-1.7 0,-2.5z" />
+</vector>

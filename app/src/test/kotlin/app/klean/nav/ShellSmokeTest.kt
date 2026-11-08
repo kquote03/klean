@@ -12,9 +12,13 @@ import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import app.klean.core.capture.UniversalCaptureService
 import app.klean.core.design.theme.KleanTheme
+import app.klean.shared.capture.DefaultCaptureRouter
+import kotlin.time.Clock
 import app.klean.core.ui.module.KleanModule
 import app.klean.feature.diet.DietKleanModule
+import app.klean.feature.diet.DietEnablement
 import org.junit.Assert.assertEquals
 import app.klean.core.ui.module.ModuleRegistry
 import org.junit.Assert.assertTrue
@@ -28,8 +32,13 @@ import org.junit.runner.RunWith
 class ShellSmokeTest {
     @get:Rule val compose = createComposeRule()
 
+    private fun shell(modules: Set<KleanModule>): ShellViewModel {
+        val gate = FakeModuleGate()
+        return ShellViewModel(ModuleRegistry(modules, gate), UniversalCaptureService(emptySet(), gate, DefaultCaptureRouter(null)), Clock.System)
+    }
+
     @Test fun shellShowsTodayAndSettingsWithEmptyState() {
-        val vm = ShellViewModel(ModuleRegistry(emptySet(), FakeModuleGate()))
+        val vm = shell(emptySet())
         compose.setContent { KleanTheme { KleanAppUi(vm) } }
         compose.onNodeWithText("Nothing here yet. Turn on a module in Settings.").assertIsDisplayed()
         assertTrue(compose.onAllNodesWithText("Today").fetchSemanticsNodes().isNotEmpty())
@@ -44,10 +53,10 @@ class ShellSmokeTest {
 
     @Test fun dietModuleAddsBottomBarItemBetweenTodayAndSettings() {
         // The real dashboard card needs Hilt; the bottom bar only needs the module's metadata.
-        val diet = object : KleanModule by DietKleanModule() {
+        val diet = object : KleanModule by DietKleanModule(DietEnablement { }) {
             @Composable override fun DashboardCard(onOpen: () -> Unit, modifier: Modifier) {}
         }
-        val vm = ShellViewModel(ModuleRegistry(setOf(diet), FakeModuleGate()))
+        val vm = shell(setOf(diet))
         compose.setContent { KleanTheme { KleanAppUi(vm) } }
         compose.waitForIdle()
         val labels = compose.onAllNodes(hasClickAction() and (hasText("Today") or hasText("Diet") or hasText("Settings")))

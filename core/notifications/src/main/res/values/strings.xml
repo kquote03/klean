@@ -1,0 +1,8 @@
+<resources>
+    <string name="channel_diet_status">Food status</string>
+    <string name="channel_diet_prompt">Food check-ins</string>
+    <string name="channel_diet_prompt_heads_up">Food check-ins (pop-up)</string>
+    <string name="channel_diet_prompt_vibrate">Food check-ins (vibrate only)</string>
+    <string name="channel_unlock_sheet">Today so far</string>
+    <string name="channel_backup">Backups</string>
+</resources>
