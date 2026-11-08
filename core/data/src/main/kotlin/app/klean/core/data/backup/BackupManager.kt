@@ -10,6 +10,7 @@ import app.klean.core.data.photo.PhotoStore
 import app.klean.core.data.prefs.DevicePrefs
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
+import java.io.InputStream
 import java.io.OutputStream
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -74,6 +75,124 @@ class BackupManager @Inject constructor(
             File(tmp.path + "-journal").delete()
         }
     }
+
+    /** Entries currently in Klean (not deleted), for the restore confirmation. */
+    suspend fun currentEntryCount(): Int = db.foodEntryDao().count()
+
+    /** Validates a backup and reads its summary. Never touches live data. */
+    suspend fun inspect(input: InputStream): BackupInfo = withContext(Dispatchers.IO) {
+        val cand = copyToCache(input, "restore-inspect.db")
+        try { validate(cand) } finally { deleteDbFiles(cand) }
+    }
+
+    /**
+     * Replaces the database, photos and device prefs (and secrets, if the backup has them) with the
+     * backup's. Everything that can fail is checked before the live data is touched. Closes the live
+     * database, so the caller must restart the process afterwards ([ProcessRestarter]).
+     */
+    suspend fun restore(input: InputStream) = withContext(Dispatchers.IO) {
+        val cand = copyToCache(input, "restore-candidate.db")
+        val staging = File(ctx.filesDir, "photos-restore")
+        val devicePrefs = mutableMapOf<String, String>()
+        var secretMap: Map<String, String>? = null
+        try {
+            validate(cand)
+            staging.deleteRecursively()
+            staging.mkdirs()
+            BundledSQLiteDriver().open(cand.absolutePath).use { c ->
+                c.prepare("SELECT file_name, bytes FROM $PHOTO").use { s ->
+                    while (s.step()) File(staging, safePhotoName(s.getText(0))).writeBytes(s.getBlob(1))
+                }
+                devicePrefs += pairs(c, DEVICE_PREF)
+                if (SECRET in tableNames(c)) secretMap = pairs(c, SECRET)
+                BACKUP_TABLES.forEach { c.execSQL("DROP TABLE IF EXISTS $it") }
+                c.execSQL("VACUUM") // drop the photo blobs' pages from the restored database
+            }
+        } catch (e: Exception) {
+            staging.deleteRecursively()
+            deleteDbFiles(cand)
+            throw e as? BackupInvalid ?: BackupInvalid(BackupInvalid.Reason.DAMAGED, e)
+        }
+
+        // Point of no return: swap the database file and the photos directory.
+        db.close()
+        deleteDbFiles(dbFile)
+        dbFile.parentFile?.mkdirs()
+        cand.copyTo(dbFile, overwrite = true)
+        deleteDbFiles(cand)
+        val live = photos.photosDir
+        live.deleteRecursively()
+        if (!staging.renameTo(live)) {
+            staging.copyRecursively(live, overwrite = true)
+            staging.deleteRecursively()
+        }
+        prefs.importAll(devicePrefs)
+        secretMap?.let { secrets.importPlain(it) }
+    }
+
+    private fun validate(file: File): BackupInfo {
+        val invalid = { r: BackupInvalid.Reason -> BackupInvalid(r) }
+        try {
+            BundledSQLiteDriver().open(file.absolutePath).use { c ->
+                val tables = try {
+                    tableNames(c)
+                } catch (e: Exception) {
+                    throw BackupInvalid(BackupInvalid.Reason.NOT_A_BACKUP, e) // "file is not a database"
+                }
+                if (META !in tables) throw invalid(BackupInvalid.Reason.NOT_A_BACKUP)
+                val meta = pairs(c, META)
+                if (meta["format"] != FORMAT) throw invalid(BackupInvalid.Reason.NOT_A_BACKUP)
+                val version = c.prepare("PRAGMA user_version").use { s -> s.step(); s.getLong(0).toInt() }
+                if (version > KleanDatabase.VERSION) throw invalid(BackupInvalid.Reason.NEWER_VERSION)
+                if (version < 1 || listOf("food_entry", PHOTO, DEVICE_PREF).any { it !in tables }) {
+                    throw invalid(BackupInvalid.Reason.DAMAGED)
+                }
+                val check = c.prepare("PRAGMA quick_check").use { s -> s.step(); s.getText(0) }
+                if (check != "ok") throw invalid(BackupInvalid.Reason.DAMAGED)
+                return BackupInfo(
+                    exportedAt = meta["exportedAt"]?.toLongOrNull() ?: throw invalid(BackupInvalid.Reason.DAMAGED),
+                    schemaVersion = version,
+                    appVersion = meta["appVersion"].orEmpty(),
+                    entryCount = count(c, "SELECT COUNT(*) FROM food_entry WHERE deleted = 0"),
+                    photoCount = count(c, "SELECT COUNT(*) FROM $PHOTO"),
+                    hasSecrets = SECRET in tables,
+                )
+            }
+        } catch (e: BackupInvalid) {
+            throw e
+        } catch (e: Exception) {
+            throw BackupInvalid(BackupInvalid.Reason.DAMAGED, e)
+        }
+    }
+
+    private fun copyToCache(input: InputStream, name: String): File {
+        val f = File(ctx.cacheDir, name)
+        deleteDbFiles(f)
+        f.outputStream().use { input.copyTo(it) }
+        return f
+    }
+
+    private fun deleteDbFiles(f: File) = listOf("", "-wal", "-shm", "-journal").forEach { File(f.path + it).delete() }
+
+    /** Photo names are plain file names; anything that could escape the photos dir means a bad file. */
+    private fun safePhotoName(name: String): String {
+        if (name.isBlank() || name == "." || name == ".." || '/' in name || '\\' in name || '\u0000' in name) {
+            throw BackupInvalid(BackupInvalid.Reason.DAMAGED)
+        }
+        return name
+    }
+
+    private fun tableNames(c: SQLiteConnection): Set<String> =
+        c.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").use { s ->
+            buildSet { while (s.step()) add(s.getText(0)) }
+        }
+
+    private fun pairs(c: SQLiteConnection, table: String): Map<String, String> =
+        c.prepare("SELECT key, value FROM $table").use { s ->
+            buildMap { while (s.step()) put(s.getText(0), s.getText(1)) }
+        }
+
+    private fun count(c: SQLiteConnection, sql: String): Int = c.prepare(sql).use { s -> s.step(); s.getLong(0).toInt() }
 
     /** Atomic, consistent copy of the live database (WAL included) taken on Room's writer connection. */
     private suspend fun vacuumInto(target: File) {

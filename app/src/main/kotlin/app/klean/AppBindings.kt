@@ -1,0 +1,33 @@
+package app.klean
+
+import android.content.Context
+import android.content.Intent
+import app.klean.core.data.backup.BuildConfigProvider
+import app.klean.core.data.backup.ProcessRestarter
+import dagger.Module
+import dagger.Provides
+import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.components.SingletonComponent
+import kotlin.system.exitProcess
+
+@Module
+@InstallIn(SingletonComponent::class)
+object AppBindingsModule {
+    @Provides
+    fun buildConfig(): BuildConfigProvider = object : BuildConfigProvider {
+        override val versionName: String = BuildConfig.VERSION_NAME
+    }
+
+    /**
+     * After a restore: start MainActivity in a fresh task, then end this process so every Hilt
+     * singleton (database, DataStore, caches) is rebuilt on the restored files.
+     */
+    @Provides
+    fun processRestarter(@ApplicationContext ctx: Context): ProcessRestarter = ProcessRestarter {
+        ctx.startActivity(
+            Intent(ctx, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK),
+        )
+        exitProcess(0)
+    }
+}

@@ -2,6 +2,7 @@ package app.klean.core.data.backup
 
 import android.content.Context
 import androidx.room.Room
+import androidx.room.useReaderConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import app.klean.core.data.FakeClock
@@ -16,6 +17,10 @@ import app.klean.shared.diet.CaptureSource
 import app.klean.shared.diet.EnrichmentStatus
 import java.io.File
 import kotlinx.coroutines.Dispatchers
+
+suspend fun KleanDatabase.queryStrings(sql: String): List<String> = useReaderConnection { c ->
+    c.usePrepared(sql) { s -> buildList { while (s.step()) add(s.getText(0)) } }
+}
 
 class FakeSecretBackup(var stored: Map<String, String> = emptyMap()) : SecretBackup {
     val imported = mutableListOf<Map<String, String>>()
