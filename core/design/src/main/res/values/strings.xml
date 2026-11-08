@@ -1,0 +1,7 @@
+<resources>
+    <string name="design_capture_speak">Speak</string>
+    <string name="design_capture_save">Save</string>
+    <string name="design_capture_photo">Add a photo</string>
+    <string name="design_gap_add_something">Add something</string>
+    <string name="design_card_open">Open</string>
+</resources>
