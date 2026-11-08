@@ -25,6 +25,9 @@ interface FoodEntryDao {
     @Query("SELECT * FROM food_entry WHERE deleted = 0 AND eaten_at >= :from AND eaten_at < :to ORDER BY eaten_at ASC")
     suspend fun range(from: Long, to: Long): List<FoodEntryEntity>
 
+    @Query("SELECT eaten_at FROM food_entry WHERE deleted = 0 AND eaten_at >= :from AND eaten_at < :to ORDER BY eaten_at ASC")
+    fun observeEatenBetween(from: Long, to: Long): Flow<List<Long>>
+
     @Query("SELECT eaten_at FROM food_entry WHERE deleted = 0 AND eaten_at >= :since")
     suspend fun eatenSince(since: Long): List<Long>
 

@@ -33,6 +33,15 @@
     <string name="diet_photo_add">Add a photo</string>
     <string name="diet_photo_replace">Replace photo</string>
     <string name="diet_photo_remove">Remove photo</string>
+    <string name="diet_history_title">History</string>
+    <string name="diet_history_open">History</string>
+    <string name="diet_history_previous">Previous month</string>
+    <string name="diet_history_next">Next month</string>
+    <plurals name="diet_history_day_entries">
+        <item quantity="one">%1$s, %2$d entry</item>
+        <item quantity="other">%1$s, %2$d entries</item>
+    </plurals>
+    <string name="diet_day_empty">No entries on this day.</string>
     <string name="diet_card_title">Food today</string>
     <string name="diet_card_empty">Nothing yet today.</string>
     <string name="diet_status_title">What did you eat?</string>

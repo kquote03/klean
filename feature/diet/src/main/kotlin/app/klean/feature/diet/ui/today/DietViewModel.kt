@@ -8,13 +8,10 @@ import app.klean.core.data.db.entity.FoodEntryEntity
 import app.klean.core.data.photo.PhotoStorage
 import app.klean.core.data.db.entity.FoodItemEntity
 import app.klean.feature.diet.data.DietRepository
-import app.klean.feature.diet.data.DietViewPrefs
 import app.klean.feature.diet.ui.DietFormatter
+import app.klean.feature.diet.ui.DietRowBuilder
 import app.klean.feature.diet.ui.MinuteTicker
 import app.klean.shared.diet.CaptureSource
-import app.klean.shared.diet.FoodItemState
-import app.klean.shared.diet.GapDetector
-import app.klean.shared.time.MINUTE_MS
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlin.time.Clock
@@ -72,6 +69,7 @@ class DietViewModel @Inject constructor(
     recognizer: VoiceRecognizer,
     private val photos: PhotoStorage,
 ) : ViewModel() {
+    private val rows = DietRowBuilder(repo, fmt, photos)
     private val _field = MutableStateFlow("")
 
     /** The capture field's text. Here so voice Undo can put the words back. */
@@ -99,7 +97,7 @@ class DietViewModel @Inject constructor(
             val dayWithRepeats = entriesWithItems(date).map { it to repo.quickRepeats() }
             combine(dayWithRepeats, repo.observeViewPrefs(), nowFlow) { (day, reps), prefs, now ->
                 val (entries, items) = day
-                DietUiState(date, buildRows(date, entries, items, prefs, now), reps, prefs.showCalories, loaded = true)
+                DietUiState(date, rows.build(date, entries, items, prefs, now), reps, prefs.showCalories, loaded = true)
             }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DietUiState())
@@ -135,37 +133,4 @@ class DietViewModel @Inject constructor(
         repo.observeDay(date).flatMapLatest { entries ->
             repo.observeItems(entries.map { it.id }).map { items -> entries to items }
         }
-
-    private fun buildRows(
-        date: LocalDate,
-        entries: List<FoodEntryEntity>,
-        items: List<FoodItemEntity>,
-        prefs: DietViewPrefs,
-        now: Long,
-    ): List<DietRow> {
-        val window = repo.windowFor(date)
-        val gaps = GapDetector.find(entries.map { it.eatenAt }, window, now, prefs.gapThresholdMinutes * MINUTE_MS)
-        val byEntry = items.filter { it.state != FoodItemState.REJECTED }.groupBy { it.entryId }
-        val entryRows = entries.map { e ->
-            val its = byEntry[e.id].orEmpty()
-            val summary = its.takeIf { it.isNotEmpty() }?.joinToString(", ") { it.name }
-                ?.let { s ->
-                    val kcal = its.mapNotNull { it.calories }.takeIf { it.isNotEmpty() }?.sum()
-                    if (prefs.showCalories && kcal != null) "$s · $kcal kcal" else s
-                }
-            e.eatenAt to DietRow.Entry(
-                id = e.id,
-                timeLabel = fmt.time(e.eatenAt),
-                text = e.rawText,
-                itemsSummary = summary,
-                providerName = its.firstOrNull { it.providerId != "user" }?.providerId,
-                photoPath = e.photoFile?.let { photos.file(it).path },
-            )
-        }
-        val gapRows = gaps.map { g -> g.start to DietRow.GapRow(fmt.gap(g), g.start) }
-        // At equal times the entry comes first: a gap starts after the entry that opens it.
-        return (entryRows.map { Triple(it.first, 0, it.second) } + gapRows.map { Triple(it.first, 1, it.second) })
-            .sortedWith(compareBy({ it.first }, { it.second }))
-            .map { it.third }
-    }
 }

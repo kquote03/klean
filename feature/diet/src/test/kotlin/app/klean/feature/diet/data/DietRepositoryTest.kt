@@ -153,4 +153,16 @@ class DietRepositoryTest {
         repo.logEntry("toast", CaptureSource.MODULE_SCREEN)
         assertEquals(listOf("coffee", "toast"), repo.quickRepeats())
     }
+
+    @Test fun eatenTimesInRangeSkipTombstones() = runBlocking {
+        val a = repo.logEntry("tea", CaptureSource.MODULE_SCREEN, eatenAt = noon - 3_600_000)
+        val b = repo.logEntry("toast", CaptureSource.MODULE_SCREEN, eatenAt = noon - 60_000)
+        repo.logEntry("later", CaptureSource.MODULE_SCREEN, eatenAt = noon + 3_600_000)
+        repo.delete(b)
+        repo.observeEatenTimes(noon - 7_200_000, noon).test {
+            assertEquals(listOf(noon - 3_600_000), awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+        assertNotNull(a)
+    }
 }

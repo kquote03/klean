@@ -18,8 +18,8 @@ import app.klean.core.design.component.ProviderChip
 import app.klean.feature.diet.R
 import app.klean.feature.diet.ui.today.DietRow
 
-/** Entries and gap markers for one day. Shared by Today and (M7) the day pager. */
-fun LazyListScope.dietRows(rows: List<DietRow>, onOpenEntry: (String) -> Unit, onGapAdd: () -> Unit) {
+/** Entries and gap markers for one day. Shared by Today and the day pager. */
+fun LazyListScope.dietRows(rows: List<DietRow>, onOpenEntry: (String) -> Unit, onGapAdd: (DietRow.GapRow) -> Unit) {
     items(rows, key = { it.key }) { row ->
         when (row) {
             is DietRow.Entry -> EntryRow(
@@ -34,7 +34,7 @@ fun LazyListScope.dietRows(rows: List<DietRow>, onOpenEntry: (String) -> Unit, o
             is DietRow.GapRow -> GapMarker(
                 label = row.label,
                 actionLabel = stringResource(app.klean.core.design.R.string.design_gap_add_something),
-                onAdd = onGapAdd,
+                onAdd = { onGapAdd(row) },
             )
         }
     }

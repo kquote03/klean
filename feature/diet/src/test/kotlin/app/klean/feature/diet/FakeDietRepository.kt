@@ -70,6 +70,8 @@ class FakeDietRepository(private val clock: FakeClock) : DietRepository {
         val w = windowFor(date)
         return entries.map { l -> l.filter { !it.sync.deleted && it.eatenAt >= w.start && it.eatenAt < w.end } }
     }
+    override fun observeEatenTimes(fromMs: Long, toMs: Long): Flow<List<Long>> =
+        entries.map { l -> l.filter { !it.sync.deleted && it.eatenAt >= fromMs && it.eatenAt < toMs }.map { it.eatenAt } }
     override fun observeItems(entryIds: List<String>): Flow<List<FoodItemEntity>> = flowOf(emptyList())
     override fun observeViewPrefs(): Flow<DietViewPrefs> = flowOf(prefs)
     override fun windowFor(date: LocalDate): DayWindow = DayWindows.forDate(date, QuietHours.DEFAULT, Dubai)

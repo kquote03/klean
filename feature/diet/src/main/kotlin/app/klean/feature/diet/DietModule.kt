@@ -13,7 +13,12 @@ import app.klean.feature.diet.notification.DietStatusNotifier
 import app.klean.core.ui.module.DashboardSlot
 import app.klean.core.ui.module.KleanModule
 import app.klean.feature.diet.ui.dashboard.DietDashboardCard
+import androidx.compose.ui.platform.LocalContext
+import app.klean.core.capture.CaptureActivity
 import app.klean.feature.diet.ui.entry.FoodEntryScreen
+import app.klean.feature.diet.ui.history.DietDayScreen
+import app.klean.feature.diet.ui.history.DietHistoryScreen
+import app.klean.shared.diet.CaptureSource
 import app.klean.feature.diet.ui.popAfterRemove
 import app.klean.feature.diet.ui.settings.DietSettingsScreen
 import app.klean.feature.diet.ui.today.DietScreen
@@ -39,7 +44,23 @@ class DietKleanModule @Inject constructor(private val enablement: DietEnablement
 
     override fun registerGraph(builder: NavGraphBuilder, nav: NavController) = with(builder) {
         composable<DietRoute>(deepLinks = listOf(navDeepLink { uriPattern = DietStatusNotifier.DEEP_LINK_DIET })) { entry ->
-            DietScreen(onOpenEntry = { nav.navigate(FoodEntryRoute(it)) }, backStackEntry = entry)
+            DietScreen(
+                onOpenEntry = { nav.navigate(FoodEntryRoute(it)) },
+                onOpenHistory = { nav.navigate(DietHistoryRoute) },
+                backStackEntry = entry,
+            )
+        }
+        composable<DietHistoryRoute> {
+            DietHistoryScreen(onBack = { nav.popBackStack() }, onOpenDay = { nav.navigate(DietDayRoute(it.toString())) })
+        }
+        composable<DietDayRoute> { entry ->
+            val ctx = LocalContext.current
+            DietDayScreen(
+                onBack = { nav.popBackStack() },
+                onOpenEntry = { nav.navigate(FoodEntryRoute(it)) },
+                onAddForGap = { ctx.startActivity(CaptureActivity.intent(ctx, CaptureSource.MODULE_SCREEN, ModuleId.DIET)) },
+                backStackEntry = entry,
+            )
         }
         composable<FoodEntryRoute> {
             FoodEntryScreen(onBack = { nav.popBackStack() }, onRemoved = { nav.popAfterRemove(it) })

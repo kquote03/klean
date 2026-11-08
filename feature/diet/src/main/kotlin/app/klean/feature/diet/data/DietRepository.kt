@@ -73,6 +73,9 @@ interface DietRepository {
     fun observeEntry(id: String): Flow<FoodEntryEntity?>
     fun observeDay(date: LocalDate): Flow<List<FoodEntryEntity>>
     fun observeItems(entryIds: List<String>): Flow<List<FoodItemEntity>>
+
+    /** `eaten_at` of live entries in [fromMs, toMs). History groups them by logical day. */
+    fun observeEatenTimes(fromMs: Long, toMs: Long): Flow<List<Long>>
     fun observeViewPrefs(): Flow<DietViewPrefs>
     fun windowFor(date: LocalDate): DayWindow
     suspend fun today(): List<FoodEntryEntity>
@@ -186,6 +189,9 @@ class DefaultDietRepository @Inject constructor(
 
     override fun observeItems(entryIds: List<String>): Flow<List<FoodItemEntity>> =
         if (entryIds.isEmpty()) flowOf(emptyList()) else db.foodItemDao().observeForEntries(entryIds)
+
+    override fun observeEatenTimes(fromMs: Long, toMs: Long): Flow<List<Long>> =
+        db.foodEntryDao().observeEatenBetween(fromMs, toMs)
 
     override fun observeViewPrefs(): Flow<DietViewPrefs> = combine(
         settings.observe(SyncedKeys.QuietHoursKey),
