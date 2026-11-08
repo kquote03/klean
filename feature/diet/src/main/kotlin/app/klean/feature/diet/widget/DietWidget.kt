@@ -39,6 +39,7 @@ import androidx.glance.layout.padding
 import androidx.glance.layout.size
 import androidx.glance.layout.width
 import androidx.glance.material3.ColorProviders
+import androidx.glance.color.ColorProvider as DayNightColorProvider
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
@@ -70,6 +71,15 @@ interface DietWidgetEntryPoint {
 
 /** Klean's pastel scheme for the widget (dynamic colour on the home screen is left to M13). */
 val KleanGlanceColors = ColorProviders(light = KleanColors.lightScheme, dark = KleanColors.darkScheme)
+
+/**
+ * Widget card colour. Glance's scheme has no surfaceContainer slot, and its widgetBackground maps to
+ * secondaryContainer (the green accent), which looked off next to the lavender app.
+ */
+private val WidgetSurface = DayNightColorProvider(
+    day = KleanColors.light.getValue("surfaceContainer"),
+    night = KleanColors.dark.getValue("surfaceContainer"),
+)
 
 /** Home-screen widget: today's food, a one-tap capture pill and a mic (plan §5.4). */
 class DietWidget : GlanceAppWidget() {
@@ -118,7 +128,7 @@ private fun openAppAction(context: Context): Action =
 private fun DietWidgetContent(state: DietWidgetState) {
     val size = LocalSize.current
     Column(
-        modifier = GlanceModifier.fillMaxSize().background(GlanceTheme.colors.widgetBackground).cornerRadius(20.dp).padding(8.dp),
+        modifier = GlanceModifier.fillMaxSize().background(WidgetSurface).cornerRadius(20.dp).padding(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         when {
@@ -162,8 +172,8 @@ private fun CompactContent(state: DietWidgetState) {
 @Composable
 private fun FullContent(state: DietWidgetState) {
     val ctx = LocalContext.current
-    val pillBg = if (state.highlighted) GlanceTheme.colors.tertiaryContainer else GlanceTheme.colors.secondaryContainer
-    val pillFg = if (state.highlighted) GlanceTheme.colors.onTertiaryContainer else GlanceTheme.colors.onSecondaryContainer
+    val pillBg = if (state.highlighted) GlanceTheme.colors.tertiaryContainer else GlanceTheme.colors.primaryContainer
+    val pillFg = if (state.highlighted) GlanceTheme.colors.onTertiaryContainer else GlanceTheme.colors.onPrimaryContainer
     Column(GlanceModifier.fillMaxSize()) {
         Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Row(
