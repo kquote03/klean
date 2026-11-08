@@ -84,7 +84,7 @@ Everything ticked is merged on `main` (milestones M0–M4 and M9 are tagged).
 
 - [x] Task 5.1 — QuietHoursService
 - [x] Task 5.2 — AlarmScheduler + Reschedulable + RescheduleReceiver
-- [ ] Task 5.3 — Phrasing pool
+- [x] Task 5.3 — Phrasing pool
 - [ ] Task 5.4 — PromptNotifier
 - [ ] Task 5.5 — DietPromptEngine (TDD with fakes)
 - [ ] Task 5.6 — Day rollover

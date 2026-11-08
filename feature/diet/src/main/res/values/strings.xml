@@ -51,4 +51,23 @@
         <item quantity="one">%1$d entry today · last: %2$s</item>
         <item quantity="other">%1$d today · last: %2$s</item>
     </plurals>
+    <!-- Check-in phrasings (PromptPhrasings). Calm, no exclamation marks. -->
+    <string name="prompt_g1">What did you eat?</string>
+    <string name="prompt_g2">Anything to add to today?</string>
+    <string name="prompt_g3">Quick food note?</string>
+    <string name="prompt_g4">Eaten anything lately?</string>
+    <string name="prompt_g5">Add a snack or a meal?</string>
+    <string name="prompt_g6">Food check: anything new?</string>
+    <string name="prompt_g7">Anything you\'d like to jot down?</string>
+    <string name="prompt_g8">Had something? Add it here.</string>
+    <string name="prompt_since_breakfast">Anything since breakfast?</string>
+    <string name="prompt_since_breakfast_2">Anything after breakfast to add?</string>
+    <string name="prompt_since_lunch">Anything since lunch?</string>
+    <string name="prompt_since_lunch_2">Lunch and after: anything to add?</string>
+    <string name="prompt_since_dinner">Anything since dinner?</string>
+    <string name="prompt_since_dinner_2">Anything this evening?</string>
+    <string name="prompt_late">Anything late-night to add?</string>
+    <string name="prompt_late_2">A late snack to note?</string>
+    <string name="prompt_delivery">What did you order?</string>
+    <string name="prompt_geofence">Anything from %1$s?</string>
 </resources>
