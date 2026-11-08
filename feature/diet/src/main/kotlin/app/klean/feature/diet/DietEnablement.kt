@@ -6,7 +6,7 @@ import androidx.core.app.NotificationManagerCompat
 import app.klean.core.capture.CaptureTileService
 import app.klean.core.notifications.NotificationIds
 import app.klean.feature.diet.notification.DietStatusNotifier
-import app.klean.feature.diet.prompt.DietPromptEngine
+import app.klean.feature.diet.prompt.DietPrompts
 import app.klean.feature.diet.widget.DietWidgetUpdater
 import dagger.Binds
 import dagger.Module
@@ -28,7 +28,7 @@ fun interface DietEnablement {
 class DefaultDietEnablement @Inject constructor(
     @ApplicationContext private val ctx: Context,
     private val status: DietStatusNotifier,
-    private val prompts: DietPromptEngine,
+    private val prompts: DietPrompts,
     private val widget: DietWidgetUpdater,
 ) : DietEnablement {
     override suspend fun onEnabledChanged(enabled: Boolean) {

@@ -11,6 +11,9 @@
             android:name=".notification.PromptDismissReceiver"
             android:exported="false" />
         <receiver
+            android:name=".prompt.PromptAlarmReceiver"
+            android:exported="false" />
+        <receiver
             android:name=".widget.DietWidgetReceiver"
             android:exported="true"
             android:label="@string/diet_widget_label">

@@ -18,7 +18,7 @@ import app.klean.core.ui.module.ModuleRegistry
 import app.klean.feature.diet.data.DefaultDietRepository
 import app.klean.feature.diet.data.DietChangeDispatcher
 import app.klean.feature.diet.notification.DietStatusNotifier
-import app.klean.feature.diet.prompt.DietPromptEngine
+import app.klean.feature.diet.prompt.DietPrompts
 import app.klean.feature.diet.notification.PromptHighlight
 import app.klean.feature.diet.ui.AndroidDietFormatter
 import app.klean.feature.diet.widget.DietWidgetUpdater
@@ -55,7 +55,7 @@ class DietEnablementTest {
     private val repo = DefaultDietRepository(db, stamper, clock, DubaiZone, settings, DietChangeDispatcher(emptySet()), noAi, scope)
     private val status = DietStatusNotifier(ctx, { repo }, gate, settings, AndroidDietFormatter(ctx, DubaiZone), PromptHighlight { null })
     private val calls = mutableListOf<String>()
-    private val prompts = object : DietPromptEngine() {
+    private val prompts = object : DietPrompts {
         override suspend fun reschedule() { calls += "reschedule" }
         override suspend fun cancel() { calls += "cancel" }
     }
