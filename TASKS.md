@@ -105,7 +105,7 @@ Everything ticked is merged on `main` (milestones M0–M7 and M9 are tagged).
 ## M8 — Onboarding and permissions
 
 - [x] Task 8.1 — Permission state model
-- [ ] Task 8.2 — PermissionsRoute
+- [x] Task 8.2 — PermissionsRoute
 - [ ] Task 8.3 — Onboarding graph
 
 ## M9 — Backup and restore

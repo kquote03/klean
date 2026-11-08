@@ -14,6 +14,8 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import app.klean.core.capture.UniversalCaptureService
@@ -37,7 +39,7 @@ class ShellSmokeTest {
     @get:Rule val compose = createComposeRule()
 
     private fun shell(modules: Set<KleanModule>, gate: FakeModuleGate = FakeModuleGate()): ShellViewModel =
-        ShellViewModel(ModuleRegistry(modules, gate), UniversalCaptureService(emptySet(), gate, DefaultCaptureRouter(null)), Clock.System)
+        ShellViewModel(ModuleRegistry(modules, gate), UniversalCaptureService(emptySet(), gate, DefaultCaptureRouter(null)), Clock.System, FakePermissionChecker())
 
     // The real dashboard card needs Hilt; the shell only needs the module's metadata and routes.
     private fun diet(): KleanModule = object : KleanModule by DietKleanModule(DietEnablement { }) {
@@ -72,6 +74,19 @@ class ShellSmokeTest {
         compose.waitForIdle()
         compose.onNodeWithText("Quiet hours").assertIsDisplayed()
         compose.onAllNodesWithText("Diet").assertCountEquals(0)
+    }
+
+    @Test fun settingsPermissionsShowsLiveStatusRows() {
+        val vm = shell(emptySet())
+        compose.setContent { KleanTheme { KleanAppUi(vm) } }
+        compose.waitForIdle()
+        compose.onAllNodes(hasClickAction() and hasText("Settings"))[0].performClick()
+        compose.waitForIdle()
+        compose.onNode(hasScrollAction()).performScrollToNode(hasText("Permissions"))
+        compose.onNodeWithText("Permissions").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithText("Alarms and reminders").assertExists()
+        assertTrue(compose.onAllNodesWithText("Off").fetchSemanticsNodes().isNotEmpty())
     }
 
     @Test fun shellShowsTodayAndSettingsWithEmptyState() {

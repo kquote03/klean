@@ -22,7 +22,7 @@ fun KleanNavHost(nav: NavHostController, shell: ShellViewModel, enabled: List<Kl
     NavHost(navController = nav, startDestination = TodayRoute) {
         composable<TodayRoute>(deepLinks = listOf(navDeepLink { uriPattern = "klean://today" })) { TodayScreen(registry = registry, capture = shell.capture, clock = shell.clock, onOpen = { nav.navigate(it) }) }
         composable<SettingsRoute> { SettingsScreen(modules = enabled, onOpen = { nav.navigate(it) }) }
-        settingsGraph(nav, registry)
+        settingsGraph(nav, registry, shell.permissions)
         registry.all.forEach { it.registerGraph(this, nav) }
     }
 }

@@ -21,7 +21,10 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import app.klean.core.ui.module.KleanModule
 import app.klean.core.ui.module.ModuleRegistry
+import androidx.navigation.navDeepLink
+import app.klean.core.notifications.permissions.PermissionChecker
 import app.klean.feature.settings.backup.BackupSettingsScreen
+import app.klean.feature.settings.permissions.PermissionsSettingsScreen
 
 private data class GeneralRow(@StringRes val label: Int, val route: Any)
 
@@ -75,13 +78,15 @@ private fun SettingsRow(label: String, onClick: (() -> Unit)?) {
 }
 
 /** Registers the settings sub-screens under the app's NavHost. */
-fun NavGraphBuilder.settingsGraph(nav: NavController, registry: ModuleRegistry) {
+fun NavGraphBuilder.settingsGraph(nav: NavController, registry: ModuleRegistry, permissions: PermissionChecker) {
     val back: () -> Unit = { nav.popBackStack() }
     composable<ModulesSettingsRoute> { ModulesSettingsScreen(registry = registry, onBack = back) }
     composable<QuietHoursSettingsRoute> { StubSettingsScreen(R.string.settings_quiet_hours, back) }
     composable<AppearanceSettingsRoute> { StubSettingsScreen(R.string.settings_appearance, back) }
     composable<AiProvidersSettingsRoute> { StubSettingsScreen(R.string.settings_ai_providers, back) }
     composable<BackupSettingsRoute> { BackupSettingsScreen(onBack = back) }
-    composable<PermissionsSettingsRoute> { StubSettingsScreen(R.string.settings_permissions, back) }
+    composable<PermissionsSettingsRoute>(deepLinks = listOf(navDeepLink { uriPattern = "klean://settings/permissions" })) {
+        PermissionsSettingsScreen(checker = permissions, onBack = back)
+    }
     composable<AboutSettingsRoute> { StubSettingsScreen(R.string.settings_about, back) }
 }
