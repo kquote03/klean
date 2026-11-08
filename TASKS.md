@@ -94,7 +94,7 @@ Everything ticked is merged on `main` (milestones M0–M5 and M9 are tagged).
 
 - [x] Task 6.1 — VoiceInput
 - [x] Task 6.2 — Photo attach
-- [ ] Task 6.3 — Quick repeat chips everywhere
+- [x] Task 6.3 — Quick repeat chips everywhere
 
 ## M7 — History and gaps
 

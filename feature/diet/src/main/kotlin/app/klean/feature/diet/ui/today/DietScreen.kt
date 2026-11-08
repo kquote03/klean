@@ -1,16 +1,12 @@
 package app.klean.feature.diet.ui.today
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -28,6 +24,7 @@ import app.klean.core.capture.voice.VoiceUiState
 import app.klean.core.capture.voice.rememberVoiceInput
 import app.klean.core.design.component.CaptureField
 import app.klean.core.design.component.NeutralEmpty
+import app.klean.core.design.component.RepeatChips
 import app.klean.feature.diet.R
 import app.klean.feature.diet.ui.dietRows
 
@@ -49,7 +46,7 @@ fun DietScreen(onOpenEntry: (String) -> Unit, vm: DietViewModel = hiltViewModel(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DietScreenContent(
     state: DietUiState,
@@ -77,14 +74,7 @@ fun DietScreenContent(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).focusRequester(focus),
             )
             VoiceStatus(voice, onUndo = onUndoVoice, modifier = Modifier.padding(horizontal = 16.dp))
-            if (state.repeats.isNotEmpty()) {
-                FlowRow(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    state.repeats.forEach { r -> SuggestionChip(onClick = { onRepeat(r) }, label = { Text(r) }) }
-                }
-            }
+            RepeatChips(state.repeats, onRepeat = onRepeat, modifier = Modifier.padding(horizontal = 16.dp))
             if (state.loaded && state.rows.none { it is DietRow.Entry }) {
                 NeutralEmpty(stringResource(R.string.diet_today_empty))
             }

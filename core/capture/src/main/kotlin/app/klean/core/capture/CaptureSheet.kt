@@ -39,6 +39,7 @@ import app.klean.core.capture.photo.PhotoPicker
 import app.klean.core.capture.photo.rememberPhotoPicker
 import app.klean.core.design.component.CaptureField
 import app.klean.core.design.component.PhotoThumbnail
+import app.klean.core.design.component.RepeatChips
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.mutableStateOf
@@ -137,15 +138,12 @@ internal fun CaptureSheetContent(
                         modifier = Modifier.padding(top = 8.dp),
                     )
                 }
-                if (state.suggestions.isNotEmpty()) {
-                    Text(
-                        stringResource(R.string.capture_repeats_label),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 12.dp),
-                    )
-                    ChipRow { state.suggestions.forEach { s -> SuggestionChip(onClick = { onSubmit(s) }, label = { Text(s) }) } }
-                }
+                RepeatChips(
+                    state.suggestions,
+                    onRepeat = onSubmit,
+                    label = stringResource(R.string.capture_repeats_label),
+                    modifier = Modifier.padding(top = 4.dp),
+                )
             }
         }
     }
