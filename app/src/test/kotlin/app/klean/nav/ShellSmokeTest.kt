@@ -18,6 +18,7 @@ import app.klean.shared.capture.DefaultCaptureRouter
 import kotlin.time.Clock
 import app.klean.core.ui.module.KleanModule
 import app.klean.feature.diet.DietKleanModule
+import app.klean.feature.diet.DietEnablement
 import org.junit.Assert.assertEquals
 import app.klean.core.ui.module.ModuleRegistry
 import org.junit.Assert.assertTrue
@@ -52,7 +53,7 @@ class ShellSmokeTest {
 
     @Test fun dietModuleAddsBottomBarItemBetweenTodayAndSettings() {
         // The real dashboard card needs Hilt; the bottom bar only needs the module's metadata.
-        val diet = object : KleanModule by DietKleanModule() {
+        val diet = object : KleanModule by DietKleanModule(DietEnablement { }) {
             @Composable override fun DashboardCard(onOpen: () -> Unit, modifier: Modifier) {}
         }
         val vm = shell(setOf(diet))

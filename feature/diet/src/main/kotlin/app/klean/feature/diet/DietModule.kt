@@ -27,7 +27,7 @@ import javax.inject.Singleton
 
 /** The diet module as seen by the registry: nav item, routes, dashboard card, settings entry. */
 @Singleton
-class DietKleanModule @Inject constructor() : KleanModule {
+class DietKleanModule @Inject constructor(private val enablement: DietEnablement) : KleanModule {
     override val id: ModuleId = ModuleId.DIET
     override val labelRes: Int = R.string.diet_label
     override val icon: ImageVector get() = Icons.Rounded.Restaurant
@@ -46,6 +46,8 @@ class DietKleanModule @Inject constructor() : KleanModule {
 
     @Composable
     override fun DashboardCard(onOpen: () -> Unit, modifier: Modifier) = DietDashboardCard(onOpen, modifier)
+
+    override suspend fun onEnabledChanged(enabled: Boolean) = enablement.onEnabledChanged(enabled)
 }
 
 @Module
