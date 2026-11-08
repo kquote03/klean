@@ -19,6 +19,7 @@ import app.klean.feature.diet.data.DefaultDietRepository
 import app.klean.feature.diet.data.DietChangeDispatcher
 import app.klean.feature.diet.notification.DietStatusNotifier
 import app.klean.feature.diet.prompt.DietPromptEngine
+import app.klean.feature.diet.notification.PromptHighlight
 import app.klean.feature.diet.ui.AndroidDietFormatter
 import app.klean.feature.diet.widget.DietWidgetUpdater
 import app.klean.shared.ai.AiTask
@@ -52,7 +53,7 @@ class DietEnablementTest {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
     private val noAi = object : EnrichmentPolicy { override suspend fun hasProviderFor(task: AiTask) = false }
     private val repo = DefaultDietRepository(db, stamper, clock, DubaiZone, settings, DietChangeDispatcher(emptySet()), noAi, scope)
-    private val status = DietStatusNotifier(ctx, { repo }, gate, settings, AndroidDietFormatter(ctx, DubaiZone))
+    private val status = DietStatusNotifier(ctx, { repo }, gate, settings, AndroidDietFormatter(ctx, DubaiZone), PromptHighlight { null })
     private val calls = mutableListOf<String>()
     private val prompts = object : DietPromptEngine() {
         override suspend fun reschedule() { calls += "reschedule" }

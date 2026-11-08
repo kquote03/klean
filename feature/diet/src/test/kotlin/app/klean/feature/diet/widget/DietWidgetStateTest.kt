@@ -61,4 +61,18 @@ class DietWidgetStateTest {
             cancelAndIgnoreRemainingEvents()
         }
     }
+
+    @Test fun highlightShowsTheCheckInWording() = runTest {
+        val labelled = dietWidgetStates(repo, disabled, highlight, highlightLabel = { if (it == "p2") "Quick food note?" else null }) { "t$it" }
+        labelled.test {
+            assertEquals(null, awaitItem().highlightText)
+            highlight.value = "p2"
+            val on = awaitItem()
+            assertTrue(on.highlighted)
+            assertEquals("Quick food note?", on.highlightText)
+            highlight.value = null
+            assertEquals(null, awaitItem().highlightText)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
 }

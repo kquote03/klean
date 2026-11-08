@@ -23,6 +23,7 @@ import app.klean.feature.diet.data.DefaultDietRepository
 import app.klean.feature.diet.data.DietChangeDispatcher
 import app.klean.feature.diet.inMemoryDb
 import app.klean.feature.diet.tempDevicePrefs
+import app.klean.feature.diet.notification.PromptHighlight
 import app.klean.feature.diet.ui.AndroidDietFormatter
 import app.klean.shared.ai.AiTask
 import app.klean.shared.diet.CaptureSource
@@ -56,7 +57,7 @@ class DietStatusNotifierTest {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
     private val noAi = object : EnrichmentPolicy { override suspend fun hasProviderFor(task: AiTask) = false }
     private val repo = DefaultDietRepository(db, stamper, clock, DubaiZone, settings, DietChangeDispatcher(emptySet()), noAi, scope)
-    private val notifier = DietStatusNotifier(ctx, { repo }, gate, settings, AndroidDietFormatter(ctx, DubaiZone))
+    private val notifier = DietStatusNotifier(ctx, { repo }, gate, settings, AndroidDietFormatter(ctx, DubaiZone), PromptHighlight { null })
 
     @Before fun setUp() {
         ChannelRegistrar.ensure(ctx)

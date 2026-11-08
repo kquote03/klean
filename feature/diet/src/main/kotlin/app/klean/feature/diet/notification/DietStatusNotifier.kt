@@ -47,6 +47,7 @@ class DietStatusNotifier @Inject constructor(
     private val gate: ModuleGate,
     private val settings: SettingsRepository,
     private val fmt: DietFormatter,
+    private val highlight: PromptHighlight,
 ) : DietChangeListener {
     private val mutex = Mutex()
 
@@ -60,7 +61,7 @@ class DietStatusNotifier @Inject constructor(
             return@withLock
         }
         if (!canPost(nm)) return@withLock
-        post(nm, build(repo.get().todaySummary(), savedText))
+        post(nm, build(repo.get().todaySummary(), savedText, highlight.phrasing()?.let { ctx.getString(it.res) }))
     }
 
     fun cancel() = NotificationManagerCompat.from(ctx).cancel(NotificationIds.DIET_STATUS)
@@ -74,7 +75,8 @@ class DietStatusNotifier @Inject constructor(
     @SuppressLint("MissingPermission") // checked in canPost()
     private fun post(nm: NotificationManagerCompat, n: Notification) = nm.notify(NotificationIds.DIET_STATUS, n)
 
-    internal fun build(summary: TodaySummary, savedText: String?): Notification {
+    /** [highlightTitle]: a WIDGET_HIGHLIGHT check-in is active; its wording replaces the title. */
+    internal fun build(summary: TodaySummary, savedText: String?, highlightTitle: String? = null): Notification {
         val res = ctx.resources
         val text = when {
             savedText != null -> ctx.getString(R.string.diet_status_saved, savedText)
@@ -88,7 +90,7 @@ class DietStatusNotifier @Inject constructor(
             .build()
         val builder = NotificationCompat.Builder(ctx, Channels.DIET_STATUS)
             .setSmallIcon(NotifR.drawable.ic_stat_klean)
-            .setContentTitle(ctx.getString(R.string.diet_status_title))
+            .setContentTitle(highlightTitle ?: ctx.getString(R.string.diet_status_title))
             .setContentText(text)
             .setOngoing(true)
             .setOnlyAlertOnce(true)

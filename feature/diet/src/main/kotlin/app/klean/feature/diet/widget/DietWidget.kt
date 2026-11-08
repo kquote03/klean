@@ -48,6 +48,7 @@ import app.klean.core.data.prefs.DevicePrefs
 import app.klean.core.design.theme.KleanColors
 import app.klean.feature.diet.R
 import app.klean.feature.diet.data.DietRepository
+import app.klean.feature.diet.notification.PromptHighlight
 import app.klean.feature.diet.ui.DietFormatter
 import app.klean.shared.diet.CaptureSource
 import app.klean.shared.module.ModuleId
@@ -64,6 +65,7 @@ interface DietWidgetEntryPoint {
     fun gate(): ModuleGate
     fun prefs(): DevicePrefs
     fun formatter(): DietFormatter
+    fun highlight(): PromptHighlight
 }
 
 /** Klean's pastel scheme for the widget (dynamic colour on the home screen is left to M13). */
@@ -76,7 +78,12 @@ class DietWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val ep = EntryPointAccessors.fromApplication(context, DietWidgetEntryPoint::class.java)
         val fmt = ep.formatter()
-        val states = dietWidgetStates(ep.repo(), ep.gate().disabledIds, ep.prefs().highlightPromptId, fmt::time)
+        val highlight = ep.highlight()
+        val states = dietWidgetStates(
+            ep.repo(), ep.gate().disabledIds, ep.prefs().highlightPromptId,
+            highlightLabel = { highlight.phrasing()?.let { context.getString(it.res) } },
+            timeLabel = fmt::time,
+        )
         val initial = states.first()
         provideContent {
             val state by remember { states }.collectAsState(initial)
@@ -165,7 +172,7 @@ private fun FullContent(state: DietWidgetState) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    ctx.getString(R.string.diet_widget_prompt),
+                    state.highlightText ?: ctx.getString(R.string.diet_widget_prompt),
                     style = TextStyle(color = pillFg, fontSize = 15.sp, fontWeight = FontWeight.Medium),
                     maxLines = 1,
                 )

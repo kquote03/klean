@@ -18,6 +18,8 @@ data class DietWidgetState(
     val entries: List<WidgetEntry> = emptyList(),
     /** A check-in is waiting (WIDGET_HIGHLIGHT format): the pill uses the highlight colour. */
     val highlighted: Boolean = false,
+    /** The highlighted check-in's wording, shown in the pill instead of the default prompt. */
+    val highlightText: String? = null,
 ) {
     val lastText: String? get() = entries.firstOrNull()?.text
 }
@@ -28,15 +30,16 @@ fun dietWidgetStates(
     repo: DietRepository,
     disabledModules: Flow<Set<ModuleId>>,
     highlightPromptId: Flow<String?>,
+    highlightLabel: suspend (promptId: String) -> String? = { null },
     timeLabel: (Long) -> String,
 ): Flow<DietWidgetState> {
     // Re-evaluates the logical day whenever the sleep window changes; day rollover triggers a widget update.
     val today = repo.quietHours.flatMapLatest { repo.observeDay(repo.todayDate()) }
     return combine(
         disabledModules.map { ModuleId.DIET !in it }.distinctUntilChanged(),
-        highlightPromptId.map { it != null }.distinctUntilChanged(),
+        highlightPromptId.distinctUntilChanged().map { id -> id?.let { (it to highlightLabel(it)) } },
         today,
-    ) { enabled, highlighted, entries ->
+    ) { enabled, highlight, entries ->
         if (!enabled) {
             DietWidgetState(dietEnabled = false)
         } else {
@@ -44,7 +47,8 @@ fun dietWidgetStates(
                 dietEnabled = true,
                 count = entries.size,
                 entries = entries.sortedByDescending { it.eatenAt }.map { WidgetEntry(it.id, timeLabel(it.eatenAt), it.rawText) },
-                highlighted = highlighted,
+                highlighted = highlight != null,
+                highlightText = highlight?.second,
             )
         }
     }

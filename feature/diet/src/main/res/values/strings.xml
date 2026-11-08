@@ -68,6 +68,7 @@
     <string name="prompt_since_dinner_2">Anything this evening?</string>
     <string name="prompt_late">Anything late-night to add?</string>
     <string name="prompt_late_2">A late snack to note?</string>
+    <string name="prompt_body">Reply here to add it to today, or tap to open.</string>
     <string name="prompt_delivery">What did you order?</string>
     <string name="prompt_geofence">Anything from %1$s?</string>
 </resources>
