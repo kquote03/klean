@@ -2,6 +2,7 @@ package app.klean.shared.capture
 
 import app.klean.shared.diet.CaptureSource
 import app.klean.shared.module.ModuleId
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.currentTime
 import kotlinx.coroutines.test.runTest
@@ -9,6 +10,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class DefaultCaptureRouterTest {
     private class FakeHandler(override val moduleId: ModuleId) : CaptureHandler {
         override val actionSpecs = listOf(ActionSpec("log_${moduleId.value}", "Something for ${moduleId.value}"))
