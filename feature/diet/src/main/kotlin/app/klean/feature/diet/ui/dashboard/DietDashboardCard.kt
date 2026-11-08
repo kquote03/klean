@@ -19,6 +19,9 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
+import androidx.compose.ui.platform.LocalContext
+import app.klean.core.capture.CaptureActivity
+import app.klean.shared.module.ModuleId
 import app.klean.core.design.component.CaptureField
 import app.klean.core.design.component.KleanCard
 import app.klean.feature.diet.R
@@ -74,6 +77,7 @@ class DietDashboardViewModel @Inject constructor(
 fun DietDashboardCard(onOpen: () -> Unit, modifier: Modifier = Modifier, vm: DietDashboardViewModel = hiltViewModel()) {
     val state by vm.uiState.collectAsStateWithLifecycle()
     var text by rememberSaveable { mutableStateOf("") }
+    val ctx = LocalContext.current
     KleanCard(title = stringResource(R.string.diet_card_title), onOpen = onOpen, modifier = modifier) {
         Column(Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp)) {
             if (state.entries.isEmpty()) {
@@ -102,7 +106,8 @@ fun DietDashboardCard(onOpen: () -> Unit, modifier: Modifier = Modifier, vm: Die
                     vm.onSubmit(text)
                     text = ""
                 },
-                onMic = {}, // Voice input arrives in M6.
+                // Voice runs in the capture sheet, which owns the mic permission and the Undo chip.
+                onMic = { ctx.startActivity(CaptureActivity.intent(ctx, CaptureSource.DASHBOARD, ModuleId.DIET, startVoice = true)) },
                 onPhoto = null,
                 placeholder = stringResource(R.string.diet_capture_placeholder),
                 modifier = Modifier.padding(top = 8.dp),

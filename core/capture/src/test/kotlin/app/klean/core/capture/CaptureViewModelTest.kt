@@ -1,6 +1,8 @@
 package app.klean.core.capture
 
 import androidx.lifecycle.SavedStateHandle
+import app.klean.core.capture.voice.FakeVoiceRecognizer
+import app.klean.core.capture.voice.VoiceSession
 import app.klean.core.ui.module.ModuleRegistry
 import app.klean.shared.capture.DefaultCaptureRouter
 import app.klean.shared.diet.CaptureSource
@@ -28,6 +30,7 @@ class CaptureViewModelTest {
     private val diet = FakeHandler(ModuleId.DIET, repeats = listOf("tea"))
     private val gate = FakeModuleGate()
     private val clock = object : Clock { override fun now() = Instant.fromEpochMilliseconds(42) }
+    private val rec = FakeVoiceRecognizer()
 
     @Before fun setUp() = Dispatchers.setMain(dispatcher)
     @After fun tearDown() = Dispatchers.resetMain()
@@ -36,6 +39,7 @@ class CaptureViewModelTest {
         UniversalCaptureService(setOf(diet), gate, DefaultCaptureRouter(null)),
         ModuleRegistry(emptySet(), gate),
         clock,
+        rec,
         SavedStateHandle(mapOf(*extras)),
     )
 
@@ -66,6 +70,55 @@ class CaptureViewModelTest {
         runCurrent()
         assertEquals(1, diet.executed.size)
         assertEquals(CaptureActivity.DEFAULT_SOURCE, diet.executed.single().source)
+    }
+
+    @Test fun voiceFinalAutoSavesViaVoiceAndUndoReturnsTextToTheField() = runTest(dispatcher) {
+        val vm = vm(CaptureActivity.EXTRA_TARGET_MODULE to "diet")
+        runCurrent()
+        vm.voice.onMic()
+        rec.final("two manakish")
+        runCurrent()
+        val input = diet.executed.single()
+        assertEquals("two manakish", input.text)
+        assertTrue(input.viaVoice)
+        assertTrue(vm.state.value.phase is CapturePhase.Saved)
+        assertEquals("two manakish", vm.voice.state.value.undo?.text)
+        // Stays open past the normal confirmation so the Undo chip can be used.
+        advanceTimeBy(CaptureViewModel.CONFIRM_MS + 1)
+        assertFalse(vm.state.value.finished)
+        vm.voice.undoLast()
+        runCurrent()
+        assertEquals(listOf("diet-1"), diet.undone)
+        assertEquals(CapturePhase.Editing, vm.state.value.phase)
+        assertEquals("two manakish", vm.state.value.text)
+        advanceTimeBy(10_000)
+        assertFalse(vm.state.value.finished)
+    }
+
+    @Test fun voiceSaveClosesAfterTheUndoWindow() = runTest(dispatcher) {
+        val vm = vm()
+        vm.voice.onMic()
+        rec.final("tea")
+        runCurrent()
+        advanceTimeBy(VoiceSession.UNDO_MS + 1)
+        assertTrue(vm.state.value.finished)
+        assertTrue(diet.undone.isEmpty())
+    }
+
+    @Test fun startVoiceExtraIsConsumedOnce() = runTest(dispatcher) {
+        val vm = vm(CaptureActivity.EXTRA_START_VOICE to true)
+        assertTrue(vm.consumeStartVoice())
+        assertFalse(vm.consumeStartVoice())
+        assertFalse(vm(CaptureActivity.EXTRA_START_VOICE to false).consumeStartVoice())
+    }
+
+    @Test fun typedTextLivesInState() = runTest(dispatcher) {
+        val vm = vm()
+        vm.onTextChange("toa")
+        assertEquals("toa", vm.state.value.text)
+        vm.submit(vm.state.value.text)
+        runCurrent()
+        assertFalse(diet.executed.single().viaVoice)
     }
 
     @Test fun noModuleStaysOpen() = runTest(dispatcher) {

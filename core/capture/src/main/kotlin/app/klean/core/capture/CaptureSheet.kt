@@ -22,11 +22,8 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -34,6 +31,9 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.klean.core.capture.voice.VoiceStatus
+import app.klean.core.capture.voice.VoiceUiState
+import app.klean.core.capture.voice.rememberVoiceInput
 import app.klean.core.design.component.CaptureField
 import kotlinx.coroutines.launch
 
@@ -41,6 +41,9 @@ import kotlinx.coroutines.launch
 @Composable
 fun CaptureSheet(vm: CaptureViewModel, onDismiss: () -> Unit) {
     val state by vm.state.collectAsStateWithLifecycle()
+    val voice by vm.voice.state.collectAsStateWithLifecycle()
+    val onMic = rememberVoiceInput(vm.voice)
+    LaunchedEffect(Unit) { if (vm.consumeStartVoice()) onMic() }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
     LaunchedEffect(state.finished) {
@@ -49,8 +52,12 @@ fun CaptureSheet(vm: CaptureViewModel, onDismiss: () -> Unit) {
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
         CaptureSheetContent(
             state = state,
-            onSubmit = vm::submit,
+            voice = voice,
+            onTextChange = vm::onTextChange,
+            onSubmit = { vm.submit(it) },
             onMove = vm::moveTo,
+            onMic = onMic,
+            onUndoVoice = vm.voice::undoLast,
             modifier = Modifier.navigationBarsPadding().imePadding(),
         )
     }
@@ -59,17 +66,25 @@ fun CaptureSheet(vm: CaptureViewModel, onDismiss: () -> Unit) {
 @Composable
 internal fun CaptureSheetContent(
     state: CaptureUiState,
+    voice: VoiceUiState,
+    onTextChange: (String) -> Unit,
     onSubmit: (String) -> Unit,
     onMove: (MoveOption) -> Unit,
+    onMic: () -> Unit,
+    onUndoVoice: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var text by rememberSaveable { mutableStateOf("") }
+    val text = state.text
     val focus = remember { FocusRequester() }
     Column(modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 24.dp)) {
         when (val phase = state.phase) {
-            is CapturePhase.Saved -> SavedLine(savedText(phase.moduleLabelRes))
+            is CapturePhase.Saved -> {
+                SavedLine(savedText(phase.moduleLabelRes))
+                VoiceStatus(voice, onUndo = onUndoVoice)
+            }
             is CapturePhase.SavedWithAlternatives -> {
                 SavedLine(savedText(phase.moduleLabelRes))
+                VoiceStatus(voice, onUndo = onUndoVoice)
                 ChipRow {
                     phase.options.forEach { o ->
                         val label = o.labelRes?.let { stringResource(it) } ?: o.action.moduleId.value
@@ -80,15 +95,17 @@ internal fun CaptureSheetContent(
             CapturePhase.Editing, CapturePhase.Saving, CapturePhase.NoModule -> {
                 LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
                 CaptureField(
-                    value = text,
-                    onValueChange = { text = it },
+                    value = if (voice.listening && voice.partial.isNotBlank()) voice.partial else text,
+                    onValueChange = onTextChange,
                     onSubmit = { onSubmit(text) },
-                    onMic = {}, // Voice input arrives in M6.
-                    onPhoto = null, // Photo attach arrives in M6.
+                    onMic = onMic,
+                    onPhoto = null, // Photo attach arrives in 6.2.
                     placeholder = stringResource(R.string.capture_placeholder),
                     enabled = phase != CapturePhase.Saving,
+                    listening = voice.listening,
                     modifier = Modifier.focusRequester(focus),
                 )
+                VoiceStatus(voice, onUndo = onUndoVoice)
                 if (phase == CapturePhase.NoModule) {
                     Text(
                         stringResource(R.string.capture_no_module),

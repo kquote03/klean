@@ -2,6 +2,8 @@ package app.klean.feature.diet.ui.today
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.klean.core.capture.voice.VoiceRecognizer
+import app.klean.core.capture.voice.VoiceSession
 import app.klean.core.data.db.entity.FoodEntryEntity
 import app.klean.core.data.db.entity.FoodItemEntity
 import app.klean.feature.diet.data.DietRepository
@@ -17,6 +19,8 @@ import javax.inject.Inject
 import kotlin.time.Clock
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -62,7 +66,23 @@ class DietViewModel @Inject constructor(
     private val clock: Clock,
     private val fmt: DietFormatter,
     private val ticker: MinuteTicker,
+    recognizer: VoiceRecognizer,
 ) : ViewModel() {
+    private val _field = MutableStateFlow("")
+
+    /** The capture field's text. Here so voice Undo can put the words back. */
+    val field: StateFlow<String> = _field.asStateFlow()
+
+    val voice = VoiceSession(
+        scope = viewModelScope,
+        recognizer = recognizer,
+        save = { text -> repo.logEntry(text, CaptureSource.MODULE_SCREEN, viaVoice = true) },
+        undo = { u ->
+            repo.delete(u.recordId)
+            if (_field.value.isBlank()) _field.value = u.text
+        },
+    )
+
     private fun now() = clock.now().toEpochMilliseconds()
 
     private val nowFlow: Flow<Long> get() = ticker.ticks().map { now() }
@@ -80,13 +100,27 @@ class DietViewModel @Inject constructor(
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DietUiState())
 
+    fun onTextChange(text: String) {
+        _field.value = text
+    }
+
     fun onSubmit(text: String) {
+        val clean = text.trim()
+        if (clean.isEmpty()) return
+        _field.value = ""
+        viewModelScope.launch { repo.logEntry(clean, CaptureSource.MODULE_SCREEN) }
+    }
+
+    /** A quick-repeat chip: logs at once and leaves the field alone. */
+    fun onRepeat(text: String) {
         val clean = text.trim()
         if (clean.isEmpty()) return
         viewModelScope.launch { repo.logEntry(clean, CaptureSource.MODULE_SCREEN) }
     }
 
-    fun onRepeat(text: String) = onSubmit(text)
+    override fun onCleared() {
+        voice.close()
+    }
 
     private fun entriesWithItems(date: LocalDate): Flow<Pair<List<FoodEntryEntity>, List<FoodItemEntity>>> =
         repo.observeDay(date).flatMapLatest { entries ->

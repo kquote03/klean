@@ -8,6 +8,7 @@ import app.klean.feature.diet.Dubai
 import app.klean.feature.diet.DubaiZone
 import app.klean.feature.diet.FakeClock
 import app.klean.feature.diet.FakeDietRepository
+import app.klean.feature.diet.FakeVoice
 import app.klean.feature.diet.ui.AndroidDietFormatter
 import app.klean.feature.diet.ui.MinuteTicker
 import app.klean.shared.diet.CaptureSource
@@ -43,7 +44,28 @@ class DietViewModelTest {
     @Before fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
     @After fun tearDown() = Dispatchers.resetMain()
 
-    private fun vm() = DietViewModel(repo, clock, fmt, oneTick)
+    private val rec = FakeVoice()
+
+    private fun vm() = DietViewModel(repo, clock, fmt, oneTick, rec)
+
+    @Test fun voiceFinalLogsViaVoiceAndUndoDeletesAndRefillsTheField() = runTest {
+        val vm = vm()
+        vm.voice.onMic()
+        rec.listener!!.onFinal("two manakish")
+        assertEquals(listOf(FakeDietRepository.LogCall("two manakish", CaptureSource.MODULE_SCREEN, null, viaVoice = true)), repo.logs)
+        assertEquals("two manakish", vm.voice.state.value.undo?.text)
+        vm.voice.undoLast()
+        assertEquals(listOf("id1"), repo.deletes)
+        assertEquals("two manakish", vm.field.value)
+    }
+
+    @Test fun typedSubmitClearsTheField() = runTest {
+        val vm = vm()
+        vm.onTextChange("toast")
+        vm.onSubmit(vm.field.value)
+        assertEquals("", vm.field.value)
+        assertEquals(false, repo.logs.single().viaVoice)
+    }
 
     @Test fun submitLogsFromModuleScreen() = runTest {
         val vm = vm()

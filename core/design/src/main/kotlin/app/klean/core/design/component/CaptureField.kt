@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.PhotoCamera
+import androidx.compose.material.icons.rounded.Stop
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -44,6 +45,8 @@ fun CaptureField(
     placeholder: String,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    /** Voice is listening: the mic button becomes a stop button. */
+    listening: Boolean = false,
 ) {
     Row(modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         OutlinedTextField(
@@ -63,7 +66,11 @@ fun CaptureField(
                         }
                     }
                     IconButton(onClick = onMic, enabled = enabled, modifier = Modifier.size(48.dp)) {
-                        Icon(Icons.Rounded.Mic, contentDescription = stringResource(R.string.design_capture_speak))
+                        if (listening) {
+                            Icon(Icons.Rounded.Stop, contentDescription = stringResource(R.string.design_capture_stop_listening))
+                        } else {
+                            Icon(Icons.Rounded.Mic, contentDescription = stringResource(R.string.design_capture_speak))
+                        }
                     }
                 }
             },

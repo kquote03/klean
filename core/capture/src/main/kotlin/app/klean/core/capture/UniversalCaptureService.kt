@@ -71,6 +71,11 @@ class UniversalCaptureService @Inject constructor(
         return CaptureResult.Saved(to.moduleId, newId, alternatives, saved.input)
     }
 
+    /** Undoes a save, e.g. from the voice Undo chip. */
+    suspend fun undo(saved: CaptureResult.Saved) {
+        handlers.firstOrNull { it.moduleId == saved.moduleId }?.undo(saved.recordId)
+    }
+
     /** Quick-repeat chips from enabled handlers, or only [target]'s when given. */
     suspend fun suggestions(target: ModuleId? = null, limit: Int = 8): List<String> =
         enabledHandlers()

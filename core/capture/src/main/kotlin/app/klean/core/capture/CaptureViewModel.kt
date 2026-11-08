@@ -4,6 +4,9 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.klean.core.capture.voice.VoiceRecognizer
+import app.klean.core.capture.voice.VoiceSession
+import app.klean.core.capture.voice.VoiceUndo
 import app.klean.core.ui.module.ModuleRegistry
 import app.klean.shared.capture.CandidateAction
 import app.klean.shared.capture.CaptureInput
@@ -32,6 +35,8 @@ sealed interface CapturePhase {
 }
 
 data class CaptureUiState(
+    /** What is in the field. Lives here so voice can fill it and Undo can put it back. */
+    val text: String = "",
     val suggestions: List<String> = emptyList(),
     val phase: CapturePhase = CapturePhase.Editing,
     val startVoice: Boolean = false,
@@ -44,6 +49,7 @@ class CaptureViewModel @Inject constructor(
     private val service: UniversalCaptureService,
     private val registry: ModuleRegistry,
     private val clock: Clock,
+    recognizer: VoiceRecognizer,
     savedState: SavedStateHandle,
 ) : ViewModel() {
     private val target: ModuleId? = savedState.get<String>(CaptureActivity.EXTRA_TARGET_MODULE)?.let(::ModuleId)
@@ -56,6 +62,14 @@ class CaptureViewModel @Inject constructor(
 
     private var lastSaved: CaptureResult.Saved? = null
     private var closeJob: Job? = null
+    private var startVoicePending = _state.value.startVoice
+
+    val voice = VoiceSession(
+        scope = viewModelScope,
+        recognizer = recognizer,
+        save = { text -> save(text, viaVoice = true)?.recordId },
+        undo = { u -> undoVoice(u) },
+    )
 
     init {
         viewModelScope.launch {
@@ -64,17 +78,44 @@ class CaptureViewModel @Inject constructor(
         }
     }
 
+    fun onTextChange(text: String) = _state.update { it.copy(text = text) }
+
+    /** True once if the sheet was opened from a mic button (widget); the sheet then starts listening. */
+    fun consumeStartVoice(): Boolean = startVoicePending.also { startVoicePending = false }
+
     fun submit(text: String, viaVoice: Boolean = false) {
+        val clean = begin(text) ?: return
+        viewModelScope.launch { finish(clean, viaVoice) }
+    }
+
+    /** Moves to Saving synchronously, so a double tap saves once. Null when there is nothing to save. */
+    private fun begin(text: String): String? {
         val clean = text.trim()
-        if (clean.isEmpty() || _state.value.phase != CapturePhase.Editing) return
-        _state.update { it.copy(phase = CapturePhase.Saving) }
-        viewModelScope.launch {
-            val input = CaptureInput(clean, source, clock.now().toEpochMilliseconds(), viaVoice = viaVoice, targetModule = target)
-            when (val r = service.submit(input)) {
-                CaptureResult.NoModule -> _state.update { it.copy(phase = CapturePhase.NoModule) }
-                is CaptureResult.Saved -> onSaved(r)
+        if (clean.isEmpty() || _state.value.phase != CapturePhase.Editing) return null
+        _state.update { it.copy(phase = CapturePhase.Saving, text = clean) }
+        return clean
+    }
+
+    private suspend fun save(text: String, viaVoice: Boolean): CaptureResult.Saved? =
+        begin(text)?.let { finish(it, viaVoice) }
+
+    private suspend fun finish(clean: String, viaVoice: Boolean): CaptureResult.Saved? {
+        val input = CaptureInput(clean, source, clock.now().toEpochMilliseconds(), viaVoice = viaVoice, targetModule = target)
+        return when (val r = service.submit(input)) {
+            CaptureResult.NoModule -> {
+                _state.update { it.copy(phase = CapturePhase.NoModule) }
+                null
             }
+            is CaptureResult.Saved -> r.also { onSaved(it) }
         }
+    }
+
+    private suspend fun undoVoice(u: VoiceUndo) {
+        val saved = lastSaved?.takeIf { it.recordId == u.recordId } ?: return
+        closeJob?.cancel()
+        service.undo(saved)
+        lastSaved = null
+        _state.update { it.copy(phase = CapturePhase.Editing, text = u.text) }
     }
 
     fun moveTo(option: MoveOption) {
@@ -95,9 +136,19 @@ class CaptureViewModel @Inject constructor(
         }
         _state.update { it.copy(phase = phase) }
         closeJob = viewModelScope.launch {
-            delay(if (r.alternatives.isEmpty()) CONFIRM_MS else ALTERNATIVES_MS)
+            delay(
+                when {
+                    r.input.viaVoice -> maxOf(VoiceSession.UNDO_MS, if (r.alternatives.isEmpty()) 0 else ALTERNATIVES_MS)
+                    r.alternatives.isEmpty() -> CONFIRM_MS
+                    else -> ALTERNATIVES_MS
+                },
+            )
             _state.update { it.copy(finished = true) }
         }
+    }
+
+    override fun onCleared() {
+        voice.close()
     }
 
     private fun labelOf(id: ModuleId): Int? = registry.all.firstOrNull { it.id == id }?.labelRes

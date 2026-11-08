@@ -20,7 +20,7 @@ import kotlinx.datetime.LocalDate
 
 /** In-memory [DietRepository] that records calls. */
 class FakeDietRepository(private val clock: FakeClock) : DietRepository {
-    data class LogCall(val text: String, val source: CaptureSource, val eatenAt: Long?)
+    data class LogCall(val text: String, val source: CaptureSource, val eatenAt: Long?, val viaVoice: Boolean = false, val photoFile: String? = null)
     data class EditCall(val id: String, val text: String?, val eatenAt: Long?, val photoFile: String?, val clearPhoto: Boolean)
 
     val entries = MutableStateFlow<List<FoodEntryEntity>>(emptyList())
@@ -38,9 +38,9 @@ class FakeDietRepository(private val clock: FakeClock) : DietRepository {
     )
 
     override suspend fun logEntry(text: String, source: CaptureSource, eatenAt: Long?, photoFile: String?, viaVoice: Boolean): String {
-        logs += LogCall(text, source, eatenAt)
+        logs += LogCall(text, source, eatenAt, viaVoice, photoFile)
         val id = "id${logs.size}"
-        entries.value = (entries.value + entry(id, text.trim(), eatenAt ?: clock.nowMs)).sortedBy { it.eatenAt }
+        entries.value = (entries.value + entry(id, text.trim(), eatenAt ?: clock.nowMs, photoFile)).sortedBy { it.eatenAt }
         return id
     }
 

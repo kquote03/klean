@@ -15,10 +15,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -26,6 +23,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.klean.core.capture.voice.VoiceStatus
+import app.klean.core.capture.voice.VoiceUiState
+import app.klean.core.capture.voice.rememberVoiceInput
 import app.klean.core.design.component.CaptureField
 import app.klean.core.design.component.NeutralEmpty
 import app.klean.feature.diet.R
@@ -34,34 +34,49 @@ import app.klean.feature.diet.ui.dietRows
 @Composable
 fun DietScreen(onOpenEntry: (String) -> Unit, vm: DietViewModel = hiltViewModel()) {
     val state by vm.uiState.collectAsStateWithLifecycle()
-    DietScreenContent(state, onSubmit = vm::onSubmit, onRepeat = vm::onRepeat, onOpenEntry = onOpenEntry)
+    val text by vm.field.collectAsStateWithLifecycle()
+    val voice by vm.voice.state.collectAsStateWithLifecycle()
+    DietScreenContent(
+        state = state,
+        text = text,
+        voice = voice,
+        onTextChange = vm::onTextChange,
+        onSubmit = vm::onSubmit,
+        onRepeat = vm::onRepeat,
+        onOpenEntry = onOpenEntry,
+        onMic = rememberVoiceInput(vm.voice),
+        onUndoVoice = vm.voice::undoLast,
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun DietScreenContent(
     state: DietUiState,
+    text: String,
+    voice: VoiceUiState,
+    onTextChange: (String) -> Unit,
     onSubmit: (String) -> Unit,
     onRepeat: (String) -> Unit,
     onOpenEntry: (String) -> Unit,
+    onMic: () -> Unit,
+    onUndoVoice: () -> Unit,
 ) {
-    var text by rememberSaveable { mutableStateOf("") }
     val focus = remember { FocusRequester() }
     Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.diet_today_title)) }) }) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
             // Pinned under the top bar: logging is always one action away.
             CaptureField(
-                value = text,
-                onValueChange = { text = it },
-                onSubmit = {
-                    onSubmit(text)
-                    text = ""
-                },
-                onMic = {}, // Voice input arrives in M6.
+                value = if (voice.listening && voice.partial.isNotBlank()) voice.partial else text,
+                onValueChange = onTextChange,
+                onSubmit = { onSubmit(text) },
+                onMic = onMic,
                 onPhoto = null,
                 placeholder = stringResource(R.string.diet_capture_placeholder),
+                listening = voice.listening,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).focusRequester(focus),
             )
+            VoiceStatus(voice, onUndo = onUndoVoice, modifier = Modifier.padding(horizontal = 16.dp))
             if (state.repeats.isNotEmpty()) {
                 FlowRow(
                     modifier = Modifier.padding(horizontal = 16.dp),

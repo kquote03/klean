@@ -7,4 +7,13 @@
     <string name="capture_repeats_label">Log again</string>
     <string name="tile_label">Log food</string>
     <string name="tile_label_universal">Capture</string>
+    <string name="voice_listening">Listening…</string>
+    <string name="voice_listening_heard">Listening… %1$s</string>
+    <string name="voice_permission_rationale">Klean uses the mic only while you tap it to speak an entry.</string>
+    <string name="voice_permission_off">Mic access is off. You can type instead, or allow it in system settings.</string>
+    <string name="voice_unavailable_offline">Voice isn\'t available offline on this phone</string>
+    <string name="voice_no_match">Didn\'t catch that. Tap the mic to try again, or type it.</string>
+    <string name="voice_try_again">Voice is busy right now. You can type instead.</string>
+    <string name="voice_saved_undo">Saved by voice · Undo</string>
+    <string name="voice_undo_description">Undo saving %1$s</string>
 </resources>

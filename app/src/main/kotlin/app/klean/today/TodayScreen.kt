@@ -23,7 +23,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.klean.R
+import app.klean.core.capture.CaptureActivity
 import app.klean.core.capture.UniversalCaptureService
+import app.klean.shared.diet.CaptureSource
+import androidx.compose.ui.platform.LocalContext
 import app.klean.core.design.component.CaptureField
 import app.klean.core.design.component.NeutralEmpty
 import app.klean.core.ui.module.ModuleRegistry
@@ -43,6 +46,7 @@ fun TodayScreen(
     val available by vm.captureAvailable.collectAsStateWithLifecycle()
     val justSaved by vm.justSaved.collectAsStateWithLifecycle()
     var text by rememberSaveable { mutableStateOf("") }
+    val ctx = LocalContext.current
     Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.nav_today)) }) }) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -62,7 +66,8 @@ fun TodayScreen(
                             val submitted = text
                             vm.submit(submitted) { saved -> if (saved && text == submitted) text = "" }
                         },
-                        onMic = {}, // Voice input arrives in M6.
+                        // Voice runs in the capture sheet, which owns the mic permission and the Undo chip.
+                        onMic = { ctx.startActivity(CaptureActivity.intent(ctx, CaptureSource.DASHBOARD, startVoice = true)) },
                         onPhoto = null,
                         placeholder = stringResource(R.string.today_capture_placeholder),
                         enabled = available,
