@@ -39,18 +39,9 @@ class KleanDb private constructor(val database: Database, val isSqlite: Boolean,
     /** Blocking variant for start-up work. */
     fun <T> blocking(block: JdbcTransaction.() -> T): T = transaction(database) { block() }
 
-    suspend fun setting(key: String): String? = read {
-        SettingsTable.selectAll().where { SettingsTable.key eq key }.singleOrNull()?.get(SettingsTable.value)
-    }
+    suspend fun setting(key: String): String? = read { selectSetting(key) }
 
     suspend fun putSetting(key: String, value: String) = write { upsertSetting(key, value) }
-
-    fun JdbcTransaction.upsertSetting(key: String, value: String) {
-        SettingsTable.upsert {
-            it[SettingsTable.key] = key
-            it[SettingsTable.value] = value
-        }
-    }
 
     /** For admin backup: a consistent SQLite snapshot via `VACUUM INTO`. */
     suspend fun vacuumInto(path: String) = write {
@@ -89,5 +80,15 @@ class KleanDb private constructor(val database: Database, val isSqlite: Boolean,
             transaction(db) { SchemaUtils.create(*ALL_TABLES) }
             return KleanDb(db, sqlite, ds)
         }
+    }
+}
+
+fun JdbcTransaction.selectSetting(key: String): String? =
+    SettingsTable.selectAll().where { SettingsTable.key eq key }.singleOrNull()?.get(SettingsTable.value)
+
+fun JdbcTransaction.upsertSetting(key: String, value: String) {
+    SettingsTable.upsert {
+        it[SettingsTable.key] = key
+        it[SettingsTable.value] = value
     }
 }
