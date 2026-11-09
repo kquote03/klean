@@ -133,8 +133,9 @@ class ModuleDisableTest {
         registry.setEnabled(ModuleId.DIET, true)
     }
 
+    // The holistic Today status (M16) isn't diet's, but with diet as its only line it goes when diet does.
     private fun dietNotifications() =
-        nm.activeNotifications.filter { it.id in DefaultDietEnablement.DIET_NOTIFICATIONS }.map { it.id }
+        nm.activeNotifications.filter { it.id in DefaultDietEnablement.DIET_NOTIFICATIONS + NotificationIds.STATUS }.map { it.id }
 
     /** notify()/cancel() are queued in system_server, so the active list catches up a moment later. */
     private suspend fun awaitDietNotifications(expect: (List<Int>) -> Boolean): List<Int> {
