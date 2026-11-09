@@ -36,6 +36,22 @@ interface ReminderRepository {
     /** Tombstones the row; it keeps syncing as deleted. */
     suspend fun delete(id: String)
 
+    /** Rings again at [until] (UTC ms): state SNOOZED. */
+    suspend fun snooze(id: String, until: Long)
+
+    /**
+     * "Done": the user did the thing. With [nextFireAt] (a recurring reminder; the caller owns the
+     * rule maths) it is rescheduled there. Otherwise it becomes DONE and an attached, open,
+     * non-recurring task is completed too.
+     */
+    suspend fun markDone(id: String, nextFireAt: Long? = null)
+
+    /**
+     * "Dismiss": stop ringing, nothing else. Never completes a task (dismiss ≠ done). With
+     * [nextFireAt] it is rescheduled there; otherwise it becomes DISMISSED.
+     */
+    suspend fun dismiss(id: String, nextFireAt: Long? = null)
+
     fun observeForTask(taskId: String): Flow<List<ReminderEntity>>
 
     /** SCHEDULED or SNOOZED reminders due at or after [fromMs] (snoozed ones by their snooze time). */
@@ -101,11 +117,50 @@ class DefaultReminderRepository @Inject constructor(
         if (found) notify(id)
     }
 
+    override suspend fun snooze(id: String, until: Long) =
+        change(id) { it.copy(state = SNOOZED, snoozedUntil = until) }
+
+    override suspend fun markDone(id: String, nextFireAt: Long?) = change(id) { r ->
+        if (nextFireAt != null) return@change r.rescheduled(nextFireAt)
+        r.taskId?.let { taskId ->
+            val task = db.taskDao().get(taskId)
+            if (task != null && !task.sync.deleted && task.completedAt == null && task.recurrence == null) {
+                db.taskDao().upsert(
+                    task.copy(status = "DONE", completedAt = clock.now().toEpochMilliseconds(), sync = stamper.stamp(task.sync)),
+                )
+            }
+        }
+        r.copy(state = DONE, snoozedUntil = null)
+    }
+
+    override suspend fun dismiss(id: String, nextFireAt: Long?) = change(id) { r ->
+        if (nextFireAt != null) r.rescheduled(nextFireAt) else r.copy(state = DISMISSED, snoozedUntil = null)
+    }
+
+    private fun ReminderEntity.rescheduled(at: Long) = copy(state = SCHEDULED, fireAt = at, snoozedUntil = null)
+
+    /** Read-modify-write of one live reminder in a transaction; listeners hear about it afterwards. */
+    private suspend fun change(id: String, edit: suspend (ReminderEntity) -> ReminderEntity) {
+        val found = db.transact {
+            val prev = dao.get(id)?.takeUnless { it.sync.deleted } ?: return@transact false
+            dao.upsert(edit(prev).copy(sync = stamper.stamp(prev.sync)))
+            true
+        }
+        if (found) notify(id)
+    }
+
     override fun observeForTask(taskId: String): Flow<List<ReminderEntity>> = dao.forTask(taskId)
 
     override fun observeUpcoming(fromMs: Long): Flow<List<ReminderEntity>> = dao.observeUpcoming(fromMs)
 
     private suspend fun notify(id: String) = listeners.forEach { it.onChanged(id) }
+
+    companion object {
+        const val SCHEDULED = "SCHEDULED"
+        const val SNOOZED = "SNOOZED"
+        const val DONE = "DONE"
+        const val DISMISSED = "DISMISSED"
+    }
 }
 
 @Module
