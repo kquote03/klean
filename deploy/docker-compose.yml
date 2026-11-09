@@ -1,0 +1,37 @@
+# Klean backend: one service, one volume, port 8080.
+#   ./gradlew :backend:jibDockerBuild          # builds klean-backend:dev
+#   docker compose -f deploy/docker-compose.yml up -d
+#   curl -s localhost:8080/api/v1/health      # {"status":"ok"}
+# See docs/deploy.md for Tailscale (default), LAN and reverse-proxy setups.
+name: klean
+
+services:
+  klean:
+    image: ${KLEAN_IMAGE:-klean-backend:dev}
+    restart: unless-stopped
+    ports:
+      # Bind to 127.0.0.1 only when a reverse proxy or `tailscale serve` fronts it: "127.0.0.1:8080:8080".
+      - "${KLEAN_BIND:-8080}:8080"
+    environment:
+      # Leave empty to have one generated into /data/admin-password.txt on first start.
+      KLEAN_ADMIN_PASSWORD: ${KLEAN_ADMIN_PASSWORD:-}
+      # The URL phones use to reach the server; it goes into the pairing QR.
+      KLEAN_PUBLIC_URL: ${KLEAN_PUBLIC_URL:-http://localhost:8080}
+      # Default: SQLite in the volume. Postgres: jdbc:postgresql://db:5432/klean (+ KLEAN_DB_USER/PASSWORD).
+      KLEAN_DB_URL: ${KLEAN_DB_URL:-}
+      KLEAN_DB_USER: ${KLEAN_DB_USER:-}
+      KLEAN_DB_PASSWORD: ${KLEAN_DB_PASSWORD:-}
+      # Optional integrations.
+      KLEAN_AI_UPSTREAM: ${KLEAN_AI_UPSTREAM:-}
+      KLEAN_AI_API_KEY: ${KLEAN_AI_API_KEY:-}
+      KLEAN_HERMES_URL: ${KLEAN_HERMES_URL:-}
+      KLEAN_HERMES_TOKEN: ${KLEAN_HERMES_TOKEN:-}
+      KLEAN_GOOGLE_CLIENT_ID: ${KLEAN_GOOGLE_CLIENT_ID:-}
+      KLEAN_GOOGLE_CLIENT_SECRET: ${KLEAN_GOOGLE_CLIENT_SECRET:-}
+      KLEAN_VAPID_SUBJECT: ${KLEAN_VAPID_SUBJECT:-}
+      KLEAN_LOG_LEVEL: ${KLEAN_LOG_LEVEL:-INFO}
+    volumes:
+      - klean-data:/data
+
+volumes:
+  klean-data:

@@ -1,0 +1,21 @@
+# Caddy in front of the Klean backend, with automatic HTTPS.
+# Run the backend with KLEAN_BIND=127.0.0.1:8080 and KLEAN_PUBLIC_URL=https://klean.example.com.
+klean.example.com {
+	encode zstd gzip
+
+	# Server-sent events (Hermes relay, AI streaming) must not be buffered.
+	@stream path /api/v1/hermes/* /api/v1/ai/*
+	reverse_proxy @stream 127.0.0.1:8080 {
+		flush_interval -1
+	}
+
+	reverse_proxy 127.0.0.1:8080
+
+	# DAV clients (DAVx5) discover through these.
+	redir /.well-known/carddav /dav/ 301
+	redir /.well-known/caldav /dav/ 301
+
+	request_body {
+		max_size 60MB
+	}
+}

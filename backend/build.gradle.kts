@@ -59,8 +59,8 @@ jib {
         image = "eclipse-temurin:21-jre"
     }
     to {
-        image = "klean-backend"
-        tags = setOf("dev")
+        // Override for CI publishing: -Djib.to.image=ghcr.io/kquote03/klean-backend:<tag>
+        image = "klean-backend:dev"
     }
     container {
         mainClass = "app.klean.backend.MainKt"
@@ -73,4 +73,9 @@ jib {
         jvmFlags = listOf("-XX:MaxRAMPercentage=75")
         creationTime = "USE_CURRENT_TIMESTAMP"
     }
+}
+
+// Jib 3.5 reads Task.project at execution time; let Gradle fall back to a non-cached configuration for it.
+tasks.matching { it.name.startsWith("jib") }.configureEach {
+    notCompatibleWithConfigurationCache("Jib uses Task.project at execution time")
 }
