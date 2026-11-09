@@ -2,6 +2,7 @@ package app.klean.feature.diet.ui.entry
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -101,7 +102,8 @@ fun FoodEntryScreen(onBack: () -> Unit, onRemoved: (String) -> Unit, vm: FoodEnt
                 modifier = Modifier.fillMaxWidth(),
             )
             Text(stringResource(R.string.diet_entry_eaten_at), style = MaterialTheme.typography.titleSmall)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            // Wraps the time under the date when large text leaves no room for both.
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 AssistChip(onClick = { showDate = true }, enabled = !state.deleted, label = { Text(state.dateLabel) })
                 AssistChip(onClick = { showTime = true }, enabled = !state.deleted, label = { Text(state.timeLabel) })
             }

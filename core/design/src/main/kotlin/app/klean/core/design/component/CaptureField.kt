@@ -26,7 +26,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import app.klean.core.design.R
@@ -52,11 +51,21 @@ fun CaptureField(
     Row(modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         OutlinedTextField(
             value = value,
-            onValueChange = onValueChange,
+            // One entry is one line of text, but it wraps instead of scrolling out of sight, so long
+            // entries and large font sizes stay readable. Newlines become spaces; Enter at the end submits.
+            onValueChange = { v ->
+                if ('\n' in v) {
+                    onValueChange(v.replace('\n', ' ').trimEnd())
+                    if (v.endsWith('\n')) onSubmit()
+                } else {
+                    onValueChange(v)
+                }
+            },
             modifier = Modifier.weight(1f).defaultMinSize(minHeight = 56.dp),
             enabled = enabled,
-            placeholder = { Text(placeholder, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-            singleLine = true,
+            placeholder = { Text(placeholder) },
+            singleLine = false,
+            maxLines = 4,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
             keyboardActions = KeyboardActions(onSend = { onSubmit() }),
             trailingIcon = {

@@ -25,6 +25,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -77,16 +80,22 @@ fun OnboardingScreen(
             }
             Spacer(Modifier.height(16.dp))
             val first = s.current == OnboardingStep.Welcome
-            Row(Modifier.fillMaxWidth()) {
+            // Same height even when large text wraps one label onto two lines.
+            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
                 // Equal weight on purpose: skipping is as normal as going on.
                 OutlinedButton(
                     onClick = { if (first) vm.skipAll() else vm.skip() },
-                    modifier = Modifier.weight(1f).heightIn(min = 48.dp),
-                ) { Text(stringResource(if (first) R.string.onboarding_skip_setup else R.string.onboarding_skip)) }
+                    modifier = Modifier.weight(1f).fillMaxHeight().heightIn(min = 48.dp),
+                ) {
+                    Text(
+                        stringResource(if (first) R.string.onboarding_skip_setup else R.string.onboarding_skip),
+                        textAlign = TextAlign.Center,
+                    )
+                }
                 Spacer(Modifier.width(12.dp))
                 FilledTonalButton(
                     onClick = { vm.next() },
-                    modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+                    modifier = Modifier.weight(1f).fillMaxHeight().heightIn(min = 48.dp),
                 ) {
                     Text(
                         stringResource(
@@ -96,6 +105,7 @@ fun OnboardingScreen(
                                 else -> R.string.onboarding_next
                             },
                         ),
+                        textAlign = TextAlign.Center,
                     )
                 }
             }

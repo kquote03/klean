@@ -174,7 +174,7 @@ private fun CompactContent(state: DietWidgetState) {
             imageProvider = ImageProvider(R.drawable.ic_widget_add),
             contentDescription = ctx.getString(R.string.diet_widget_add),
             onClick = captureAction(ctx, voice = false),
-            modifier = GlanceModifier.size(40.dp),
+            modifier = GlanceModifier.size(48.dp),
         )
     }
 }
