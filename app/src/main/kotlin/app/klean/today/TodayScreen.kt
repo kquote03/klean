@@ -2,15 +2,17 @@ package app.klean.today
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
@@ -56,7 +58,6 @@ import kotlinx.datetime.LocalDate
  * a neutral week overview and the module cards. Lives in :app until a second consumer justifies
  * :feature:today.
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun TodayScreen(
     registry: ModuleRegistry,
@@ -126,18 +127,24 @@ fun TodayScreen(
             }
             if (state.summaries.isNotEmpty()) {
                 item(key = "tiles") {
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        state.summaries.forEach { tile ->
-                            SummaryTile(
-                                label = tile.label,
-                                value = tile.value,
-                                icon = tile.icon,
-                                onClick = tile.route?.let { r -> { onOpen(r) } },
-                                modifier = Modifier.widthIn(min = 150.dp).weight(1f),
-                            )
+                    // Rows of tiles at least 150 dp wide. Tiles in a row share its height (the tallest
+                    // value decides), so a two-line value doesn't leave its neighbour short.
+                    BoxWithConstraints {
+                        val perRow = (maxWidth / 158.dp).toInt().coerceAtLeast(1)
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            state.summaries.chunked(perRow).forEach { row ->
+                                Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    row.forEach { tile ->
+                                        SummaryTile(
+                                            label = tile.label,
+                                            value = tile.value,
+                                            icon = tile.icon,
+                                            onClick = tile.route?.let { r -> { onOpen(r) } },
+                                            modifier = Modifier.weight(1f).fillMaxHeight(),
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }
