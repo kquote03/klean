@@ -31,9 +31,10 @@ import java.nio.file.Files
 import java.nio.file.attribute.PosixFilePermissions
 import kotlin.time.Clock
 
-@Serializable data class LoginRequest(val password: String, val deviceName: String = "web")
+/** [deviceId]: optional client-chosen id (its local `device_id`), so server and client ids match. */
+@Serializable data class LoginRequest(val password: String, val deviceName: String = "web", val deviceId: String? = null)
 @Serializable data class PairStartResponse(val code: String, val qr: String, val expiresAt: Long)
-@Serializable data class PairClaimRequest(val code: String, val deviceName: String, val platform: String = "ANDROID")
+@Serializable data class PairClaimRequest(val code: String, val deviceName: String, val platform: String = "ANDROID", val deviceId: String? = null)
 @Serializable data class PairClaimResponse(val deviceId: String, val token: String)
 @Serializable data class AppPasswordRequest(val name: String)
 @Serializable data class AppPasswordResponse(val deviceId: String, val username: String, val token: String)
@@ -87,7 +88,7 @@ class AuthService(private val db: KleanDb, private val config: KleanConfig, priv
     suspend fun login(request: LoginRequest): PairClaimResponse {
         val hash = db.setting(ADMIN_HASH_KEY) ?: throw ApiException(HttpStatusCode.Unauthorized, "not set up")
         if (!Passwords.verify(request.password, hash)) throw ApiException(HttpStatusCode.Unauthorized, "wrong password")
-        return createDevice(request.deviceName.take(200).ifBlank { "web" }, "WEB", admin = true)
+        return createDevice(request.deviceName.take(200).ifBlank { "web" }, "WEB", admin = true, wantedId = request.deviceId)
     }
 
     suspend fun startPairing(): PairStartResponse {
@@ -107,6 +108,7 @@ class AuthService(private val db: KleanDb, private val config: KleanConfig, priv
     suspend fun claim(request: PairClaimRequest): PairClaimResponse {
         val platform = request.platform.uppercase().takeIf { it in PLATFORMS && it != "DAV" }
             ?: throw ApiException(HttpStatusCode.BadRequest, "unknown platform")
+        request.deviceId?.let { checkWantedId(it) }
         val hash = sha256Hex(normalise(request.code).toByteArray())
         val now = clock.now().toEpochMilliseconds()
         val ok = db.write {
@@ -115,7 +117,7 @@ class AuthService(private val db: KleanDb, private val config: KleanConfig, priv
             }) { it[used] = true } == 1
         }
         if (!ok) throw ApiException(HttpStatusCode.Unauthorized, "invalid or expired code")
-        return createDevice(request.deviceName.take(200).ifBlank { "device" }, platform, admin = false)
+        return createDevice(request.deviceName.take(200).ifBlank { "device" }, platform, admin = false, wantedId = request.deviceId)
     }
 
     suspend fun createAppPassword(request: AppPasswordRequest): AppPasswordResponse {
@@ -152,9 +154,16 @@ class AuthService(private val db: KleanDb, private val config: KleanConfig, priv
         if (n == 0) throw ApiException(HttpStatusCode.NotFound, "no such device")
     }
 
-    private suspend fun createDevice(name: String, platform: String, admin: Boolean): PairClaimResponse {
+    private suspend fun checkWantedId(id: String) {
+        if (!DEVICE_ID.matches(id)) throw ApiException(HttpStatusCode.BadRequest, "bad deviceId")
+        val taken = db.read { DevicesTable.selectAll().where { DevicesTable.id eq id }.any() }
+        if (taken) throw ApiException(HttpStatusCode.Conflict, "deviceId already paired")
+    }
+
+    private suspend fun createDevice(name: String, platform: String, admin: Boolean, wantedId: String? = null): PairClaimResponse {
+        wantedId?.let { checkWantedId(it) }
         val token = randomBytes(32).b64Url()
-        val id = UuidV7.generate(clock.now().toEpochMilliseconds())
+        val id = wantedId ?: UuidV7.generate(clock.now().toEpochMilliseconds())
         val now = clock.now().toEpochMilliseconds()
         db.write {
             DevicesTable.insert {
@@ -180,6 +189,7 @@ class AuthService(private val db: KleanDb, private val config: KleanConfig, priv
     companion object {
         const val ADMIN_HASH_KEY = "admin.passwordHash"
         const val DAV_USERNAME = "klean"
+        private val DEVICE_ID = Regex("^[A-Za-z0-9_-]{1,64}$")
         private const val ALPHABET = "ABCDEFGHJKMNPQRSTVWXYZ23456789"
 
         fun newCode(): String {

@@ -83,6 +83,19 @@ class PairingTest {
         assertEquals(HttpStatusCode.Unauthorized, c.get("/api/v1/devices") { bearerAuth(a.token) }.status)
     }
 
+    @Test fun claimCanKeepTheClientsOwnDeviceId() = kleanTest {
+        val c = jsonClient()
+        val web = c.login()
+        suspend fun claim(id: String) = c.post("/api/v1/pair/claim") {
+            val start = c.post("/api/v1/pair/start") { bearerAuth(web.token) }.body<PairStartResponse>()
+            contentType(ContentType.Application.Json); setBody(PairClaimRequest(start.code, "Pixel", "ANDROID", deviceId = id))
+        }
+        val first = claim("0190f0aa-local-device")
+        assertEquals("0190f0aa-local-device", first.body<PairClaimResponse>().deviceId)
+        assertEquals(HttpStatusCode.Conflict, claim("0190f0aa-local-device").status)
+        assertEquals(HttpStatusCode.BadRequest, claim("../../etc").status)
+    }
+
     @Test fun unknownOrExpiredCodeIsRejected() = kleanTest {
         val c = jsonClient()
         val r = c.post("/api/v1/pair/claim") {
