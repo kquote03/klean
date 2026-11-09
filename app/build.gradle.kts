@@ -16,6 +16,12 @@ android {
         versionName = "0.1.0-$versionCode-${gitOutput("rev-parse", "--short", "HEAD") ?: "dev"}"
         testInstrumentationRunner = "app.klean.HiltTestRunner"
     }
+    signingConfigs {
+        // CI passes the shared debug key explicitly, so nightly APKs install over local debug builds.
+        getByName("debug") {
+            providers.environmentVariable("KLEAN_DEBUG_KEYSTORE").orNull?.let { storeFile = file(it) }
+        }
+    }
     buildTypes {
         debug { applicationIdSuffix = ".debug" }
         release {

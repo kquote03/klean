@@ -39,10 +39,19 @@ jobs:
         env:
           KEYSTORE: ${{ secrets.DEBUG_KEYSTORE_B64 }}
         if: env.KEYSTORE != ''
-        run: mkdir -p ~/.android && echo "$KEYSTORE" | base64 -d > ~/.android/debug.keystore
+        run: |
+          echo "$KEYSTORE" | base64 -d > "$RUNNER_TEMP/debug.keystore"
+          echo "KLEAN_DEBUG_KEYSTORE=$RUNNER_TEMP/debug.keystore" >> "$GITHUB_ENV"
 
       - name: Gate
         run: ./gradlew assembleDebug :app:assembleDebugAndroidTest :shared:jvmTest testDebugUnitTest --console=plain
+
+      - name: Check the APK is signed with the shared debug key
+        if: env.KLEAN_DEBUG_KEYSTORE != ''
+        run: |
+          digest=$("$ANDROID_HOME"/build-tools/36.0.0/apksigner verify --print-certs app/build/outputs/apk/debug/app-debug.apk | sed -n 's/.*certificate SHA-256 digest: //p')
+          echo "signed with $digest"
+          test "$digest" = "105be2212f0a3aff9b1015bd29797c9b70bfd386f58bac3de9ae75429633ed52"
 
       - name: Version
         id: version
