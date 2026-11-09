@@ -3,6 +3,7 @@ package app.klean.nav
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.isToggleable
@@ -63,6 +64,7 @@ class ShellSmokeTest {
         gate: FakeModuleGate = FakeModuleGate(),
         dashboard: DashboardContributions? = null,
         layout: TodayLayoutStore = InMemoryTodayLayout(),
+        newModules: NewModulesStore = InMemoryNewModules(),
     ): ShellViewModel =
         ShellViewModel(
             ModuleRegistry(modules, gate), UniversalCaptureService(emptySet(), gate, DefaultCaptureRouter(null)), Clock.System,
@@ -70,6 +72,7 @@ class ShellSmokeTest {
             dashboard = dashboard ?: DashboardContributions(emptySet(), emptySet(), gate),
             ticker = OneTick,
             todayLayout = layout,
+            newModules = newModules,
         )
 
     /** One clock read; the real ticker loops once a minute forever. */
@@ -306,5 +309,23 @@ class ShellSmokeTest {
         compose.onNodeWithText("Diet card").assertDoesNotExist()
         compose.onNode(hasClickAction() and hasText("Diet")).assertExists()
         compose.onNodeWithText("Nothing here yet. Turn on a module in Settings.").assertDoesNotExist()
+    }
+
+    /** M16.6: an update's new modules are listed once on Today, already on; a switch turns one off. */
+    @Test fun newInKleanListsNewModulesOnceAndCanTurnOneOff() {
+        val gate = FakeModuleGate()
+        val store = InMemoryNewModules(setOf(ModuleId.DIET))
+        val vm = shell(setOf(dietWithCard()), gate, newModules = store)
+        compose.setContent { KleanTheme { KleanAppUi(vm) } }
+        compose.waitForIdle()
+        compose.onNodeWithText("New in Klean").assertExists()
+        compose.onNodeWithContentDescription("Use Diet").assertIsOn()
+        compose.onNodeWithContentDescription("Use Diet").performClick()
+        compose.waitForIdle()
+        assertEquals(setOf(ModuleId.DIET), gate.state.value)
+        compose.onNodeWithText("Done").performClick()
+        compose.waitForIdle()
+        assertEquals(emptySet<ModuleId>(), store.pending.value)
+        compose.onNodeWithText("New in Klean").assertDoesNotExist()
     }
 }

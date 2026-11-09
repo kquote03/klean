@@ -39,6 +39,7 @@ class ShellViewModel @Inject constructor(
     val zone: ZoneProvider = SystemZone,
     val ticker: MinuteTicker = MinuteTicker(),
     val todayLayout: TodayLayoutStore = InMemoryTodayLayout(),
+    val newModules: NewModulesStore = InMemoryNewModules(),
 ) : ViewModel() {
     private val _startWithSetup = MutableStateFlow<Boolean?>(null)
 

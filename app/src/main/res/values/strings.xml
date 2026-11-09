@@ -11,6 +11,10 @@
     <string name="today_arrange_done">Done</string>
     <string name="today_arrange_back">Back</string>
     <string name="today_more_options">More options</string>
+    <string name="new_modules_title">New in Klean</string>
+    <string name="new_modules_body">These are switched on. You can turn any of them off here, or later in Settings.</string>
+    <string name="new_modules_switch">Use %1$s</string>
+    <string name="new_modules_done">Done</string>
     <string name="today_empty">Nothing here yet. Turn on a module in Settings.</string>
     <string name="today_capture_saved">Saved</string>
     <string name="today_greeting_morning">Good morning</string>

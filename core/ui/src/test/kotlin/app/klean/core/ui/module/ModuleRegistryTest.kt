@@ -25,7 +25,7 @@ class ModuleRegistryTest {
             state.value = if (enabled) state.value - id else state.value + id
         }
         val seeded = mutableListOf<Set<ModuleId>>()
-        override suspend fun seedNew(registered: Set<ModuleId>) { seeded += registered }
+        override suspend fun seedNew(registered: Set<ModuleId>): Set<ModuleId> { seeded += registered; return emptySet() }
     }
 
     private class FakeModule(

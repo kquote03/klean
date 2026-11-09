@@ -50,6 +50,7 @@ fun KleanNavHost(nav: NavHostController, shell: ShellViewModel, enabled: List<Kl
                 onOpen = { nav.navigate(it) },
                 onArrange = { nav.navigate(ArrangeTodayRoute) },
             )
+            NewModulesSheet(registry, shell.newModules)
         }
         composable<ArrangeTodayRoute> {
             ArrangeTodayScreen(registry = registry, layout = shell.todayLayout, onDone = { nav.popBackStack() })

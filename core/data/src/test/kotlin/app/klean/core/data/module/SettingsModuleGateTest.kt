@@ -46,13 +46,17 @@ class SettingsModuleGateTest {
         assertEquals(setOf("sleep"), settings.get(SyncedKeys.DisabledModules))
     }
 
-    @Test fun seedingRecordsKnownIdsAndSwitchesNewOnesOff() = runBlocking {
-        gate.seedNew(setOf(ModuleId.DIET, ModuleId.TASKS, ModuleId.SLEEP))
+    @Test fun seedingRecordsKnownIdsAndKeepsNewOnesOn() = runBlocking {
+        // Fresh install: everything on, nothing to announce.
+        assertEquals(emptySet<ModuleId>(), gate.seedNew(setOf(ModuleId.DIET)))
+        assertEquals(setOf("diet"), settings.get(KnownModules))
+        // An update adds two: both on, both announced once.
+        assertEquals(setOf(ModuleId.TASKS, ModuleId.SLEEP), gate.seedNew(setOf(ModuleId.DIET, ModuleId.TASKS, ModuleId.SLEEP)))
         assertEquals(setOf("diet", "tasks", "sleep"), settings.get(KnownModules))
-        assertEquals(setOf(ModuleId.TASKS, ModuleId.SLEEP), gate.disabledIds.first())
-        gate.setEnabled(ModuleId.TASKS, true)
-        gate.seedNew(setOf(ModuleId.DIET, ModuleId.TASKS, ModuleId.SLEEP))
-        assertTrue("re-enabled module stays on", gate.isEnabled(ModuleId.TASKS))
-        assertFalse(gate.isEnabled(ModuleId.SLEEP))
+        assertEquals(emptySet<ModuleId>(), gate.disabledIds.first())
+        gate.setEnabled(ModuleId.TASKS, false)
+        assertEquals(emptySet<ModuleId>(), gate.seedNew(setOf(ModuleId.DIET, ModuleId.TASKS, ModuleId.SLEEP)))
+        assertFalse("switched-off module stays off", gate.isEnabled(ModuleId.TASKS))
+        assertTrue(gate.isEnabled(ModuleId.SLEEP))
     }
 }

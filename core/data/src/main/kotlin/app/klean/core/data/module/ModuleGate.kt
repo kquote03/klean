@@ -19,8 +19,11 @@ interface ModuleGate {
     suspend fun isEnabled(id: ModuleId): Boolean
     suspend fun setEnabled(id: ModuleId, enabled: Boolean)
 
-    /** Switches off every id in [registered] the user has never been offered (see [seedNewModules]). */
-    suspend fun seedNew(registered: Set<ModuleId>) {}
+    /**
+     * Records every id in [registered] as known; new ones stay on (see [seedNewModules]). Returns the
+     * new ids an existing install should list once in "New in Klean".
+     */
+    suspend fun seedNew(registered: Set<ModuleId>): Set<ModuleId> = emptySet()
 }
 
 /** Backed by the synced `core.modules.disabled` setting, so the choice follows the user across devices. */
@@ -34,16 +37,14 @@ class SettingsModuleGate @Inject constructor(private val settings: SettingsRepos
     override suspend fun setEnabled(id: ModuleId, enabled: Boolean) =
         settings.update(SyncedKeys.DisabledModules) { if (enabled) it - id.value else it + id.value }
 
-    /**
-     * Disabled is written before known: if the process dies in between, the next start sees the same
-     * ids as new again and adds them to the (set-valued, so idempotent) disabled list once more.
-     */
-    override suspend fun seedNew(registered: Set<ModuleId>) {
+    /** New modules stay on, so only `known` is written; the disabled set is left as the user made it. */
+    override suspend fun seedNew(registered: Set<ModuleId>): Set<ModuleId> {
         val ids = registered.map { it.value }.toSet()
         val known = settings.get(KnownModules)
-        if ((ids - known).isEmpty()) return
-        settings.update(SyncedKeys.DisabledModules) { disabled -> seedNewModules(ids, known, disabled).second }
-        settings.update(KnownModules) { k -> k + ids }
+        if ((ids - known).isEmpty()) return emptySet()
+        val result = seedNewModules(ids, known, emptySet())
+        settings.update(KnownModules) { k -> k + result.known }
+        return result.pending.map(::ModuleId).toSet()
     }
 }
 

@@ -58,7 +58,7 @@ class DietKleanModule @Inject constructor(private val enablement: DietEnablement
     override val id: ModuleId = ModuleId.DIET
     override val labelRes: Int = R.string.diet_label
     override val icon: ImageVector get() = Icons.Rounded.Restaurant
-    override val navOrder: Int = 10
+    override val navOrder: Int = 60
     override val dashboardSlot: DashboardSlot = DashboardSlot.DIET
     override val startRoute: Any = DietRoute
     override val graphRoute: Any = DietGraph

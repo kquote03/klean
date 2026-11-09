@@ -25,5 +25,13 @@
                 <action android:name="${applicationId}.ENSURE_ACCOUNT" />
             </intent-filter>
         </receiver>
+        <!-- `adb shell am broadcast -a app.klean.debug.NEW_MODULES -p app.klean.debug`: shows "New in Klean" once. -->
+        <receiver
+            android:name="app.klean.debug.NewModulesReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="${applicationId}.NEW_MODULES" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>
