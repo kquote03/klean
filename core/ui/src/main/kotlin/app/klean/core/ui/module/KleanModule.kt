@@ -54,6 +54,9 @@ class ModuleRegistry @Inject constructor(
     val dashboardCards: Flow<List<KleanModule>> =
         enabled.map { l -> l.filter { it.dashboardSlot != null }.sortedBy { it.dashboardSlot!!.ordinal } }
 
+    /** Startup: modules the user has never been offered (added by an update) start switched off. */
+    suspend fun seed() = gate.seedNew(all.map { it.id }.toSet())
+
     suspend fun setEnabled(id: ModuleId, enabled: Boolean) {
         gate.setEnabled(id, enabled)
         all.firstOrNull { it.id == id }?.onEnabledChanged(enabled)

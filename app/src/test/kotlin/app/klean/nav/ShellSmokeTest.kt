@@ -6,6 +6,7 @@ import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.isToggleable
+import androidx.compose.ui.test.isSelectable
 import app.klean.shared.module.ModuleId
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -233,5 +234,44 @@ class ShellSmokeTest {
         compose.onNodeWithText("3 entries").assertDoesNotExist()
         compose.onNodeWithText("This week").assertDoesNotExist()
         compose.onNodeWithText("Nothing here yet. Turn on a module in Settings.").assertIsDisplayed()
+    }
+
+    private fun barLabels(): List<String> =
+        compose.onAllNodes(hasClickAction() and isSelectable())
+            .fetchSemanticsNodes()
+            .mapNotNull { n -> n.config.getOrNull(SemanticsProperties.Text)?.joinToString { it.text } }
+
+    /** Five modules on: the bar keeps Today + 3 + More; More lists the 4th and 5th, then Settings. */
+    // A tall screen, so Settings' general rows are composed under the five module rows.
+    @Config(qualifiers = "w411dp-h891dp")
+    @Test fun moreThanThreeModulesMoveTheRestUnderMore() {
+        val vm = shell(fiveFakeModules())
+        compose.setContent { KleanTheme { KleanAppUi(vm) } }
+        compose.waitForIdle()
+        assertEquals(listOf("Today", "OK", "Cancel", "Copy", "More"), barLabels())
+        compose.onNode(hasClickAction() and hasText("More")).performClick()
+        compose.waitForIdle()
+        compose.onNode(hasClickAction() and hasText("More")).assertIsSelected()
+        compose.onNodeWithText("Paste").assertIsDisplayed()
+        compose.onNodeWithText("Cut").assertIsDisplayed()
+        compose.onNodeWithText("OK").assertIsDisplayed() // in the bar only
+        compose.onAllNodesWithText("Copy").assertCountEquals(1)
+        compose.onNodeWithText("Cut").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithText("Screen of Cut").assertIsDisplayed()
+        compose.onNode(hasClickAction() and hasText("More")).assertIsSelected()
+        compose.onNode(hasClickAction() and hasText("More")).performClick()
+        compose.waitForIdle()
+        compose.onNodeWithText("Settings").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithText("Quiet hours").assertExists()
+        compose.onNode(hasClickAction() and hasText("More")).assertIsSelected()
+    }
+
+    @Test fun threeModulesKeepSettingsInTheBar() {
+        val vm = shell(fiveFakeModules().take(3).toSet())
+        compose.setContent { KleanTheme { KleanAppUi(vm) } }
+        compose.waitForIdle()
+        assertEquals(listOf("Today", "OK", "Cancel", "Copy", "Settings"), barLabels())
     }
 }

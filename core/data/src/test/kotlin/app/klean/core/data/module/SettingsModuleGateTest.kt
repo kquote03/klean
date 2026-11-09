@@ -45,4 +45,14 @@ class SettingsModuleGateTest {
         assertFalse(gate.isEnabled(ModuleId.SLEEP))
         assertEquals(setOf("sleep"), settings.get(SyncedKeys.DisabledModules))
     }
+
+    @Test fun seedingRecordsKnownIdsAndSwitchesNewOnesOff() = runBlocking {
+        gate.seedNew(setOf(ModuleId.DIET, ModuleId.TASKS, ModuleId.SLEEP))
+        assertEquals(setOf("diet", "tasks", "sleep"), settings.get(KnownModules))
+        assertEquals(setOf(ModuleId.TASKS, ModuleId.SLEEP), gate.disabledIds.first())
+        gate.setEnabled(ModuleId.TASKS, true)
+        gate.seedNew(setOf(ModuleId.DIET, ModuleId.TASKS, ModuleId.SLEEP))
+        assertTrue("re-enabled module stays on", gate.isEnabled(ModuleId.TASKS))
+        assertFalse(gate.isEnabled(ModuleId.SLEEP))
+    }
 }

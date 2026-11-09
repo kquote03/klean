@@ -3,4 +3,7 @@
     <string name="backup_channel_description">A note when the daily backup could not be saved</string>
     <string name="backup_notification_title">Backup</string>
     <string name="backup_auto_failed">Daily backup couldn\'t be saved. Check the backup folder in Settings.</string>
+    <!-- Must equal the application id; the debug build overrides it in app/src/debug/res. -->
+    <string name="klean_account_type" translatable="false">app.klean</string>
+    <string name="klean_account_label">Klean</string>
 </resources>

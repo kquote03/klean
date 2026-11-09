@@ -18,6 +18,9 @@ interface ModuleGate {
     val disabledIds: Flow<Set<ModuleId>>
     suspend fun isEnabled(id: ModuleId): Boolean
     suspend fun setEnabled(id: ModuleId, enabled: Boolean)
+
+    /** Switches off every id in [registered] the user has never been offered (see [seedNewModules]). */
+    suspend fun seedNew(registered: Set<ModuleId>) {}
 }
 
 /** Backed by the synced `core.modules.disabled` setting, so the choice follows the user across devices. */
@@ -30,6 +33,18 @@ class SettingsModuleGate @Inject constructor(private val settings: SettingsRepos
 
     override suspend fun setEnabled(id: ModuleId, enabled: Boolean) =
         settings.update(SyncedKeys.DisabledModules) { if (enabled) it - id.value else it + id.value }
+
+    /**
+     * Disabled is written before known: if the process dies in between, the next start sees the same
+     * ids as new again and adds them to the (set-valued, so idempotent) disabled list once more.
+     */
+    override suspend fun seedNew(registered: Set<ModuleId>) {
+        val ids = registered.map { it.value }.toSet()
+        val known = settings.get(KnownModules)
+        if ((ids - known).isEmpty()) return
+        settings.update(SyncedKeys.DisabledModules) { disabled -> seedNewModules(ids, known, disabled).second }
+        settings.update(KnownModules) { k -> k + ids }
+    }
 }
 
 @Module

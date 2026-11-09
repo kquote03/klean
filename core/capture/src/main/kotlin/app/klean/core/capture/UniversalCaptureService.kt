@@ -6,6 +6,12 @@ import app.klean.shared.capture.CaptureHandler
 import app.klean.shared.capture.CaptureInput
 import app.klean.core.ai.AiCaptureClassifier
 import app.klean.shared.capture.CaptureRouter
+import app.klean.shared.capture.CaptureClassifier
+import app.klean.shared.capture.CompositeCaptureClassifier
+import app.klean.shared.capture.RuleCaptureClassifier
+import app.klean.core.common.ZoneProvider
+import kotlin.time.Clock
+import kotlinx.datetime.toLocalDateTime
 import app.klean.shared.capture.DefaultCaptureRouter
 import app.klean.shared.module.ModuleId
 import dagger.Module
@@ -100,5 +106,15 @@ object CaptureRouterModule {
      * The AI classifier is consulted only with two or more modules and an on-device (offline) provider
      * assigned to "Sorting quick capture"; with Prototype 1's single module the router short-circuits.
      */
-    @Provides fun router(classifier: AiCaptureClassifier): CaptureRouter = DefaultCaptureRouter(classifier)
+    @Provides fun router(classifier: AiCaptureClassifier, clock: Clock, zone: ZoneProvider): CaptureRouter =
+        captureRouter(classifier, clock, zone)
 }
+
+/**
+ * Offline rules first; the AI classifier only when the rules find nothing, and never for birthdays (decision 6).
+ * With diet as the only module the router still short-circuits before either is asked.
+ */
+internal fun captureRouter(ai: CaptureClassifier?, clock: Clock, zone: ZoneProvider): CaptureRouter =
+    DefaultCaptureRouter(
+        CompositeCaptureClassifier(RuleCaptureClassifier { clock.now().toLocalDateTime(zone.current()) }, ai),
+    )
