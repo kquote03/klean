@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import app.klean.shared.id.UuidV7
 import dagger.Module
 import dagger.Provides
@@ -48,6 +49,9 @@ class DevicePrefs @Inject constructor(
         val aiTaskAssignment = stringPreferencesKey("aiTaskAssignment")
         val deliveryOffer = stringPreferencesKey("deliveryOffer")
         val mainPhone = booleanPreferencesKey("mainPhone")
+        val cardOrder = stringPreferencesKey("cardOrder")
+        val hiddenCards = stringSetPreferencesKey("hiddenCards")
+        val pendingNewModules = stringSetPreferencesKey("pendingNewModules")
     }
 
     /** Stable id of this install. Generated (UUIDv7) and persisted on first use. */
@@ -104,6 +108,18 @@ class DevicePrefs @Inject constructor(
     /** Future: marks the phone that owns prompts when several devices sync. */
     val mainPhone: Flow<Boolean> = flow(K.mainPhone, true)
     suspend fun setMainPhone(v: Boolean) = put(K.mainPhone, v)
+
+    /** Today's card order as module ids (device-local layout); empty = the default slot order. */
+    val cardOrder: Flow<List<String>> = store.data.map { p -> p[K.cardOrder]?.split(',')?.filter { it.isNotEmpty() } ?: emptyList() }
+    suspend fun setCardOrder(v: List<String>) = put(K.cardOrder, v.joinToString(",").ifEmpty { null })
+
+    /** Module ids whose Today card is hidden. */
+    val hiddenCards: Flow<Set<String>> = flow(K.hiddenCards, emptySet())
+    suspend fun setHiddenCards(v: Set<String>) = put(K.hiddenCards, v)
+
+    /** Modules an update added (switched on), listed once in the "New in Klean" sheet. */
+    val pendingNewModules: Flow<Set<String>> = flow(K.pendingNewModules, emptySet())
+    suspend fun setPendingNewModules(v: Set<String>) = put(K.pendingNewModules, v)
 
     /**
      * Device prefs that travel in a backup, as strings. Leaves out what only makes sense on this

@@ -44,6 +44,10 @@ import kotlinx.datetime.todayIn
 import app.klean.core.ui.module.ModuleRegistry
 import org.junit.Assert.assertTrue
 import org.junit.Rule
+import app.klean.core.ui.module.DashboardSlot
+import app.klean.today.InMemoryTodayLayout
+import app.klean.today.TodayLayoutStore
+import androidx.compose.material3.Text
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
@@ -58,12 +62,14 @@ class ShellSmokeTest {
         modules: Set<KleanModule>,
         gate: FakeModuleGate = FakeModuleGate(),
         dashboard: DashboardContributions? = null,
+        layout: TodayLayoutStore = InMemoryTodayLayout(),
     ): ShellViewModel =
         ShellViewModel(
             ModuleRegistry(modules, gate), UniversalCaptureService(emptySet(), gate, DefaultCaptureRouter(null)), Clock.System,
             FakePermissionChecker(), FakeOnboardingState(show = false), FakeQuietHoursStore(),
             dashboard = dashboard ?: DashboardContributions(emptySet(), emptySet(), gate),
             ticker = OneTick,
+            todayLayout = layout,
         )
 
     /** One clock read; the real ticker loops once a minute forever. */
@@ -273,5 +279,32 @@ class ShellSmokeTest {
         compose.setContent { KleanTheme { KleanAppUi(vm) } }
         compose.waitForIdle()
         assertEquals(listOf("Today", "OK", "Cancel", "Copy", "Settings"), barLabels())
+    }
+
+    /** Diet laid out like the real one, with a visible card. */
+    private fun dietWithCard(): KleanModule = object : KleanModule by NestedModule() {
+        override val dashboardSlot = DashboardSlot.DIET
+        @Composable override fun DashboardCard(onOpen: () -> Unit, modifier: Modifier) { Text("Diet card") }
+    }
+
+    /** M16.5: hiding Diet's card on Today keeps Diet itself (its nav item) where it is. */
+    @Test fun hidingTheDietCardKeepsTheDietNavItem() {
+        val layout = InMemoryTodayLayout()
+        val vm = shell(setOf(dietWithCard()), layout = layout)
+        compose.setContent { KleanTheme { KleanAppUi(vm) } }
+        compose.waitForIdle()
+        compose.onNodeWithText("Diet card").assertExists()
+        compose.onNodeWithContentDescription("More options").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithText("Arrange Today").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithContentDescription("Show Diet").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithText("Done").performClick()
+        compose.waitForIdle()
+        assertEquals(setOf("diet"), layout.hidden.value)
+        compose.onNodeWithText("Diet card").assertDoesNotExist()
+        compose.onNode(hasClickAction() and hasText("Diet")).assertExists()
+        compose.onNodeWithText("Nothing here yet. Turn on a module in Settings.").assertDoesNotExist()
     }
 }

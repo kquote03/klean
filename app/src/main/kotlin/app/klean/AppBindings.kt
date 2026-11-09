@@ -5,7 +5,9 @@ import android.content.Intent
 import app.klean.core.data.backup.BuildConfigProvider
 import app.klean.core.data.backup.ProcessRestarter
 import app.klean.core.ui.module.DashboardSummaryProvider
+import app.klean.today.DevicePrefsTodayLayout
 import app.klean.today.QuietHoursSummary
+import app.klean.today.TodayLayoutStore
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -20,6 +22,9 @@ object AppBindingsModule {
     /** The app's own tile on Today ("Quiet hours · until 8:00 AM"). */
     @Provides @IntoSet
     fun quietHoursTile(impl: QuietHoursSummary): DashboardSummaryProvider = impl
+
+    @Provides
+    fun todayLayout(impl: DevicePrefsTodayLayout): TodayLayoutStore = impl
 
     @Provides
     fun buildConfig(): BuildConfigProvider = object : BuildConfigProvider {

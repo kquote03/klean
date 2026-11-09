@@ -13,8 +13,11 @@ import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-/** Fixed order of cards on Today. Independent of navigation order. */
-enum class DashboardSlot { DIET, TASKS, REMINDERS, EVENTS, BIRTHDAYS, SLEEP, WORKOUT }
+/**
+ * Default order of cards on Today (holistic plan H4): approvals first, diet last. Independent of
+ * navigation order; the user can rearrange or hide cards once (device-local, `arrangeCards`).
+ */
+enum class DashboardSlot { APPROVALS, TASKS, AGENDA, BIRTHDAYS, SLEEP, WORKOUT, DIET }
 
 /** A life module (diet, tasks, ...). Each feature contributes one into the Hilt `Set<KleanModule>`. */
 interface KleanModule {

@@ -54,9 +54,10 @@ class ModuleRegistryTest {
     }
 
     @Test fun dashboardCardsOrderedBySlotNotNavOrder() = runTest {
-        val registry = ModuleRegistry(setOf(sleep, tasks, diet), FakeGate())
-        // navOrder: tasks(1), sleep(2), diet(3). Slot order: DIET, TASKS, SLEEP.
-        assertEquals(listOf(ModuleId.DIET, ModuleId.TASKS, ModuleId.SLEEP), registry.dashboardCards.first().map { it.id })
+        val first = FakeModule(ModuleId.DIET, navOrder = 0, dashboardSlot = DashboardSlot.DIET)
+        val registry = ModuleRegistry(setOf(sleep, tasks, first), FakeGate())
+        // navOrder: diet(0), tasks(1), sleep(2). Slot order (H4): TASKS, SLEEP, DIET last.
+        assertEquals(listOf(ModuleId.TASKS, ModuleId.SLEEP, ModuleId.DIET), registry.dashboardCards.first().map { it.id })
     }
 
     @Test fun setEnabledNotifiesOnlyThatModule() = runTest {

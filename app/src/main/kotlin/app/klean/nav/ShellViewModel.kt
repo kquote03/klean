@@ -12,6 +12,8 @@ import app.klean.core.notifications.permissions.PermissionChecker
 import app.klean.core.ui.module.ModuleRegistry
 import app.klean.feature.onboarding.OnboardingState
 import app.klean.feature.settings.quiet.QuietHoursStore
+import app.klean.today.InMemoryTodayLayout
+import app.klean.today.TodayLayoutStore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlin.time.Clock
@@ -36,6 +38,7 @@ class ShellViewModel @Inject constructor(
     val dashboard: DashboardContributions = DashboardContributions(emptySet(), emptySet(), NoGate),
     val zone: ZoneProvider = SystemZone,
     val ticker: MinuteTicker = MinuteTicker(),
+    val todayLayout: TodayLayoutStore = InMemoryTodayLayout(),
 ) : ViewModel() {
     private val _startWithSetup = MutableStateFlow<Boolean?>(null)
 

@@ -11,6 +11,7 @@ import app.klean.feature.onboarding.OnboardingScreen
 import app.klean.feature.settings.AiProvidersSettingsRoute
 import app.klean.feature.settings.SettingsScreen
 import app.klean.feature.settings.settingsGraph
+import app.klean.today.ArrangeTodayScreen
 import app.klean.today.TodayScreen
 
 /**
@@ -45,8 +46,13 @@ fun KleanNavHost(nav: NavHostController, shell: ShellViewModel, enabled: List<Kl
             TodayScreen(
                 registry = registry, capture = shell.capture, clock = shell.clock,
                 dashboard = shell.dashboard, zone = shell.zone, ticker = shell.ticker,
+                layout = shell.todayLayout,
                 onOpen = { nav.navigate(it) },
+                onArrange = { nav.navigate(ArrangeTodayRoute) },
             )
+        }
+        composable<ArrangeTodayRoute> {
+            ArrangeTodayScreen(registry = registry, layout = shell.todayLayout, onDone = { nav.popBackStack() })
         }
         composable<SettingsRoute> {
             SettingsScreen(modules = enabled, onOpen = { nav.navigate(it) }, onRunSetup = { nav.navigate(OnboardingRoute) })

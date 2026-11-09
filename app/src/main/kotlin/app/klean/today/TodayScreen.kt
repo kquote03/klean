@@ -1,6 +1,16 @@
 package app.klean.today
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import kotlinx.coroutines.flow.combine
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -67,12 +77,19 @@ fun TodayScreen(
     zone: ZoneProvider,
     ticker: MinuteTicker,
     onOpen: (Any) -> Unit,
+    layout: TodayLayoutStore = InMemoryTodayLayout(),
+    onArrange: () -> Unit = {},
     vm: TodayViewModel = viewModel { TodayViewModel(capture, clock) },
     dash: TodayDashboardViewModel = viewModel {
         TodayDashboardViewModel(dashboard, clock, zone, WeekFields.of(Locale.getDefault()).firstDayOfWeek, ticker.ticks())
     },
 ) {
-    val cards by registry.dashboardCards.collectAsStateWithLifecycle(initialValue = emptyList())
+    val cardsFlow = remember(registry, layout) {
+        combine(registry.dashboardCards, layout.order, layout.hidden) { c, order, hidden -> arrangeTodayCards(c, order, hidden) }
+    }
+    val cards by cardsFlow.collectAsStateWithLifecycle(initialValue = emptyList())
+    val hasCards by registry.dashboardCards.collectAsStateWithLifecycle(initialValue = emptyList())
+    var menuOpen by remember { mutableStateOf(false) }
     val available by vm.captureAvailable.collectAsStateWithLifecycle()
     val justSaved by vm.justSaved.collectAsStateWithLifecycle()
     val state by dash.state.collectAsStateWithLifecycle()
@@ -89,14 +106,29 @@ fun TodayScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item(key = "header") {
-                Column(Modifier.fillMaxWidth().semantics(mergeDescendants = true) { heading() }) {
-                    Text(greetingText(state.greeting), style = MaterialTheme.typography.headlineMedium)
-                    if (state.loaded) {
-                        Text(
-                            longDate(state.today),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+                    Column(Modifier.weight(1f).semantics(mergeDescendants = true) { heading() }) {
+                        Text(greetingText(state.greeting), style = MaterialTheme.typography.headlineMedium)
+                        if (state.loaded) {
+                            Text(
+                                longDate(state.today),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                    if (hasCards.isNotEmpty()) {
+                        Box {
+                            IconButton(onClick = { menuOpen = true }) {
+                                Icon(Icons.Rounded.MoreVert, contentDescription = stringResource(R.string.today_more_options))
+                            }
+                            DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.today_arrange)) },
+                                    onClick = { menuOpen = false; onArrange() },
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -184,7 +216,7 @@ fun TodayScreen(
                     )
                 }
             }
-            if (cards.isEmpty()) {
+            if (hasCards.isEmpty()) {
                 item(key = "empty") { NeutralEmpty(stringResource(R.string.today_empty)) }
             } else {
                 items(cards, key = { it.id.value }) { module ->
