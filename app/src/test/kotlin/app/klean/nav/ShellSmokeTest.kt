@@ -28,11 +28,24 @@ import app.klean.core.ui.module.KleanModule
 import app.klean.feature.diet.DietKleanModule
 import app.klean.feature.diet.DietEnablement
 import org.junit.Assert.assertEquals
+import app.klean.core.ui.module.DashboardContributions
+import app.klean.core.ui.module.DashboardSummaryProvider
+import app.klean.core.ui.module.DayActivityProvider
+import app.klean.core.ui.module.SummaryItem
+import app.klean.feature.diet.ui.MinuteTicker
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.onNodeWithContentDescription
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
 import app.klean.core.ui.module.ModuleRegistry
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.annotation.Config
 
 /** Stand-in for the on-device check: with no modules the shell shows Today + Settings,
  * and the settings skeleton navigates to the modules screen. */
@@ -40,11 +53,22 @@ import org.junit.runner.RunWith
 class ShellSmokeTest {
     @get:Rule val compose = createComposeRule()
 
-    private fun shell(modules: Set<KleanModule>, gate: FakeModuleGate = FakeModuleGate()): ShellViewModel =
+    private fun shell(
+        modules: Set<KleanModule>,
+        gate: FakeModuleGate = FakeModuleGate(),
+        dashboard: DashboardContributions? = null,
+    ): ShellViewModel =
         ShellViewModel(
             ModuleRegistry(modules, gate), UniversalCaptureService(emptySet(), gate, DefaultCaptureRouter(null)), Clock.System,
             FakePermissionChecker(), FakeOnboardingState(show = false), FakeQuietHoursStore(),
+            dashboard = dashboard ?: DashboardContributions(emptySet(), emptySet(), gate),
+            ticker = OneTick,
         )
+
+    /** One clock read; the real ticker loops once a minute forever. */
+    private object OneTick : MinuteTicker() {
+        override fun ticks(): Flow<Unit> = flowOf(Unit)
+    }
 
     // The real dashboard card needs Hilt; the shell only needs the module's metadata and routes.
     private fun diet(): KleanModule = object : KleanModule by DietKleanModule(DietEnablement { }) {
@@ -131,5 +155,83 @@ class ShellSmokeTest {
             .fetchSemanticsNodes()
             .mapNotNull { n -> n.config.getOrNull(SemanticsProperties.Text)?.joinToString { it.text } }
         assertEquals(listOf("Today", "Diet", "Settings"), labels)
+    }
+
+    // A tall screen, so the week strip is composed in the lazy list.
+    @Config(qualifiers = "w411dp-h891dp")
+    @Test fun todayShowsGreetingTilesAndWeek() {
+        val gate = FakeModuleGate()
+        val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+        val tiles = object : DashboardSummaryProvider {
+            override val moduleId = ModuleId.DIET
+            override fun summaries() = flowOf(listOf(SummaryItem("diet.today", "Today", "3 entries", route = NestedStart)))
+        }
+        val activity = object : DayActivityProvider {
+            override val moduleId = ModuleId.DIET
+            override fun activity(from: LocalDate, to: LocalDate) = flowOf(mapOf(today to 3))
+            override fun dayRoute(date: LocalDate): Any = NestedInner
+        }
+        val vm = shell(setOf(NestedModule()), gate, DashboardContributions(setOf(tiles), setOf(activity), gate))
+        compose.setContent { KleanTheme { KleanAppUi(vm) } }
+        compose.waitForIdle()
+        assertTrue(
+            compose.onAllNodes(hasText("Good morning") or hasText("Good afternoon") or hasText("Good evening") or hasText("Hello"))
+                .fetchSemanticsNodes().isNotEmpty(),
+        )
+        compose.onNodeWithText("3 entries").assertExists()
+        compose.onNodeWithText("This week").assertExists()
+        compose.onAllNodes(hasContentDescription("nothing logged", substring = true)).assertCountEquals(6)
+        compose.onNode(hasContentDescription("3 things logged", substring = true)).performClick()
+        compose.waitForIdle()
+        compose.onNodeWithText("Inner screen").assertExists()
+        compose.onNode(hasClickAction() and hasText("Diet")).assertIsSelected()
+    }
+
+    // A tall screen, so the week strip is composed in the lazy list.
+    @Config(qualifiers = "w411dp-h891dp")
+    @Test fun todayTileOpensItsRouteAndPreviousWeekCanComeBack() {
+        val gate = FakeModuleGate()
+        val tiles = object : DashboardSummaryProvider {
+            override val moduleId = ModuleId.DIET
+            override fun summaries() = flowOf(listOf(SummaryItem("diet.today", "Today", "3 entries", route = NestedStart)))
+        }
+        val activity = object : DayActivityProvider {
+            override val moduleId = ModuleId.DIET
+            override fun activity(from: LocalDate, to: LocalDate) = flowOf(emptyMap<LocalDate, Int>())
+            override fun dayRoute(date: LocalDate): Any = NestedInner
+        }
+        val vm = shell(setOf(NestedModule()), gate, DashboardContributions(setOf(tiles), setOf(activity), gate))
+        compose.setContent { KleanTheme { KleanAppUi(vm) } }
+        compose.waitForIdle()
+        compose.onNodeWithContentDescription("Previous week").performClick()
+        compose.waitForIdle()
+        assertTrue(compose.onAllNodes(hasText("Week of", substring = true)).fetchSemanticsNodes().isNotEmpty())
+        compose.onNodeWithContentDescription("Next week").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithText("This week").assertExists()
+        compose.onNodeWithText("3 entries").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithText("Open inner").assertExists()
+    }
+
+    // A tall screen, so the week strip is composed in the lazy list.
+    @Config(qualifiers = "w411dp-h891dp")
+    @Test fun moduleOffHidesItsTilesAndWeek() {
+        val gate = FakeModuleGate(setOf(ModuleId.DIET))
+        val tiles = object : DashboardSummaryProvider {
+            override val moduleId = ModuleId.DIET
+            override fun summaries() = flowOf(listOf(SummaryItem("diet.today", "Today", "3 entries")))
+        }
+        val activity = object : DayActivityProvider {
+            override val moduleId = ModuleId.DIET
+            override fun activity(from: LocalDate, to: LocalDate) = flowOf(emptyMap<LocalDate, Int>())
+            override fun dayRoute(date: LocalDate): Any = NestedInner
+        }
+        val vm = shell(setOf(NestedModule()), gate, DashboardContributions(setOf(tiles), setOf(activity), gate))
+        compose.setContent { KleanTheme { KleanAppUi(vm) } }
+        compose.waitForIdle()
+        compose.onNodeWithText("3 entries").assertDoesNotExist()
+        compose.onNodeWithText("This week").assertDoesNotExist()
+        compose.onNodeWithText("Nothing here yet. Turn on a module in Settings.").assertIsDisplayed()
     }
 }

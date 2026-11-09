@@ -41,7 +41,13 @@ fun KleanNavHost(nav: NavHostController, shell: ShellViewModel, enabled: List<Kl
                 onOpenAiSettings = { nav.navigate(AiProvidersSettingsRoute) },
             )
         }
-        composable<TodayRoute>(deepLinks = listOf(navDeepLink { uriPattern = "klean://today" })) { TodayScreen(registry = registry, capture = shell.capture, clock = shell.clock, onOpen = { nav.navigate(it) }) }
+        composable<TodayRoute>(deepLinks = listOf(navDeepLink { uriPattern = "klean://today" })) {
+            TodayScreen(
+                registry = registry, capture = shell.capture, clock = shell.clock,
+                dashboard = shell.dashboard, zone = shell.zone, ticker = shell.ticker,
+                onOpen = { nav.navigate(it) },
+            )
+        }
         composable<SettingsRoute> {
             SettingsScreen(modules = enabled, onOpen = { nav.navigate(it) }, onRunSetup = { nav.navigate(OnboardingRoute) })
         }

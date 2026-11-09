@@ -5,4 +5,17 @@
     <string name="today_capture_placeholder">Write something down</string>
     <string name="today_empty">Nothing here yet. Turn on a module in Settings.</string>
     <string name="today_capture_saved">Saved</string>
+    <string name="today_greeting_morning">Good morning</string>
+    <string name="today_greeting_afternoon">Good afternoon</string>
+    <string name="today_greeting_evening">Good evening</string>
+    <string name="today_greeting_night">Hello</string>
+    <string name="today_week_this">This week</string>
+    <string name="today_week_of">Week of %1$s</string>
+    <string name="today_week_previous">Previous week</string>
+    <string name="today_week_next">Next week</string>
+    <string name="today_day_nothing">%1$s, nothing logged</string>
+    <plurals name="today_day_description">
+        <item quantity="one">%1$s, 1 thing logged</item>
+        <item quantity="other">%1$s, %2$d things logged</item>
+    </plurals>
 </resources>
