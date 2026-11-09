@@ -10,3 +10,6 @@ import kotlinx.serialization.Serializable
 @Serializable data class DietDayRoute(val isoDate: String)
 @Serializable object DietSettingsRoute
 @Serializable object DeliveryAppsRoute
+@Serializable object PlacesRoute
+/** [placeId] null adds a new place. */
+@Serializable data class PlaceEditRoute(val placeId: String? = null)

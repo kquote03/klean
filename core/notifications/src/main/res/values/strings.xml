@@ -19,5 +19,7 @@
     <string name="permission_full_screen_title">Today\'s list after a long break</string>
     <string name="permission_full_screen_why">Lets today\'s list open by itself when you unlock after a few hours. Without it, a notification shows instead.</string>
     <string name="permission_listener_title">Notification access</string>
+    <string name="permission_location_title">Location all the time</string>
+    <string name="permission_location_why">Only for places you add in Diet settings: Klean asks \'anything from there?\' as you leave. Location stays on this phone. Choose Location, then Allow all the time.</string>
     <string name="permission_listener_why">Lets Klean notice when a food delivery arrives. Klean only asks for this when it would help.</string>
 </resources>

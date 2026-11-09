@@ -8,6 +8,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
+import app.klean.feature.diet.geofence.PlaceEditScreen
+import app.klean.feature.diet.geofence.PlacesScreen
 import androidx.navigation.compose.navigation
 import androidx.navigation.navDeepLink
 import app.klean.feature.diet.notification.DietStatusNotifier
@@ -78,9 +80,15 @@ class DietKleanModule @Inject constructor(private val enablement: DietEnablement
         }
         // Reached from Settings, so it stays outside the diet graph (the bar keeps Settings selected).
         composable<DietSettingsRoute> {
-            DietSettingsScreen(onBack = { nav.popBackStack() }, onOpenDeliveryApps = { nav.navigate(DeliveryAppsRoute) })
+            DietSettingsScreen(
+                onBack = { nav.popBackStack() },
+                onOpenDeliveryApps = { nav.navigate(DeliveryAppsRoute) },
+                onOpenPlaces = { nav.navigate(PlacesRoute) },
+            )
         }
         composable<DeliveryAppsRoute> { DeliveryAppsScreen(onBack = { nav.popBackStack() }) }
+        composable<PlacesRoute> { PlacesScreen(onBack = { nav.popBackStack() }, onOpen = { nav.navigate(PlaceEditRoute(it)) }) }
+        composable<PlaceEditRoute> { PlaceEditScreen(onBack = { nav.popBackStack() }) }
     }
 
     @Composable

@@ -19,6 +19,11 @@ import app.klean.core.capture.CaptureTileModel
 import app.klean.core.capture.UniversalCaptureService
 import app.klean.core.data.db.KleanDatabase
 import app.klean.core.data.module.ModuleGate
+import app.klean.core.data.place.PlaceDraft
+import app.klean.core.data.place.PlaceRepository
+import app.klean.feature.diet.geofence.GeofenceExitHandler
+import app.klean.feature.diet.geofence.GeofenceRegistrar
+import app.klean.feature.diet.geofence.ProximityAlertBackend
 import app.klean.core.data.prefs.DevicePrefs
 import app.klean.core.notifications.ChannelRegistrar
 import app.klean.core.notifications.NotificationIds
@@ -63,7 +68,7 @@ import org.junit.Test
 
 /**
  * Task 13.1: switching diet off through the real registry removes it from every surface, including the
- * M10–M12 additions (AI enrichment, unlock sheet, delivery listener) and the day-rollover alarm.
+ * M10–M12 additions (AI enrichment, unlock sheet, delivery listener), M15 place alerts and the day-rollover alarm.
  */
 @HiltAndroidTest
 class ModuleDisableTest {
@@ -81,6 +86,10 @@ class ModuleDisableTest {
     @Inject lateinit var delivery: DeliveryPrompter
     @Inject lateinit var repo: DietRepository
     @Inject lateinit var capture: UniversalCaptureService
+    @Inject lateinit var places: PlaceRepository
+    @Inject lateinit var geofences: GeofenceRegistrar
+    @Inject lateinit var exits: GeofenceExitHandler
+    private var placeId: String? = null
 
     private val ctx = ApplicationProvider.getApplicationContext<Context>()
     private val nm = ctx.getSystemService(NotificationManager::class.java)
@@ -109,12 +118,16 @@ class ModuleDisableTest {
         ChannelRegistrar.ensure(ctx)
         InstrumentationRegistry.getInstrumentation().uiAutomation
             .grantRuntimePermission(ctx.packageName, Manifest.permission.POST_NOTIFICATIONS)
+        InstrumentationRegistry.getInstrumentation().uiAutomation
+            .grantRuntimePermission(ctx.packageName, Manifest.permission.ACCESS_FINE_LOCATION)
         savedOffer = prefs.deliveryOffer.first()
         prefs.setDeliveryOffer(DeliveryOffer.ACCEPTED)
         gate.setEnabled(ModuleId.DIET, true)
     }
 
     @After fun tearDown() = runBlocking {
+        placeId?.let { places.delete(it) }
+        geofences.reschedule()
         prefs.setDeliveryOffer(savedOffer)
         prefs.setUnlockSheetPretend(false)
         registry.setEnabled(ModuleId.DIET, true)
@@ -154,6 +167,10 @@ class ModuleDisableTest {
         assertNotNull("check-in armed while on", pending(PromptAlarms.REQUEST_CODE, PromptAlarmReceiver::class.java))
         assertNotNull("rollover armed while on", pending(DayRollover.REQUEST_CODE, DayRolloverReceiver::class.java))
         assertEquals(1, activeEnrichment().size)
+        // M15: a place is being watched.
+        val place = places.save(null, PlaceDraft("Test place", 25.1972, 55.2796, 150)).also { placeId = it }
+        geofences.reschedule()
+        assertNotNull("place watched while on", ProximityAlertBackend.intent(ctx, place, create = false))
 
         registry.setEnabled(ModuleId.DIET, false)
 
@@ -175,6 +192,12 @@ class ModuleDisableTest {
         // M12: an accepted delivery listener asks nothing.
         assertFalse("delivery prompt", delivery.onDelivered("com.talabat"))
         assertEquals(emptyList<Int>(), awaitDietNotifications { it.isEmpty() })
+
+        // M15: no place is watched, and leaving one asks nothing.
+        assertNull("place alert", ProximityAlertBackend.intent(ctx, place, create = false))
+        assertFalse("place prompt", exits.onTransition(place, entering = false))
+        geofences.reschedule()
+        assertNull("stays off after a reschedule", ProximityAlertBackend.intent(ctx, place, create = false))
 
         // Rollover re-arming on its own (e.g. after boot) stays cancelled.
         rollover.reschedule()

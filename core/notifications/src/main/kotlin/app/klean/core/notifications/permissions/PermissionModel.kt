@@ -4,12 +4,10 @@ import androidx.annotation.StringRes
 import app.klean.core.notifications.R
 
 /** The permissions Klean shows on the Permissions screen and in setup, in display order. */
-enum class PermissionKind { NOTIFICATIONS, EXACT_ALARMS, BATTERY, FULL_SCREEN, NOTIFICATION_LISTENER }
+enum class PermissionKind { NOTIFICATIONS, EXACT_ALARMS, BATTERY, FULL_SCREEN, NOTIFICATION_LISTENER, LOCATION }
 
 /**
  * A snapshot of what the system currently allows. Plain booleans so the model is testable on the JVM.
- * Background location (place prompts, M15) joins this when that feature exists; asking for it earlier
- * would be asking for nothing.
  */
 data class PermissionStatus(
     /** The app-level notification switch (and, on 33+, the runtime grant) is on. */
@@ -22,6 +20,8 @@ data class PermissionStatus(
     val notificationListener: Boolean,
     /** Full-screen intents for the unlock sheet. Android 14+ lets the user refuse them; always true before. */
     val fullScreenIntent: Boolean = true,
+    /** Location "all the time", for place check-ins (M15). Asked for from the Places screen only. */
+    val backgroundLocation: Boolean = false,
 )
 
 /** What tapping the row's button does. */
@@ -65,6 +65,7 @@ object PermissionModel {
         if (sdkInt >= 34) add(row(PermissionKind.FULL_SCREEN, status.fullScreenIntent))
         if (includeReadOnly) {
             add(row(PermissionKind.NOTIFICATION_LISTENER, status.notificationListener, PermissionAction.NONE))
+            add(row(PermissionKind.LOCATION, status.backgroundLocation))
         }
     }
 
@@ -79,6 +80,7 @@ object PermissionModel {
             PermissionKind.BATTERY -> R.string.permission_battery_title to R.string.permission_battery_why
             PermissionKind.FULL_SCREEN -> R.string.permission_full_screen_title to R.string.permission_full_screen_why
             PermissionKind.NOTIFICATION_LISTENER -> R.string.permission_listener_title to R.string.permission_listener_why
+            PermissionKind.LOCATION -> R.string.permission_location_title to R.string.permission_location_why
         }
         return PermissionRowModel(kind, title, why, granted, if (granted) PermissionAction.NONE else action)
     }

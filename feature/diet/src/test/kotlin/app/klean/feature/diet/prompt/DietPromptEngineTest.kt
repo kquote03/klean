@@ -48,12 +48,12 @@ class FakeScheduler : PromptAlarmScheduling {
 }
 
 class FakePresenter : PromptPresenter {
-    data class Shown(val logId: String, val format: PromptFormat, val phrasingId: String, val trigger: PromptTrigger)
+    data class Shown(val logId: String, val format: PromptFormat, val phrasingId: String, val trigger: PromptTrigger, val placeLabel: String? = null)
     val shown = mutableListOf<Shown>()
     val events = mutableListOf<String>()
     var cancels = 0
-    override suspend fun present(logId: String, format: PromptFormat, phrasingId: String, trigger: PromptTrigger) {
-        shown += Shown(logId, format, phrasingId, trigger)
+    override suspend fun present(logId: String, format: PromptFormat, phrasingId: String, trigger: PromptTrigger, placeLabel: String?) {
+        shown += Shown(logId, format, phrasingId, trigger, placeLabel)
         events += "present"
     }
     override suspend fun cancelActive() { cancels++; events += "cancel" }

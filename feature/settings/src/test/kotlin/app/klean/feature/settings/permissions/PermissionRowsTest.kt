@@ -27,9 +27,9 @@ class PermissionRowsTest {
         compose.onNodeWithText("Notifications").assertExists()
         compose.onNodeWithText("So check-ins arrive on time instead of hours late.").assertExists()
         compose.onAllNodesWithText("On").assertCountEquals(1)
-        compose.onAllNodesWithText("Off").assertCountEquals(3)
-        // Exact alarms + battery can be turned on; the listener row is status only.
-        compose.onAllNodesWithText("Turn on").assertCountEquals(2)
+        compose.onAllNodesWithText("Off").assertCountEquals(4)
+        // Exact alarms, battery and location (M15) can be turned on; the listener row is status only.
+        compose.onAllNodesWithText("Turn on").assertCountEquals(3)
         compose.onAllNodesWithText("Turn on")[0].performClick()
         assertEquals(listOf(PermissionKind.EXACT_ALARMS), clicked)
         compose.onNodeWithText("Tips for this phone").assertExists()

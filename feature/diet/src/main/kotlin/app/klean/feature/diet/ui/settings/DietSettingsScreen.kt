@@ -29,7 +29,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.klean.feature.diet.R
 
 @Composable
-fun DietSettingsScreen(onBack: () -> Unit, onOpenDeliveryApps: () -> Unit = {}, vm: DietSettingsViewModel = hiltViewModel()) {
+fun DietSettingsScreen(
+    onBack: () -> Unit,
+    onOpenDeliveryApps: () -> Unit = {},
+    onOpenPlaces: () -> Unit = {},
+    vm: DietSettingsViewModel = hiltViewModel(),
+) {
     val state by vm.uiState.collectAsStateWithLifecycle()
     DietSettingsContent(
         state = state,
@@ -41,6 +46,7 @@ fun DietSettingsScreen(onBack: () -> Unit, onOpenDeliveryApps: () -> Unit = {}, 
         onUnlockSheet = { vm.setUnlockSheet(it) },
         onPretendLongBreak = { vm.pretendLongBreak() },
         onOpenDeliveryApps = onOpenDeliveryApps,
+        onOpenPlaces = onOpenPlaces,
         onFireNow = { vm.fireNow() },
         onShowNext = { vm.showNext() },
     )
@@ -60,6 +66,7 @@ fun DietSettingsContent(
     onUnlockSheet: (Boolean) -> Unit = {},
     onPretendLongBreak: () -> Unit = {},
     onOpenDeliveryApps: () -> Unit = {},
+    onOpenPlaces: () -> Unit = {},
 ) {
     Scaffold(
         topBar = {
@@ -110,6 +117,11 @@ fun DietSettingsContent(
                 headlineContent = { Text(stringResource(R.string.delivery_apps_title)) },
                 supportingContent = { Text(stringResource(R.string.delivery_apps_summary)) },
                 modifier = Modifier.clickable(onClick = onOpenDeliveryApps),
+            )
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.places_title)) },
+                supportingContent = { Text(stringResource(R.string.places_summary)) },
+                modifier = Modifier.clickable(onClick = onOpenPlaces),
             )
             if (state.debug) {
                 HorizontalDivider(Modifier.padding(vertical = 8.dp))

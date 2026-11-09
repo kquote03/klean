@@ -127,6 +127,19 @@ class PromptNotifierTest {
         assertNull(shadowOf(nm).getNotification(NotificationIds.DELIVERY))
     }
 
+    /** M15: "Anything from Dubai Mall?" as the user leaves a place, with its own id and reply source. */
+    @Test fun leavingAPlaceAsksAboutThatPlace() = runBlocking {
+        notifier.present("log-g", PromptFormat.STANDARD, PromptPhrasings.GEOFENCE_ID, PromptTrigger.GEOFENCE, placeLabel = "Dubai Mall")
+        assertNull(prompt())
+        val n = shadowOf(nm).getNotification(NotificationIds.GEOFENCE)!!
+        assertEquals("Anything from Dubai Mall?", n.title())
+        val reply = n.actions.single { it.remoteInputs?.isNotEmpty() == true }
+        assertEquals(CaptureSource.GEOFENCE_PROMPT.name, shadowOf(reply.actionIntent).savedIntent.getStringExtra(DietReplyReceiver.EXTRA_SOURCE))
+        assertEquals("log-g", shadowOf(n.deleteIntent).savedIntent.getStringExtra(PromptDismissReceiver.EXTRA_LOG_ID))
+        notifier.cancelActive()
+        assertNull(shadowOf(nm).getNotification(NotificationIds.GEOFENCE))
+    }
+
     @Test fun headsUpUsesTheHighChannel() = runBlocking {
         notifier.present("log-2", PromptFormat.HEADS_UP, "g1", PromptTrigger.CADENCE)
         assertEquals(Channels.DIET_PROMPT_HEADS_UP, prompt()!!.channelId)

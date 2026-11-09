@@ -7,6 +7,7 @@ import app.klean.core.capture.CaptureTileService
 import app.klean.core.notifications.NotificationIds
 import app.klean.feature.diet.notification.DietStatusNotifier
 import app.klean.feature.diet.ai.EnrichmentScheduler
+import app.klean.feature.diet.geofence.GeofenceRegistrar
 import app.klean.feature.diet.prompt.DayRollover
 import app.klean.feature.diet.prompt.DietPrompts
 import app.klean.feature.diet.widget.DietWidgetUpdater
@@ -24,7 +25,7 @@ fun interface DietEnablement {
 }
 
 /**
- * Off: every diet notification goes, check-ins, the day-rollover alarm and queued AI work stop, the widget shows "Klean / Open", the tile
+ * Off: every diet notification goes, check-ins, the day-rollover alarm, place alerts and queued AI work stop, the widget shows "Klean / Open", the tile
  * re-renders. On: status line, check-ins and widget come back. Each step runs even if another fails.
  */
 class DefaultDietEnablement @Inject constructor(
@@ -34,6 +35,7 @@ class DefaultDietEnablement @Inject constructor(
     private val widget: DietWidgetUpdater,
     private val rollover: DayRollover,
     private val enrichment: EnrichmentScheduler,
+    private val places: GeofenceRegistrar,
 ) : DietEnablement {
     override suspend fun onEnabledChanged(enabled: Boolean) {
         if (enabled) {
@@ -47,6 +49,8 @@ class DefaultDietEnablement @Inject constructor(
         }
         // Reads the gate itself: arms the alarm when on, cancels it when off.
         step("rollover") { rollover.reschedule() }
+        // Reads the gate too: watches the enabled places when on, unregisters every place when off.
+        step("places") { places.reschedule() }
         step("widget") { widget.update() }
         CaptureTileService.requestUpdate(ctx)
     }

@@ -3,6 +3,14 @@
     <!-- Unlock sheet (M11): opens "Today so far" after a long break. On Android 14+ the user may
          turn this off; the sheet then arrives as a heads-up notification instead. -->
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <!-- Place prompts (M15): "Anything from …?" as you leave a place you named. Location stays on the phone;
+         only proximity alerts are used (no Google Play services). Background location is asked for
+         separately, from the Places screen, with its own explanation. -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <uses-feature android:name="android.hardware.location" android:required="false" />
+    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
     <!-- Delivery prompts (M12): lets Klean check whether these apps are installed before offering. -->
     <queries>
         <package android:name="com.talabat" />
@@ -44,6 +52,9 @@
             android:exported="false" />
         <receiver
             android:name=".prompt.DayRolloverReceiver"
+            android:exported="false" />
+        <receiver
+            android:name=".geofence.GeofenceExitReceiver"
             android:exported="false" />
         <receiver
             android:name=".widget.DietWidgetReceiver"

@@ -25,6 +25,8 @@ class AndroidPermissionChecker @Inject constructor(
 ) : PermissionChecker {
     override val sdkInt: Int get() = Build.VERSION.SDK_INT
 
+    private fun granted(p: String) = ContextCompat.checkSelfPermission(ctx, p) == PackageManager.PERMISSION_GRANTED
+
     override fun current(): PermissionStatus {
         val runtime = Build.VERSION.SDK_INT < 33 ||
             ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
@@ -35,6 +37,8 @@ class AndroidPermissionChecker @Inject constructor(
             batteryUnrestricted = ctx.getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(ctx.packageName),
             notificationListener = ctx.packageName in NotificationManagerCompat.getEnabledListenerPackages(ctx),
             fullScreenIntent = NotificationManagerCompat.from(ctx).canUseFullScreenIntent(),
+            backgroundLocation = granted(Manifest.permission.ACCESS_FINE_LOCATION) &&
+                (Build.VERSION.SDK_INT < 29 || granted(Manifest.permission.ACCESS_BACKGROUND_LOCATION)),
         )
     }
 }
@@ -53,6 +57,8 @@ object PermissionIntents {
             // The row only exists on API 34+, where this screen does.
             PermissionKind.FULL_SCREEN -> Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, pkg)
             PermissionKind.NOTIFICATION_LISTENER -> null
+            // "Allow all the time" lives on the app's permission page; there is no direct screen for it.
+            PermissionKind.LOCATION -> appDetails(ctx)
         }?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }
 

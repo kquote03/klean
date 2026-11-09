@@ -37,6 +37,10 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.LocalDate
+import app.klean.core.data.place.DefaultPlaceRepository
+import app.klean.core.data.place.PlaceDraft
+import app.klean.feature.diet.geofence.FakeGeofenceBackend
+import app.klean.feature.diet.geofence.GeofenceRegistrar
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -68,8 +72,10 @@ class DietEnablementTest {
     private val widget = DietWidgetUpdater(ctx)
     private val rollover = DayRollover(ctx, AlarmScheduler(ctx), settings, gate, clock, DubaiZone, status, widget)
     private val enrichment = FakeEnrichmentScheduler()
+    private val places = DefaultPlaceRepository(db, stamper, clock)
+    private val geofences = FakeGeofenceBackend()
     private val registry = ModuleRegistry(
-        setOf(DietKleanModule(DefaultDietEnablement(ctx, status, prompts, widget, rollover, enrichment))),
+        setOf(DietKleanModule(DefaultDietEnablement(ctx, status, prompts, widget, rollover, enrichment, GeofenceRegistrar(places, gate, geofences)))),
         gate,
     )
 
@@ -102,6 +108,17 @@ class DietEnablementTest {
         // Backups are not diet's to cancel.
         assertNotNull(shadowOf(nm).getNotification(NotificationIds.BACKUP))
         assertEquals(listOf("cancel"), calls)
+    }
+
+    /** M15: with diet off nothing watches the user's places; switching it on watches them again. */
+    @Test fun disablingUnregistersEveryPlaceAndEnablingRegistersThemAgain() = runBlocking {
+        val id = places.save(null, PlaceDraft("Dubai Mall", 25.19, 55.27, 150))
+        registry.setEnabled(ModuleId.DIET, true)
+        assertEquals(listOf(id), geofences.registered.keys.toList())
+        registry.setEnabled(ModuleId.DIET, false)
+        assertEquals(emptyList<String>(), geofences.registered.keys.toList())
+        registry.setEnabled(ModuleId.DIET, true)
+        assertEquals(listOf(id), geofences.registered.keys.toList())
     }
 
     @Test fun disablingCancelsTheDayRolloverAndQueuedEnrichment() = runBlocking {

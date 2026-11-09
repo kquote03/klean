@@ -44,7 +44,7 @@ class PromptNotifier @Inject constructor(
     private val status: DietStatusNotifier,
     private val widget: DietWidgetUpdater,
 ) : PromptPresenter {
-    override suspend fun present(logId: String, format: PromptFormat, phrasingId: String, trigger: PromptTrigger) {
+    override suspend fun present(logId: String, format: PromptFormat, phrasingId: String, trigger: PromptTrigger, placeLabel: String?) {
         if (format == PromptFormat.WIDGET_HIGHLIGHT) {
             prefs.setHighlightPromptId(logId)
             refreshPassiveSurfaces()
@@ -53,10 +53,17 @@ class PromptNotifier @Inject constructor(
         val nm = NotificationManagerCompat.from(ctx)
         if (!canPost(nm)) return
         val phrasing = PromptPhrasings.byId(phrasingId) ?: PromptPhrasings.generic.first()
-        // A delivery question sits next to a check-in rather than replacing it, and its replies are told apart.
-        val delivery = trigger == PromptTrigger.DELIVERY
-        val replySource = if (delivery) CaptureSource.DELIVERY_PROMPT else CaptureSource.PROMPT_REPLY
-        val replyCode = if (delivery) RC_DELIVERY_REPLY else RC_PROMPT_REPLY
+        // Delivery and place questions sit next to a check-in rather than replacing it, and their replies are told apart.
+        val (replySource, replyCode, notificationId) = when (trigger) {
+            PromptTrigger.DELIVERY -> Triple(CaptureSource.DELIVERY_PROMPT, RC_DELIVERY_REPLY, NotificationIds.DELIVERY)
+            PromptTrigger.GEOFENCE -> Triple(CaptureSource.GEOFENCE_PROMPT, RC_GEOFENCE_REPLY, NotificationIds.GEOFENCE)
+            else -> Triple(CaptureSource.PROMPT_REPLY, RC_PROMPT_REPLY, NotificationIds.DIET_PROMPT)
+        }
+        val title = if (trigger == PromptTrigger.GEOFENCE && placeLabel != null) {
+            ctx.getString(R.string.prompt_geofence, placeLabel)
+        } else {
+            ctx.getString(phrasing.res)
+        }
         val channel = when (format) {
             PromptFormat.HEADS_UP -> Channels.DIET_PROMPT_HEADS_UP
             PromptFormat.SILENT_VIBRATE -> Channels.DIET_PROMPT_VIBRATE
@@ -64,7 +71,7 @@ class PromptNotifier @Inject constructor(
         }
         val builder = NotificationCompat.Builder(ctx, channel)
             .setSmallIcon(NotifR.drawable.ic_stat_klean)
-            .setContentTitle(ctx.getString(phrasing.res))
+            .setContentTitle(title)
             .setContentText(ctx.getString(R.string.prompt_body))
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
             .setPriority(if (format == PromptFormat.HEADS_UP) NotificationCompat.PRIORITY_HIGH else NotificationCompat.PRIORITY_DEFAULT)
@@ -76,12 +83,13 @@ class PromptNotifier @Inject constructor(
             .setDeleteIntent(dismissIntent(logId))
             .addAction(DietStatusActions.logFood(ctx, replySource, replyCode))
             .addAction(DietStatusActions.capture(ctx))
-        post(nm, if (delivery) NotificationIds.DELIVERY else NotificationIds.DIET_PROMPT, builder)
+        post(nm, notificationId, builder)
     }
 
     override suspend fun cancelActive() {
         NotificationManagerCompat.from(ctx).cancel(NotificationIds.DIET_PROMPT)
         NotificationManagerCompat.from(ctx).cancel(NotificationIds.DELIVERY)
+        NotificationManagerCompat.from(ctx).cancel(NotificationIds.GEOFENCE)
         if (prefs.highlightPromptId.first() != null) {
             prefs.setHighlightPromptId(null)
             refreshPassiveSurfaces()
@@ -122,6 +130,7 @@ class PromptNotifier @Inject constructor(
         internal const val RC_PROMPT_REPLY = 14
         internal const val RC_PROMPT_OPEN = 15
         internal const val RC_DELIVERY_REPLY = 16
+        internal const val RC_GEOFENCE_REPLY = 17
     }
 }
 

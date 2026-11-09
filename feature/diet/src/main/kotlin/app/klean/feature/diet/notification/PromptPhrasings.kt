@@ -27,5 +27,9 @@ object PromptPhrasings {
     const val DELIVERY_ID = "delivery"
     val delivery = Phrasing(DELIVERY_ID, R.string.prompt_delivery)
 
-    fun byId(id: String): Phrasing? = (generic + MealLabel.entries.flatMap(::sinceMeal) + delivery).firstOrNull { it.id == id }
+    /** "Anything from %1$s?", as the user leaves a place (M15). Formatted with the place's name. */
+    const val GEOFENCE_ID = "geofence"
+    val geofence = Phrasing(GEOFENCE_ID, R.string.prompt_geofence)
+
+    fun byId(id: String): Phrasing? = (generic + MealLabel.entries.flatMap(::sinceMeal) + delivery + geofence).firstOrNull { it.id == id }
 }

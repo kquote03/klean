@@ -18,12 +18,18 @@ class PermissionModelTest {
     @Test fun api33ShowsEveryRowInOrderWithExplanations() {
         val rows = PermissionModel.rows(allOff, sdkInt = 33, includeReadOnly = true)
         assertEquals(
-            listOf(PermissionKind.NOTIFICATIONS, PermissionKind.EXACT_ALARMS, PermissionKind.BATTERY, PermissionKind.NOTIFICATION_LISTENER),
+            listOf(
+                PermissionKind.NOTIFICATIONS, PermissionKind.EXACT_ALARMS, PermissionKind.BATTERY,
+                PermissionKind.NOTIFICATION_LISTENER, PermissionKind.LOCATION,
+            ),
             rows.map { it.kind },
         )
         rows.forEach { assertFalse(it.granted) }
         assertEquals(
-            listOf(R.string.permission_notifications_why, R.string.permission_exact_alarms_why, R.string.permission_battery_why, R.string.permission_listener_why),
+            listOf(
+                R.string.permission_notifications_why, R.string.permission_exact_alarms_why, R.string.permission_battery_why,
+                R.string.permission_listener_why, R.string.permission_location_why,
+            ),
             rows.map { it.whyRes },
         )
     }
@@ -31,6 +37,18 @@ class PermissionModelTest {
     @Test fun onboardingLeavesOutTheReadOnlyListenerRow() {
         val rows = PermissionModel.rows(allOff, sdkInt = 33, includeReadOnly = false)
         assertFalse(rows.any { it.kind == PermissionKind.NOTIFICATION_LISTENER })
+        // Location is asked for just in time, from the Places screen, never in setup.
+        assertFalse(rows.any { it.kind == PermissionKind.LOCATION })
+    }
+
+    /** M15: "all the time" location is a separate trip to the app's settings on Android 11+. */
+    @Test fun locationRowOpensSettingsUntilAllowedAllTheTime() {
+        val row = PermissionModel.rows(allOff, 33, includeReadOnly = true).single { it.kind == PermissionKind.LOCATION }
+        assertEquals(PermissionAction.OPEN_SETTINGS, row.action)
+        assertEquals(R.string.permission_location_title, row.titleRes)
+        val on = PermissionModel.rows(allOff.copy(backgroundLocation = true), 33, true).single { it.kind == PermissionKind.LOCATION }
+        assertTrue(on.granted)
+        assertEquals(PermissionAction.NONE, on.action)
     }
 
     @Test fun listenerIsStatusOnlyWithNoAction() {
@@ -75,7 +93,7 @@ class PermissionModelTest {
     }
 
     @Test fun grantedRowsHaveNoAction() {
-        val allOn = PermissionStatus(true, true, true, true, true)
+        val allOn = PermissionStatus(true, true, true, true, true, backgroundLocation = true)
         PermissionModel.rows(allOn, 34, true).forEach {
             assertTrue(it.granted)
             assertEquals(PermissionAction.NONE, it.action)
