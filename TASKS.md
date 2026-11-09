@@ -208,6 +208,14 @@ Verified on Waydroid on 2026-11-09 (M8):
 - [x] 8.2: Settings › Permissions after `pm revoke POST_NOTIFICATIONS` shows Notifications Off with "Turn on"; Notification access Off
 - [x] 8.3: Settings › Run setup again → Welcome → Skip setup → Today
 
+Verified on Waydroid on 2026-11-09 (M10), with a fake OpenAI-compatible server on the host (`~/.hermes/cache/scratch/m10/fake_openai.py`, `http://192.168.240.1:8765/v1`):
+- [x] `connectedDebugAndroidTest`: 4/4 pass, including `SecretStoreDeviceTest` (real Android Keystore AES-GCM round trip; stored value is ciphertext with a fresh IV per write)
+- [x] 10.7: the wizard's AI page shows "Set up AI providers", which opens Settings › AI providers (three cards, all Off; Use for = None). Gemini screen shows the consent text, masked key field, `gemini-2.5-flash`; Test connection while off → "Switch this provider on and fill in its details first." with no request sent
+- [x] 10.4/10.7: Local server with the LAN URL over plain HTTP + model `fake-model`, switched on → card shows On; Test connection → "Works. It read: toast · 2 slices, butter · 1 pat" (server log shows the plan's json_schema body)
+- [x] 10.5/10.6: Understanding entries → Local or custom server; logging "shawarma and fries" shows the entry at once, then "shawarma · 1 wrap", "fries · medium" and a "Local server" chip under it; no calories until Diet settings › Show calories is on, then "· ~450 kcal" per item and "~770 kcal so far" under the Diet title
+- [x] 10.6: entry screen lists the items with Change / Not right and "Remove AI details"; Not right on fries hides it in the entry, the row and the day total
+- [x] 10.5: with the server stopped, "tea with mint" appears in the list at once; the worker logs `Worker result RETRY`; after restarting the server the retry ran 30 s later (exponential backoff) and the items appeared. Crash buffer empty
+
 Still needs hands-on checks by the user (airplane mode or a reboot would drop wireless adb):
 - [ ] 4.3: inline reply from the lock screen in airplane mode (needs adb over USB or no adb), under 5 s
 - [ ] 4.7: compact widget size (resize the widget to one row)
@@ -218,5 +226,7 @@ Still needs hands-on checks by the user (airplane mode or a reboot would drop wi
 - [ ] Polish: the app uses the default Android launcher icon; none has been designed yet
 - [ ] 6.1: on a real phone, speak "two manakish" (also in airplane mode) → saved with `via_voice=1`, and Undo shows for 5 s; where offline voice is missing → "Voice isn't available offline on this phone"
 - [ ] 6.2: take a real camera photo (capture sheet and entry screen) → thumbnail in the row, EXIF stripped; log one without a photo too
+- [ ] 10.3: Gemini with a real API key (covered only by MockEngine tests and the screen rendering; no key was used)
+- [ ] 10.5: a photo entry sent to a provider with "Send photos too" / "This model understands images" on (needs a camera photo)
 - [x] Polish: the bottom bar highlights Diet on History / Day / Entry screens (diet routes live in a nested `DietGraph`; the bar matches `KleanModule.graphRoute`)
 - [x] Polish: after deleting from the entry screen it now goes back to the list, which shows "Entry removed · Undo" for 5 s
