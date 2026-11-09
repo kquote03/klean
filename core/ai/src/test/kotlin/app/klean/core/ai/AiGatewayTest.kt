@@ -33,6 +33,7 @@ class FakeProvider(
     var photos: Boolean = true,
     override val needsNetwork: Boolean = true,
     var delayMs: Long = 0,
+    override val timeoutMs: Long = AiGateway.TIMEOUT_MS,
     var answer: (StructuredRequest) -> AiOutcome = { AiOutcome.Success(JsonObject(mapOf("ok" to JsonPrimitive(true))), id, "m") },
 ) : AiProvider {
     val requests = mutableListOf<StructuredRequest>()
@@ -104,6 +105,14 @@ class AiGatewayTest {
         val out = gateway(p).run(AiTask.ENTRY_PARSE, req)
         assertEquals(AiOutcome.Unavailable("timeout"), out)
         assertEquals(45_000L, currentTime)
+    }
+
+    /** The on-device model loads hundreds of MB before its first answer, so it gets its own, longer limit. */
+    @Test fun providerCanAskForALongerTimeout() = runTest {
+        val p = FakeProvider(delayMs = 100_000, timeoutMs = 150_000)
+        assertTrue(gateway(p).run(AiTask.ENTRY_PARSE, req) is AiOutcome.Success)
+        val q = FakeProvider(delayMs = 200_000, timeoutMs = 150_000)
+        assertEquals(AiOutcome.Unavailable("timeout"), gateway(q).run(AiTask.ENTRY_PARSE, req))
     }
 
     @Test fun throwingProviderIsUnavailableNotACrash() = runTest {

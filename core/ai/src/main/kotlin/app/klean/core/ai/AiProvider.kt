@@ -37,6 +37,8 @@ sealed interface AiOutcome {
 interface AiProvider {
     val id: ProviderId
     val needsNetwork: Boolean
+    /** How long [AiGateway] waits for one answer. The on-device model needs longer on its first, loading call. */
+    val timeoutMs: Long get() = AiGateway.TIMEOUT_MS
     suspend fun capabilities(): Set<Capability>
     /** Explicitly enabled by the user and has what it needs (key, URL). This is the cloud-consent gate. */
     suspend fun isConfiguredAndEnabled(): Boolean
@@ -57,7 +59,7 @@ interface AiService : EnrichmentPolicy {
 /**
  * The single way to use AI. Enforces: a provider is used only if assigned to the task and explicitly
  * enabled; images go only to providers that support them and only when the user allowed photos;
- * every call ends within [TIMEOUT_MS]. Never throws.
+ * every call ends within the provider's [AiProvider.timeoutMs] (default [TIMEOUT_MS]). Never throws.
  */
 @Singleton
 class AiGateway @Inject constructor(
@@ -84,7 +86,7 @@ class AiGateway @Inject constructor(
             Capability.IMAGE_INPUT in p.capabilities() && p.photosAllowed()
         val r = if (req.imageJpeg != null && !keepImage) req.withoutImage() else req
         return try {
-            withTimeoutOrNull(TIMEOUT_MS) { p.generate(r) } ?: AiOutcome.Unavailable("timeout")
+            withTimeoutOrNull(p.timeoutMs) { p.generate(r) } ?: AiOutcome.Unavailable("timeout")
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {

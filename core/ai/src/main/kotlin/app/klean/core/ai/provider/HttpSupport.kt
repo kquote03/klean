@@ -35,6 +35,10 @@ object AiReasons {
     const val AUTH = "auth"
     const val NOT_FOUND = "not_found"
     const val BAD_RESPONSE = "bad_response"
+    /** The on-device model file can't be loaded (wrong format, damaged, or this phone can't run the runtime). */
+    const val MODEL_UNUSABLE = "model_unusable"
+    /** The on-device runtime failed while answering; worth another try later. */
+    const val ENGINE = "engine"
 }
 
 internal val AiJson = Json { ignoreUnknownKeys = true; isLenient = true }

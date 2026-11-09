@@ -32,8 +32,19 @@ data class OpenAiConfig(
     val acceptsImages: Boolean = false,
 )
 
+/** [modelPath] is set only by [app.klean.core.ai.ondevice.OnDeviceModels] once a model is in place. */
 @Serializable
-data class OnDeviceConfig(val enabled: Boolean = false, val modelPath: String? = null)
+data class OnDeviceConfig(
+    val enabled: Boolean = false,
+    val modelPath: String? = null,
+    val downloadUrl: String = DEFAULT_MODEL_URL,
+) {
+    companion object {
+        /** Qwen3 0.6B for LiteRT-LM, ~614 MB, Apache-2.0, not gated (see core/ai/ON_DEVICE.md). */
+        const val DEFAULT_MODEL_URL = "https://huggingface.co/litert-community/Qwen3-0.6B/resolve/main/Qwen3-0.6B.litertlm"
+        const val DEFAULT_MODEL_MB = 614
+    }
+}
 
 @Serializable
 data class AiProvidersConfig(
