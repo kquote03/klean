@@ -18,12 +18,14 @@ import app.klean.core.data.settings.SettingsRepository
 import app.klean.core.data.settings.SyncedKeys
 import app.klean.core.notifications.Channels
 import app.klean.core.notifications.NotificationIds
-import app.klean.core.ui.module.DashboardContributions
+import app.klean.core.ui.module.StatusLine
 import app.klean.core.ui.module.StatusFragment
 import app.klean.core.ui.module.StatusSurface
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import android.util.Log
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
@@ -48,7 +50,7 @@ import app.klean.core.notifications.R as NotifR
 @Singleton
 class KleanStatusNotifier @Inject constructor(
     @ApplicationContext private val ctx: Context,
-    private val contributions: DashboardContributions,
+    private val statusLine: StatusLine,
     private val settings: SettingsRepository,
 ) : StatusSurface {
     private val mutex = Mutex()
@@ -61,13 +63,13 @@ class KleanStatusNotifier @Inject constructor(
     /** Posts or updates the status. [savedTo] is a module label: "Saved to <label>" after an inline reply. */
     suspend fun refresh(savedTo: String?) = mutex.withLock {
         val nm = NotificationManagerCompat.from(ctx)
-        if (!settings.get(SyncedKeys.DietStatusNotification) || !contributions.hasStatusProviders().first()) {
+        if (!settings.get(SyncedKeys.DietStatusNotification) || !statusLine.hasProviders().first()) {
             confirmation = null
             nm.cancel(NotificationIds.STATUS)
             return@withLock
         }
         if (!canPost(nm)) return@withLock
-        val line = contributions.statusLine().first()
+        val line = statusLine.fragments().first()
         confirmation = when {
             savedTo != null -> savedTo to line
             confirmation?.second == line -> confirmation
@@ -80,8 +82,15 @@ class KleanStatusNotifier @Inject constructor(
     @OptIn(FlowPreview::class)
     fun start(scope: CoroutineScope) {
         scope.launch {
-            contributions.statusLine().distinctUntilChanged().drop(1).debounce(DEBOUNCE_MS).collect {
-                runCatching { refresh() }
+            // Never let a failing source end the app scope (or a Robolectric test without SQLite).
+            try {
+                statusLine.fragments().distinctUntilChanged().drop(1).debounce(DEBOUNCE_MS).collect {
+                    runCatching { refresh() }.onFailure { Log.w("Klean", "status refresh failed", it) }
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w("Klean", "status line stopped", e)
             }
         }
     }

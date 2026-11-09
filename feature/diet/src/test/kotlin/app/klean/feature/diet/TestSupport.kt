@@ -56,7 +56,7 @@ class StatusStack(
 
     init {
         notifier = app.klean.core.capture.status.KleanStatusNotifier(
-            ctx, app.klean.core.ui.module.DashboardContributions(emptySet(), emptySet(), gate, others + line), settings,
+            ctx, app.klean.core.ui.module.StatusLine(others + line, gate), settings,
         )
     }
 }

@@ -69,26 +69,10 @@ class DashboardContributions @Inject constructor(
     private val gate: ModuleGate,
     private val statusProviders: Set<@JvmSuppressWildcards StatusLineProvider> = emptySet(),
 ) {
-    /** Gate-filtered status fragments, highest priority first, at most [max]. */
-    fun statusLine(max: Int = 3): Flow<List<StatusFragment>> = gate.disabledIds.distinctUntilChanged().flatMapLatest { off ->
-        val on = statusProviders.filter { it.moduleId !in off }.sortedBy { it.moduleId.value }
-        if (on.isEmpty()) {
-            flowOf(emptyList())
-        } else {
-            combine(on.map { it.fragments() }) { lists ->
-                lists.flatMap { it }.sortedByDescending { it.priority }.take(max)
-            }
-        }
-    }
+    private val status = StatusLine(statusProviders, gate)
 
-    /** True when any enabled module contributes to the status line. */
-    fun hasStatusProviders(): Flow<Boolean> =
-        gate.disabledIds.map { off -> statusProviders.any { it.moduleId !in off } }.distinctUntilChanged()
-
-    /** True when any enabled module other than [except] contributes to the status line. */
-    fun hasOtherStatusProviders(except: ModuleId): Flow<Boolean> =
-        gate.disabledIds.map { off -> statusProviders.any { it.moduleId != except && it.moduleId !in off } }
-            .distinctUntilChanged()
+    /** Gate-filtered status fragments, highest priority first, at most [max]. See [StatusLine]. */
+    fun statusLine(max: Int = 3): Flow<List<StatusFragment>> = status.fragments(max)
 
     fun summaries(): Flow<List<SummaryItem>> = gate.disabledIds.distinctUntilChanged().flatMapLatest { off ->
         val on = summaryProviders.filter { it.moduleId !in off }.sortedBy { it.moduleId.value }
@@ -114,6 +98,34 @@ class DashboardContributions @Inject constructor(
                 }
             }
         }
+}
+
+/**
+ * The holistic status line on its own: gate-filtered [StatusLineProvider] fragments. Kept apart from
+ * [DashboardContributions] so the notification doesn't build every Today tile provider (and their
+ * repositories) at app start.
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
+@Singleton
+class StatusLine @Inject constructor(
+    private val providers: Set<@JvmSuppressWildcards StatusLineProvider>,
+    private val gate: ModuleGate,
+) {
+    /** Highest priority first, at most [max]. */
+    fun fragments(max: Int = 3): Flow<List<StatusFragment>> = gate.disabledIds.distinctUntilChanged().flatMapLatest { off ->
+        val on = providers.filter { it.moduleId !in off }.sortedBy { it.moduleId.value }
+        if (on.isEmpty()) {
+            flowOf(emptyList())
+        } else {
+            combine(on.map { it.fragments() }) { lists ->
+                lists.flatMap { it }.sortedByDescending { it.priority }.take(max)
+            }
+        }
+    }
+
+    /** True when any enabled module contributes to the status line. */
+    fun hasProviders(): Flow<Boolean> =
+        gate.disabledIds.map { off -> providers.any { it.moduleId !in off } }.distinctUntilChanged()
 }
 
 /** A holistic surface that shows the status line or Today items (the notification, the Today widget). */

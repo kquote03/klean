@@ -40,8 +40,9 @@ class KleanApp : Application(), Configuration.Provider {
             // Never let a startup failure crash the process (or a Robolectric test without a SQLite driver).
             launch { runCatching { rescheduler.rescheduleAll() }.onFailure { Log.w("Klean", "startup reschedule failed", it) } }
             // Re-post the Today status line after install, update, or process death, then follow its line.
-            runCatching { status.refresh() }
-            runCatching { status.start(this) }
+            // Follow only when the database works: a Robolectric :app test has no SQLite JNI, and a live
+            // Room flow there fails in Room's own scope, where no catch can reach it.
+            runCatching { status.refresh() }.onSuccess { status.start(this) }
         }
     }
 }
