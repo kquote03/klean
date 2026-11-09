@@ -119,4 +119,23 @@ class SecretStoreTest {
             .restore(ByteArrayInputStream(withKeys.readBytes()))
         assertEquals("AIza-1", fresh.get(SecretStore.GEMINI_API_KEY))
     }
+
+    @Test fun syncAndAgentTokensAreKeptOutOfBackupsUnlessOptedIn() = runBlocking {
+        assertEquals("google.refresh", SecretStore.GOOGLE_REFRESH)
+        assertEquals("backend.token", SecretStore.BACKEND_TOKEN)
+        assertEquals("hermes.token", SecretStore.HERMES_TOKEN)
+        val (store, _) = tempSecretStore()
+        store.put(SecretStore.GOOGLE_REFRESH, "1//refresh")
+        store.put(SecretStore.BACKEND_TOKEN, "bk")
+        store.put(SecretStore.HERMES_TOKEN, "hm")
+        assertEquals("1//refresh", store.get(SecretStore.GOOGLE_REFRESH))
+        rig.logEntry("e1", "toast", 1_000L)
+
+        assertNull("toggle off: no tokens", secretRows(exportWith(store)))
+        rig.prefs.setBackupIncludeSecrets(true)
+        assertEquals(
+            listOf(SecretStore.BACKEND_TOKEN to "bk", SecretStore.GOOGLE_REFRESH to "1//refresh", SecretStore.HERMES_TOKEN to "hm"),
+            secretRows(exportWith(store)),
+        )
+    }
 }

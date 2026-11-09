@@ -127,6 +127,12 @@ class SecretStore @Inject constructor(
     companion object {
         const val GEMINI_API_KEY = "gemini.apiKey"
         const val OPENAI_API_KEY = "openai.apiKey"
+        /** Google OAuth refresh token (Tasks/Calendar sync, M21). Access tokens stay in memory. */
+        const val GOOGLE_REFRESH = "google.refresh"
+        /** Bearer token for the paired Klean backend (sync, M24/M25). */
+        const val BACKEND_TOKEN = "backend.token"
+        /** Hermes API server token (delegation, M23). */
+        const val HERMES_TOKEN = "hermes.token"
     }
 }
 
