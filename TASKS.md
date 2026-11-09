@@ -123,7 +123,7 @@ Everything ticked is merged on `main` (milestones M0–M7 and M9 are tagged).
 - [x] Task 10.3 — Gemini provider (TDD with Ktor MockEngine)
 - [x] Task 10.4 — OpenAI-compatible provider (TDD)
 - [x] Task 10.5 — FoodEnrichmentWorker (TDD)
-- [ ] Task 10.6 — AI items UI
+- [x] Task 10.6 — AI items UI
 - [ ] Task 10.7 — AI provider settings screens
 - [ ] Task 10.8 — AI capture classifier
 

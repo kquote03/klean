@@ -1,5 +1,6 @@
 package app.klean.feature.diet.ui
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
@@ -41,18 +42,19 @@ fun LazyListScope.dietRows(rows: List<DietRow>, onOpenEntry: (String) -> Unit, o
 }
 
 private fun entryMeta(row: DietRow.Entry): (@Composable () -> Unit)? {
-    if (row.itemsSummary == null && row.providerName == null) return null
-    return {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            row.itemsSummary?.let {
-                Text(
-                    it,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.weight(1f, fill = false),
-                )
+    if (row.itemLines.isEmpty() && row.providerId == null) return null
+    return { AiItemsBlock(row.itemLines, row.providerId) }
+}
+
+/** AI items under an entry's raw text, with the chip naming the provider that produced them. */
+@Composable
+fun AiItemsBlock(lines: List<String>, providerId: String?, modifier: Modifier = Modifier) {
+    Row(modifier, verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f, fill = false)) {
+            lines.forEach {
+                Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            row.providerName?.let { ProviderChip(it, Modifier.padding(start = 8.dp)) }
         }
+        providerLabelRes(providerId)?.let { ProviderChip(stringResource(it), Modifier.padding(start = 8.dp)) }
     }
 }

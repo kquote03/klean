@@ -10,6 +10,9 @@ import kotlinx.coroutines.flow.Flow
 interface FoodItemDao {
     @Upsert suspend fun upsertAll(items: List<FoodItemEntity>)
 
+    @Query("SELECT * FROM food_item WHERE id = :id")
+    suspend fun get(id: String): FoodItemEntity?
+
     @Query("SELECT * FROM food_item WHERE entry_id = :entryId AND deleted = 0 ORDER BY position")
     fun observeForEntry(entryId: String): Flow<List<FoodItemEntity>>
 

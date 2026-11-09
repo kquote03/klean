@@ -11,6 +11,7 @@ import app.klean.feature.diet.data.DietRepository
 import app.klean.feature.diet.ui.DietFormatter
 import app.klean.feature.diet.ui.DietRowBuilder
 import app.klean.feature.diet.ui.MinuteTicker
+import app.klean.feature.diet.ui.caloriesSoFar
 import app.klean.shared.diet.CaptureSource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -36,8 +37,10 @@ sealed interface DietRow {
         val id: String,
         val timeLabel: String,
         val text: String,
-        val itemsSummary: String?,
-        val providerName: String?,
+        /** AI items under the raw text: "shawarma · 1 wrap". Empty when there are none. */
+        val itemLines: List<String>,
+        /** Wire id of the provider that produced the items, for the chip. */
+        val providerId: String?,
         /** Absolute path of the photo, for the row thumbnail. */
         val photoPath: String?,
     ) : DietRow {
@@ -56,6 +59,8 @@ data class DietUiState(
     val rows: List<DietRow> = emptyList(),
     val repeats: List<String> = emptyList(),
     val showCalories: Boolean = false,
+    /** "~1,850 kcal so far", only when calories are on and known. */
+    val caloriesSoFar: String? = null,
     val loaded: Boolean = false,
 )
 
@@ -97,7 +102,10 @@ class DietViewModel @Inject constructor(
             val dayWithRepeats = entriesWithItems(date).map { it to repo.quickRepeats() }
             combine(dayWithRepeats, repo.observeViewPrefs(), nowFlow) { (day, reps), prefs, now ->
                 val (entries, items) = day
-                DietUiState(date, rows.build(date, entries, items, prefs, now), reps, prefs.showCalories, loaded = true)
+                DietUiState(
+                    date, rows.build(date, entries, items, prefs, now), reps, prefs.showCalories,
+                    caloriesSoFar(items, prefs.showCalories, fmt), loaded = true,
+                )
             }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DietUiState())

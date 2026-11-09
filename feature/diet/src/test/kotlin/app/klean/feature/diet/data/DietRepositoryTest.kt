@@ -165,4 +165,31 @@ class DietRepositoryTest {
         }
         assertNotNull(a)
     }
+
+    @Test fun itemEditsRejectionsAndRemoveAllNeverTouchTheEntryText() = runBlocking {
+        val id = repo.logEntry("shawarma and fries", CaptureSource.MODULE_SCREEN)
+        val seq = db.foodEntryDao().get(id)!!.sync
+        db.foodItemDao().upsertAll(
+            listOf(
+                FoodItemEntity("i1", id, 0, "shawarma", "1 wrap", 450, "openai_compat", "m", FoodItemState.ACCEPTED, seq),
+                FoodItemEntity("i2", id, 1, "fries", "medium", 320, "openai_compat", "m", FoodItemState.ACCEPTED, seq),
+            ),
+        )
+        changes.clear()
+        repo.editItem("i1", " chicken shawarma ", " ", 520)
+        val e1 = db.foodItemDao().get("i1")!!
+        assertEquals("chicken shawarma", e1.name)
+        assertEquals(null, e1.portion)
+        assertEquals(520, e1.calories)
+        assertEquals(FoodItemState.EDITED, e1.state)
+        assertEquals("openai_compat", e1.providerId)
+        assertTrue(e1.sync.changeSeq > seq.changeSeq)
+
+        repo.rejectItem("i2")
+        assertEquals(FoodItemState.REJECTED, db.foodItemDao().get("i2")!!.state)
+        repo.rejectAllItems(id)
+        assertTrue(db.foodItemDao().forEntry(id).all { it.state == FoodItemState.REJECTED && !it.sync.deleted })
+        assertEquals("shawarma and fries", db.foodEntryDao().get(id)!!.rawText)
+        assertEquals(listOf<DietChange>(DietChange.Edited(id), DietChange.Edited(id), DietChange.Edited(id)), changes)
+    }
 }

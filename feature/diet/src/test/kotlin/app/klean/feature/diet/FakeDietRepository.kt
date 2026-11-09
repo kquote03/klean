@@ -8,6 +8,7 @@ import app.klean.feature.diet.data.DietViewPrefs
 import app.klean.feature.diet.data.TodaySummary
 import app.klean.shared.diet.CaptureSource
 import app.klean.shared.diet.EnrichmentStatus
+import app.klean.shared.diet.FoodItemState
 import app.klean.shared.time.DayWindow
 import app.klean.shared.time.DayWindows
 import app.klean.shared.time.QuietHours
@@ -24,6 +25,7 @@ class FakeDietRepository(private val clock: FakeClock) : DietRepository {
     data class EditCall(val id: String, val text: String?, val eatenAt: Long?, val photoFile: String?, val clearPhoto: Boolean)
 
     val entries = MutableStateFlow<List<FoodEntryEntity>>(emptyList())
+    val items = MutableStateFlow<List<FoodItemEntity>>(emptyList())
     val logs = mutableListOf<LogCall>()
     val edits = mutableListOf<EditCall>()
     val deletes = mutableListOf<String>()
@@ -72,7 +74,23 @@ class FakeDietRepository(private val clock: FakeClock) : DietRepository {
     }
     override fun observeEatenTimes(fromMs: Long, toMs: Long): Flow<List<Long>> =
         entries.map { l -> l.filter { !it.sync.deleted && it.eatenAt >= fromMs && it.eatenAt < toMs }.map { it.eatenAt } }
-    override fun observeItems(entryIds: List<String>): Flow<List<FoodItemEntity>> = flowOf(emptyList())
+    override fun observeItems(entryIds: List<String>): Flow<List<FoodItemEntity>> =
+        items.map { l -> l.filter { it.entryId in entryIds && !it.sync.deleted }.sortedBy { it.position } }
+
+    fun item(id: String, entryId: String, position: Int, name: String, portion: String?, calories: Int?, provider: String = "openai_compat") =
+        FoodItemEntity(id, entryId, position, name, portion, calories, provider, "m", FoodItemState.ACCEPTED, SyncColumns(1, 1, "dev", false, 1))
+
+    override suspend fun editItem(itemId: String, name: String, portion: String?, calories: Int?) {
+        items.value = items.value.map { if (it.id == itemId) it.copy(name = name, portion = portion, calories = calories, state = FoodItemState.EDITED) else it }
+    }
+
+    override suspend fun rejectItem(itemId: String) {
+        items.value = items.value.map { if (it.id == itemId) it.copy(state = FoodItemState.REJECTED) else it }
+    }
+
+    override suspend fun rejectAllItems(entryId: String) {
+        items.value = items.value.map { if (it.entryId == entryId) it.copy(state = FoodItemState.REJECTED) else it }
+    }
     override fun observeViewPrefs(): Flow<DietViewPrefs> = flowOf(prefs)
     override fun windowFor(date: LocalDate): DayWindow = DayWindows.forDate(date, QuietHours.DEFAULT, Dubai)
     override suspend fun today() = entries.value.filter { !it.sync.deleted && it.eatenAt in windowFor(todayDate()).let { w -> w.start until w.end } }

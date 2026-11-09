@@ -17,6 +17,7 @@ import androidx.navigation.NavBackStackEntry
 import app.klean.feature.diet.ui.RemovedEntrySnackbar
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -81,7 +82,14 @@ fun DietScreenContent(
 ) {
     Scaffold(snackbarHost = { SnackbarHost(snackbar) }, topBar = {
         TopAppBar(
-            title = { Text(stringResource(R.string.diet_today_title)) },
+            title = {
+                Column {
+                    Text(stringResource(R.string.diet_today_title))
+                    state.caloriesSoFar?.let {
+                        Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            },
             actions = {
                 IconButton(onClick = onOpenHistory) {
                     Icon(Icons.Rounded.CalendarMonth, contentDescription = stringResource(R.string.diet_history_open))

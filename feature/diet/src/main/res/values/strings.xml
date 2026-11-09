@@ -94,4 +94,18 @@
     <string name="prompt_body">Reply here to add it to today, or tap to open.</string>
     <string name="prompt_delivery">What did you order?</string>
     <string name="prompt_geofence">Anything from %1$s?</string>
+    <!-- AI items (M10) -->
+    <string name="diet_provider_gemini">Gemini</string>
+    <string name="diet_provider_local">Local server</string>
+    <string name="diet_provider_on_device">On device</string>
+    <string name="diet_kcal">~%1$s kcal</string>
+    <string name="diet_kcal_so_far">~%1$s kcal so far</string>
+    <string name="diet_ai_items_title">Details</string>
+    <string name="diet_ai_item_edit">Change %1$s</string>
+    <string name="diet_ai_item_not_right">Not right</string>
+    <string name="diet_ai_remove_all">Remove AI details</string>
+    <string name="diet_ai_item_edit_title">Change item</string>
+    <string name="diet_ai_item_name">Name</string>
+    <string name="diet_ai_item_portion">Portion</string>
+    <string name="diet_ai_item_calories">Calories</string>
 </resources>

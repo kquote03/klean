@@ -9,6 +9,9 @@ import app.klean.core.common.ZoneProvider
 import app.klean.core.data.photo.PhotoStorage
 import app.klean.feature.diet.data.DietRepository
 import app.klean.feature.diet.ui.DietFormatter
+import app.klean.feature.diet.ui.itemLine
+import app.klean.feature.diet.ui.providerOf
+import app.klean.shared.diet.FoodItemState
 import app.klean.shared.time.toLocal
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.io.File
@@ -16,12 +19,16 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.toInstant
+
+/** One AI item on the entry screen. */
+data class AiItemUi(val id: String, val line: String, val name: String, val portion: String?, val calories: Int?)
 
 data class FoodEntryUiState(
     val loaded: Boolean = false,
@@ -37,6 +44,11 @@ data class FoodEntryUiState(
     val deleted: Boolean = false,
     /** Set once the user deleted this entry: the screen closes and the list offers Undo. */
     val removed: String? = null,
+    /** Visible AI items (not rejected), in order. */
+    val items: List<AiItemUi> = emptyList(),
+    /** Wire id of the provider that produced [items], for the chip. */
+    val providerId: String? = null,
+    val showCalories: Boolean = false,
 )
 
 @HiltViewModel
@@ -53,6 +65,19 @@ class FoodEntryViewModel @Inject constructor(
     val uiState: StateFlow<FoodEntryUiState> = state.asStateFlow()
 
     init {
+        viewModelScope.launch {
+            combine(repo.observeItems(listOf(id)), repo.observeViewPrefs()) { items, prefs -> items to prefs.showCalories }
+                .collect { (items, showCalories) ->
+                    val visible = items.filter { it.state != FoodItemState.REJECTED }.sortedBy { it.position }
+                    state.update {
+                        it.copy(
+                            items = visible.map { i -> AiItemUi(i.id, itemLine(i, showCalories, fmt), i.name, i.portion, i.calories) },
+                            providerId = providerOf(visible),
+                            showCalories = showCalories,
+                        )
+                    }
+                }
+        }
         viewModelScope.launch {
             repo.observeEntry(id).collect { e ->
                 if (e == null) {
@@ -132,6 +157,22 @@ class FoodEntryViewModel @Inject constructor(
                 .onSuccess { name -> repo.edit(id, photoFile = name) }
                 .onFailure { Log.w("Klean", "Photo import failed", it) }
         }
+    }
+
+    /** Correct an AI item. It is marked edited and keeps the provider it came from. */
+    fun editItem(itemId: String, name: String, portion: String?, calories: Int?) {
+        if (name.isBlank()) return
+        viewModelScope.launch { repo.editItem(itemId, name, portion, calories) }
+    }
+
+    /** "Not right": hide this item. */
+    fun rejectItem(itemId: String) {
+        viewModelScope.launch { repo.rejectItem(itemId) }
+    }
+
+    /** "Remove AI details": hide every item. The entry text stays. */
+    fun removeAiDetails() {
+        viewModelScope.launch { repo.rejectAllItems(id) }
     }
 
     fun delete() {

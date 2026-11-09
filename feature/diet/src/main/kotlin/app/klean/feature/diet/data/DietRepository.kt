@@ -13,6 +13,7 @@ import app.klean.core.data.sync.SyncStamper
 import app.klean.shared.ai.AiTask
 import app.klean.shared.diet.CaptureSource
 import app.klean.shared.diet.EnrichmentStatus
+import app.klean.shared.diet.FoodItemState
 import app.klean.shared.diet.QuickRepeatRanker
 import app.klean.shared.diet.RepeatCandidate
 import app.klean.shared.id.UuidV7
@@ -68,6 +69,15 @@ interface DietRepository {
 
     /** Undoes [delete]: clears the tombstone on the entry and on the items that delete tombstoned. */
     suspend fun restore(id: String)
+
+    /** The user corrects an AI item. It becomes EDITED and keeps its provider id. */
+    suspend fun editItem(itemId: String, name: String, portion: String?, calories: Int?)
+
+    /** "Not right": hides one AI item (REJECTED). */
+    suspend fun rejectItem(itemId: String)
+
+    /** "Remove AI details": hides every item of the entry. The entry and its text stay as they are. */
+    suspend fun rejectAllItems(entryId: String)
 
     suspend fun get(id: String): FoodEntryEntity?
     fun observeEntry(id: String): Flow<FoodEntryEntity?>
@@ -174,6 +184,44 @@ class DefaultDietRepository @Inject constructor(
             true
         }
         if (restored) dispatcher.dispatch(DietChange.Edited(id))
+    }
+
+    override suspend fun editItem(itemId: String, name: String, portion: String?, calories: Int?) {
+        val cleanName = name.trim()
+        require(cleanName.isNotEmpty()) { "name required" }
+        val entryId = db.transact {
+            val prev = db.foodItemDao().get(itemId)?.takeIf { !it.sync.deleted } ?: return@transact null
+            val next = prev.copy(
+                name = cleanName.take(80),
+                portion = portion?.trim()?.takeIf { it.isNotEmpty() }?.take(60),
+                calories = calories?.takeIf { it in 0..5000 },
+                state = FoodItemState.EDITED,
+            )
+            if (next == prev) return@transact null
+            db.foodItemDao().upsertAll(listOf(next.copy(sync = stamper.stamp(prev.sync))))
+            prev.entryId
+        }
+        if (entryId != null) dispatcher.dispatch(DietChange.Edited(entryId))
+    }
+
+    override suspend fun rejectItem(itemId: String) {
+        val entryId = db.transact {
+            val prev = db.foodItemDao().get(itemId)?.takeIf { !it.sync.deleted && it.state != FoodItemState.REJECTED }
+                ?: return@transact null
+            db.foodItemDao().upsertAll(listOf(prev.copy(state = FoodItemState.REJECTED, sync = stamper.stamp(prev.sync))))
+            prev.entryId
+        }
+        if (entryId != null) dispatcher.dispatch(DietChange.Edited(entryId))
+    }
+
+    override suspend fun rejectAllItems(entryId: String) {
+        val changed = db.transact {
+            val live = db.foodItemDao().forEntry(entryId).filter { !it.sync.deleted && it.state != FoodItemState.REJECTED }
+            if (live.isEmpty()) return@transact false
+            db.foodItemDao().upsertAll(live.map { it.copy(state = FoodItemState.REJECTED, sync = stamper.stamp(it.sync)) })
+            true
+        }
+        if (changed) dispatcher.dispatch(DietChange.Edited(entryId))
     }
 
     override suspend fun get(id: String): FoodEntryEntity? = db.foodEntryDao().get(id)

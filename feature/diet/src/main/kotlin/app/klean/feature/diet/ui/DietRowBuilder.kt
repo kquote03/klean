@@ -31,18 +31,13 @@ class DietRowBuilder(
         val gaps = GapDetector.find(entries.map { it.eatenAt }, window, now, prefs.gapThresholdMinutes * MINUTE_MS)
         val byEntry = items.filter { it.state != FoodItemState.REJECTED }.groupBy { it.entryId }
         val entryRows = entries.map { e ->
-            val its = byEntry[e.id].orEmpty()
-            val summary = its.takeIf { it.isNotEmpty() }?.joinToString(", ") { it.name }
-                ?.let { s ->
-                    val kcal = its.mapNotNull { it.calories }.takeIf { it.isNotEmpty() }?.sum()
-                    if (prefs.showCalories && kcal != null) "$s · $kcal kcal" else s
-                }
+            val its = byEntry[e.id].orEmpty().sortedBy { it.position }
             e.eatenAt to DietRow.Entry(
                 id = e.id,
                 timeLabel = fmt.time(e.eatenAt),
                 text = e.rawText,
-                itemsSummary = summary,
-                providerName = its.firstOrNull { it.providerId != "user" }?.providerId,
+                itemLines = its.map { itemLine(it, prefs.showCalories, fmt) },
+                providerId = providerOf(its),
                 photoPath = e.photoFile?.let { photos.file(it).path },
             )
         }

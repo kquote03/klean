@@ -11,6 +11,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+import app.klean.core.design.component.ProviderChip
+import app.klean.feature.diet.ui.providerLabelRes
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.DatePicker
@@ -106,7 +111,14 @@ fun FoodEntryScreen(onBack: () -> Unit, onRemoved: (String) -> Unit, vm: FoodEnt
                 picker = photoPicker,
                 onRemove = vm::removePhoto,
             )
-            // AI items section appears with the provider layer (M10).
+            if (state.items.isNotEmpty()) {
+                AiItemsSection(
+                    state = state,
+                    onEdit = vm::editItem,
+                    onReject = vm::rejectItem,
+                    onRemoveAll = vm::removeAiDetails,
+                )
+            }
             TextButton(
                 enabled = !state.deleted,
                 // Goes back to the list, which offers Undo.
@@ -171,5 +183,63 @@ private fun PhotoSection(photo: File?, enabled: Boolean, picker: PhotoPicker, on
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+    }
+}
+
+@Composable
+private fun AiItemsSection(
+    state: FoodEntryUiState,
+    onEdit: (String, String, String?, Int?) -> Unit,
+    onReject: (String) -> Unit,
+    onRemoveAll: () -> Unit,
+) {
+    var editing by remember { mutableStateOf<AiItemUi?>(null) }
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(R.string.diet_ai_items_title), style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
+            providerLabelRes(state.providerId)?.let { ProviderChip(stringResource(it)) }
+        }
+        state.items.forEach { item ->
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(item.line, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                IconButton(onClick = { editing = item }, enabled = !state.deleted) {
+                    Icon(Icons.Rounded.Edit, contentDescription = stringResource(R.string.diet_ai_item_edit, item.name))
+                }
+                TextButton(onClick = { onReject(item.id) }, enabled = !state.deleted) { Text(stringResource(R.string.diet_ai_item_not_right)) }
+            }
+        }
+        TextButton(onClick = onRemoveAll, enabled = !state.deleted) { Text(stringResource(R.string.diet_ai_remove_all)) }
+    }
+    editing?.let { item ->
+        var name by remember(item.id) { mutableStateOf(item.name) }
+        var portion by remember(item.id) { mutableStateOf(item.portion.orEmpty()) }
+        var calories by remember(item.id) { mutableStateOf(item.calories?.toString().orEmpty()) }
+        AlertDialog(
+            onDismissRequest = { editing = null },
+            title = { Text(stringResource(R.string.diet_ai_item_edit_title)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(name, { name = it }, label = { Text(stringResource(R.string.diet_ai_item_name)) }, singleLine = true)
+                    OutlinedTextField(portion, { portion = it }, label = { Text(stringResource(R.string.diet_ai_item_portion)) }, singleLine = true)
+                    if (state.showCalories) {
+                        OutlinedTextField(
+                            calories,
+                            { calories = it.filter(Char::isDigit).take(4) },
+                            label = { Text(stringResource(R.string.diet_ai_item_calories)) },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(enabled = name.isNotBlank(), onClick = {
+                    val kcal = if (state.showCalories) calories.toIntOrNull() else item.calories
+                    onEdit(item.id, name, portion.ifBlank { null }, kcal)
+                    editing = null
+                }) { Text(stringResource(R.string.diet_save)) }
+            },
+            dismissButton = { TextButton(onClick = { editing = null }) { Text(stringResource(R.string.diet_cancel)) } },
+        )
     }
 }

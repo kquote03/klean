@@ -22,6 +22,8 @@ interface DietFormatter {
     fun time(epochMs: Long): String
     fun date(date: LocalDate): String
     fun gap(gap: Gap): String
+    fun kcal(n: Int): String = "~$n kcal"
+    fun kcalSoFar(n: Int): String = "~$n kcal so far"
 }
 
 class AndroidDietFormatter @Inject constructor(
@@ -39,6 +41,12 @@ class AndroidDietFormatter @Inject constructor(
     override fun gap(gap: Gap): String =
         if (gap.ongoing) ctx.getString(R.string.diet_gap_ongoing, time(gap.start))
         else ctx.getString(R.string.diet_gap_between, time(gap.start), time(gap.end))
+
+    private fun number(n: Int): String = java.text.NumberFormat.getIntegerInstance().format(n)
+
+    override fun kcal(n: Int): String = ctx.getString(R.string.diet_kcal, number(n))
+
+    override fun kcalSoFar(n: Int): String = ctx.getString(R.string.diet_kcal_so_far, number(n))
 }
 
 @Module
