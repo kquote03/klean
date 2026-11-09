@@ -1,5 +1,6 @@
 package app.klean.feature.diet.ui.settings
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -28,7 +29,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.klean.feature.diet.R
 
 @Composable
-fun DietSettingsScreen(onBack: () -> Unit, vm: DietSettingsViewModel = hiltViewModel()) {
+fun DietSettingsScreen(onBack: () -> Unit, onOpenDeliveryApps: () -> Unit = {}, vm: DietSettingsViewModel = hiltViewModel()) {
     val state by vm.uiState.collectAsStateWithLifecycle()
     DietSettingsContent(
         state = state,
@@ -39,6 +40,7 @@ fun DietSettingsScreen(onBack: () -> Unit, vm: DietSettingsViewModel = hiltViewM
         onStatusLine = { vm.setStatusNotification(it) },
         onUnlockSheet = { vm.setUnlockSheet(it) },
         onPretendLongBreak = { vm.pretendLongBreak() },
+        onOpenDeliveryApps = onOpenDeliveryApps,
         onFireNow = { vm.fireNow() },
         onShowNext = { vm.showNext() },
     )
@@ -57,6 +59,7 @@ fun DietSettingsContent(
     onShowNext: () -> Unit,
     onUnlockSheet: (Boolean) -> Unit = {},
     onPretendLongBreak: () -> Unit = {},
+    onOpenDeliveryApps: () -> Unit = {},
 ) {
     Scaffold(
         topBar = {
@@ -102,6 +105,11 @@ fun DietSettingsContent(
                 summary = stringResource(R.string.diet_settings_calories_summary),
                 checked = state.showCalories,
                 onChange = onCalories,
+            )
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.delivery_apps_title)) },
+                supportingContent = { Text(stringResource(R.string.delivery_apps_summary)) },
+                modifier = Modifier.clickable(onClick = onOpenDeliveryApps),
             )
             if (state.debug) {
                 HorizontalDivider(Modifier.padding(vertical = 8.dp))

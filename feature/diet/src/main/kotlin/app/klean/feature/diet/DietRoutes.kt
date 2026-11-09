@@ -9,3 +9,4 @@ import kotlinx.serialization.Serializable
 @Serializable object DietHistoryRoute
 @Serializable data class DietDayRoute(val isoDate: String)
 @Serializable object DietSettingsRoute
+@Serializable object DeliveryAppsRoute

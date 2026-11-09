@@ -25,6 +25,7 @@ import app.klean.shared.diet.CaptureSource
 import app.klean.feature.diet.ui.popAfterRemove
 import app.klean.feature.diet.ui.settings.DietOnboardingContent
 import app.klean.feature.diet.ui.settings.DietSettingsScreen
+import app.klean.feature.diet.delivery.DeliveryAppsScreen
 import app.klean.feature.diet.widget.DietWidgetReceiver
 import app.klean.feature.diet.ui.today.DietScreen
 import app.klean.shared.module.ModuleId
@@ -76,7 +77,10 @@ class DietKleanModule @Inject constructor(private val enablement: DietEnablement
             }
         }
         // Reached from Settings, so it stays outside the diet graph (the bar keeps Settings selected).
-        composable<DietSettingsRoute> { DietSettingsScreen(onBack = { nav.popBackStack() }) }
+        composable<DietSettingsRoute> {
+            DietSettingsScreen(onBack = { nav.popBackStack() }, onOpenDeliveryApps = { nav.navigate(DeliveryAppsRoute) })
+        }
+        composable<DeliveryAppsRoute> { DeliveryAppsScreen(onBack = { nav.popBackStack() }) }
     }
 
     @Composable

@@ -34,7 +34,10 @@ class DeliveryNotificationHandler(
         if (pkg == ownPackage) return false
         if (!rules.current().isDelivery(pkg, text)) return false
         scope.launch {
-            runCatching { prompts.onDelivered(pkg) }.onFailure { Log.w("Klean", "delivery prompt failed", it) }
+            // Package name only, never the notification's text.
+            runCatching { prompts.onDelivered(pkg) }
+                .onSuccess { Log.i("Klean", "delivery from $pkg, asked=$it") }
+                .onFailure { Log.w("Klean", "delivery prompt failed", it) }
         }
         return true
     }
@@ -51,6 +54,7 @@ class DeliveryListenerService : NotificationListenerService() {
     @Inject @ApplicationScope lateinit var scope: CoroutineScope
 
     override fun onListenerConnected() {
+        Log.i("Klean", "delivery listener connected")
         scope.launch { prefs.setDeliveryOffer(DeliveryOffer.ACCEPTED) }
     }
 

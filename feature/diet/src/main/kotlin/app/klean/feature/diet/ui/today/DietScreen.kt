@@ -34,6 +34,7 @@ import app.klean.core.design.component.NeutralEmpty
 import app.klean.core.design.component.RepeatChips
 import app.klean.feature.diet.R
 import app.klean.feature.diet.ui.dietRows
+import app.klean.feature.diet.delivery.DeliveryOfferCard
 
 @Composable
 fun DietScreen(
@@ -61,6 +62,7 @@ fun DietScreen(
         onMic = rememberVoiceInput(vm.voice),
         onUndoVoice = vm.voice::undoLast,
         snackbar = snackbar,
+        offer = { DeliveryOfferCard(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) },
     )
 }
 
@@ -79,6 +81,8 @@ fun DietScreenContent(
     onMic: () -> Unit,
     onUndoVoice: () -> Unit,
     snackbar: SnackbarHostState = remember { SnackbarHostState() },
+    /** A one-time, dismissible card (the delivery offer); nothing once answered. */
+    offer: @Composable () -> Unit = {},
 ) {
     Scaffold(snackbarHost = { SnackbarHost(snackbar) }, topBar = {
         TopAppBar(
@@ -111,6 +115,7 @@ fun DietScreenContent(
             )
             VoiceStatus(voice, onUndo = onUndoVoice, modifier = Modifier.padding(horizontal = 16.dp))
             RepeatChips(state.repeats, onRepeat = onRepeat, modifier = Modifier.padding(horizontal = 16.dp))
+            offer()
             if (state.loaded && state.rows.none { it is DietRow.Entry }) {
                 NeutralEmpty(stringResource(R.string.diet_today_empty))
             }

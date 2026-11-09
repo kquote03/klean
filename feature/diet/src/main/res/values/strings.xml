@@ -123,4 +123,20 @@
     <string name="diet_debug_pretend_long_break_done">Lock and unlock the phone to see the sheet.</string>
     <!-- Delivery prompts (M12) -->
     <string name="delivery_listener_label">Klean delivery check-ins</string>
+    <string name="delivery_offer_title">Food deliveries</string>
+    <string name="delivery_offer_body">Get a quick \'What did you order?\' when a delivery arrives? Klean only checks notifications from delivery apps, on this phone, and keeps nothing but the time it happened.</string>
+    <string name="delivery_offer_set_up">Set up</string>
+    <string name="delivery_offer_later">Not now</string>
+    <string name="delivery_offer_no">No thanks</string>
+    <string name="delivery_apps_title">Delivery apps</string>
+    <string name="delivery_apps_summary">Which apps count as food deliveries</string>
+    <string name="delivery_apps_body">With notification access on, Klean looks only at notifications from these apps, on this phone. When one says your order arrived, Klean asks what you ordered. Nothing from the notification is kept.</string>
+    <string name="delivery_apps_packages">Apps (package names)</string>
+    <string name="delivery_apps_add_package">Package name, like com.example.food</string>
+    <string name="delivery_apps_package_invalid">That doesn\'t look like a package name, or it\'s already listed</string>
+    <string name="delivery_apps_words">Extra words for “arrived”</string>
+    <string name="delivery_apps_words_body">Klean already knows phrases like “delivered” and “has arrived”. Add your own if an app words it differently.</string>
+    <string name="delivery_apps_add_word">Word or phrase</string>
+    <string name="delivery_apps_add">Add</string>
+    <string name="delivery_apps_remove">Remove %1$s</string>
 </resources>

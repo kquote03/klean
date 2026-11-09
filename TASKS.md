@@ -136,7 +136,7 @@ Everything ticked is merged on `main` (milestones M0–M7 and M9 are tagged).
 ## M12 — Delivery-app trigger
 
 - [x] Task 12.1 — DeliveryListenerService — `feature/diet/delivery/` (DeliveryRules allowlist + match words, DeliveryNotificationHandler, DeliveryPrompter 45 min debounce, prompt_log DELIVERY row with package only); debug builds also read com.android.shell; main
-- [ ] Task 12.2 — Contextual offer
+- [x] Task 12.2 — Contextual offer — `feature/diet/delivery/DeliveryOffer.kt` (DeliveryOfferPolicy: ≥3 entries in 30 days + an allowlisted app installed or a delivery-sounding entry today, never when access is on; Set up → listener detail settings on API 30+, Not now = 30 days, No thanks = for good), `DeliveryScreens.kt` (offer card on the Diet screen, DeliveryAppsRoute editor in Diet settings); main
 - [ ] Task 12.3 — Verify with a simulated notification
 
 ## M13 — Polish, disable audit, accessibility, copy audit
