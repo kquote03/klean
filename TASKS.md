@@ -106,7 +106,7 @@ Everything ticked is merged on `main` (milestones M0–M7 and M9 are tagged).
 
 - [x] Task 8.1 — Permission state model
 - [x] Task 8.2 — PermissionsRoute
-- [ ] Task 8.3 — Onboarding graph
+- [x] Task 8.3 — Onboarding graph
 
 ## M9 — Backup and restore
 
@@ -197,6 +197,16 @@ Verified on Waydroid (LineageOS, Android 13 / API 33, 540×1212, `192.168.240.11
 - [x] 7.1: History (calendar icon) shows a neutral month grid: today outlined, "1" under days with entries, nothing on empty days, next month disabled. Tapping a day opens the pager; swiping moves between days; past-day gaps are closed ("No entries 8:00 AM–12:00 AM")
 - [x] 7.2: "Add something" on a gap opens the sheet with "For around 2:45 PM · Change" (the time picker opens on 2:45). Saving logs at 2:45 PM. From a past day it reads "For around Nov 7, 2026, 4:00 PM", and History then shows "November 7, 2026, 1 entry"
 - [x] Polish: Delete on the entry screen returns to the list, which shows "Entry removed · Undo". Undo restores the entry. The first try showed no snackbar; fixed in `f262c5a`
+
+Verified on Waydroid on 2026-11-09 (M8):
+- [x] `connectedDebugAndroidTest`: 3/3 pass
+- [x] 8.3: installing over the M7 install (entries present, quick-repeat chips visible) opens on Today with no wizard
+- [x] 8.3: after `pm clear`, launch opens the wizard full screen (no bottom bar): Welcome → What to use → When you sleep → Diet → Home screen widget → Permissions → AI help, "N of 7", Skip and Next side by side at equal width
+- [x] 8.3: sleep window set to 11:00 PM–7:00 AM in the wizard is saved (Settings › Quiet hours shows it). Moving it to 10 AM–1 PM moved Diet settings' "Next check-in around 11:34 AM" to 2:00 PM at once; restoring brought it back
+- [x] 8.3: "Add widget" opens the launcher's pin dialog (Waydroid supports `requestPinAppWidget`); Cancel returns to the wizard
+- [x] 8.3: the permissions page lists Notifications, Alarms and reminders, Battery use only (no Notification access); statuses match `dumpsys package`/`deviceidle`. Done lands on Today; Back from Today leaves the app; relaunch opens Today
+- [x] 8.2: Settings › Permissions after `pm revoke POST_NOTIFICATIONS` shows Notifications Off with "Turn on"; Notification access Off
+- [x] 8.3: Settings › Run setup again → Welcome → Skip setup → Today
 
 Still needs hands-on checks by the user (airplane mode or a reboot would drop wireless adb):
 - [ ] 4.3: inline reply from the lock screen in airplane mode (needs adb over USB or no adb), under 5 s
