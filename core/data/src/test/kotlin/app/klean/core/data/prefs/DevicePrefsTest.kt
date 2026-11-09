@@ -8,7 +8,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.job
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -30,7 +32,10 @@ class DevicePrefsTest {
         val first = prefs.deviceId()
         assertEquals(first, prefs.deviceId())
         assertTrue(Regex("^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$").matches(first))
-        scope1.cancel()
+        // DataStore releases its file only when the scope's job *completes*; cancel() just requests
+        // that. Reopening the same file before then throws "multiple DataStores active for the same
+        // file" — on a loaded CI runner about 1 in 7 times. Wait for the old store to shut down.
+        scope1.coroutineContext.job.cancelAndJoin()
 
         val scope2 = CoroutineScope(SupervisorJob() + Dispatchers.IO)
         assertEquals(first, open(scope2).deviceId())
