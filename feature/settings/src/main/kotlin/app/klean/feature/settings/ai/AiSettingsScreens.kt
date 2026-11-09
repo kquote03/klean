@@ -1,5 +1,6 @@
 package app.klean.feature.settings.ai
 
+import app.klean.core.design.component.SwitchListItem
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,7 +20,6 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -36,7 +36,6 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.OutlinedCard
 import app.klean.feature.settings.R
 import app.klean.feature.settings.SettingsSubScaffold
@@ -237,10 +236,5 @@ private fun KeyField(label: String, input: String, hasKey: Boolean, onChange: (S
 
 @Composable
 private fun SwitchRow(title: String, summary: String, checked: Boolean, onChange: (Boolean) -> Unit) {
-    ListItem(
-        modifier = Modifier.toggleable(value = checked, role = Role.Switch, onValueChange = onChange),
-        headlineContent = { Text(title) },
-        supportingContent = { Text(summary) },
-        trailingContent = { Switch(checked = checked, onCheckedChange = null) },
-    )
+    SwitchListItem(checked = checked, onCheckedChange = onChange, headline = { Text(title) }, supporting = { Text(summary) })
 }

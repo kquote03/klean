@@ -1,5 +1,6 @@
 package app.klean.feature.settings.backup
 
+import app.klean.core.design.component.SwitchListItem
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -23,7 +24,6 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -87,22 +87,21 @@ fun BackupSettingsScreen(onBack: () -> Unit, vm: BackupViewModel = hiltViewModel
                 }
             }
             item {
-                ListItem(
-                    supportingContent = { Text(stringResource(R.string.backup_include_keys_warning)) },
-                    trailingContent = { Switch(checked = state.includeSecrets, onCheckedChange = vm::setIncludeSecrets) },
-                ) { Text(stringResource(R.string.backup_include_keys)) }
+                SwitchListItem(
+                    checked = state.includeSecrets,
+                    onCheckedChange = vm::setIncludeSecrets,
+                    headline = { Text(stringResource(R.string.backup_include_keys)) },
+                    supporting = { Text(stringResource(R.string.backup_include_keys_warning)) },
+                )
             }
             item { Header(R.string.backup_section_auto) }
             item {
-                ListItem(
-                    supportingContent = { Text(stringResource(R.string.backup_auto_daily_summary)) },
-                    trailingContent = {
-                        Switch(
-                            checked = state.autoEnabled,
-                            onCheckedChange = { on -> if (on) folderLauncher.launch(null) else vm.disableAuto() },
-                        )
-                    },
-                ) { Text(stringResource(R.string.backup_auto_daily)) }
+                SwitchListItem(
+                    checked = state.autoEnabled,
+                    onCheckedChange = { on -> if (on) folderLauncher.launch(null) else vm.disableAuto() },
+                    headline = { Text(stringResource(R.string.backup_auto_daily)) },
+                    supporting = { Text(stringResource(R.string.backup_auto_daily_summary)) },
+                )
             }
             if (state.autoEnabled) {
                 item {

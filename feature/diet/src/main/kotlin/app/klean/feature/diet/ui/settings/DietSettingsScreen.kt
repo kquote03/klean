@@ -1,5 +1,6 @@
 package app.klean.feature.diet.ui.settings
 
+import app.klean.core.design.component.SwitchListItem
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,7 +17,6 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -144,9 +144,5 @@ fun DietSettingsContent(
 
 @Composable
 internal fun ToggleRow(title: String, summary: String, checked: Boolean, onChange: (Boolean) -> Unit, enabled: Boolean = true) {
-    ListItem(
-        headlineContent = { Text(title) },
-        supportingContent = { Text(summary) },
-        trailingContent = { Switch(checked = checked, onCheckedChange = onChange, enabled = enabled) },
-    )
+    SwitchListItem(checked = checked, onCheckedChange = onChange, headline = { Text(title) }, supporting = { Text(summary) }, enabled = enabled)
 }

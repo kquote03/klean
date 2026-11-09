@@ -1,11 +1,10 @@
 package app.klean.feature.settings
 
+import app.klean.core.design.component.SwitchListItem
 import androidx.annotation.StringRes
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -52,11 +51,11 @@ fun ModulesSettingsScreen(
         } else {
             LazyColumn(modifier.fillMaxSize()) {
                 items(rows, key = { it.id.value }) { row ->
-                    ListItem(
-                        trailingContent = {
-                            Switch(checked = row.enabled, onCheckedChange = { vm.setEnabled(row.id, it) })
-                        },
-                    ) { Text(stringResource(row.labelRes)) }
+                    SwitchListItem(
+                        checked = row.enabled,
+                        onCheckedChange = { vm.setEnabled(row.id, it) },
+                        headline = { Text(stringResource(row.labelRes)) },
+                    )
                 }
             }
         }
