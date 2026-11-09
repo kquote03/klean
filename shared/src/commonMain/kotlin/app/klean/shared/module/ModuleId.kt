@@ -8,6 +8,8 @@ import kotlin.jvm.JvmInline
 value class ModuleId(val value: String) {
     companion object {
         val DIET = ModuleId("diet")
+        /** Contributions owned by the app itself; never disabled. */
+        val CORE = ModuleId("core")
         // Future: reserved so ids never change.
         val TASKS = ModuleId("tasks")
         val REMINDERS = ModuleId("reminders")

@@ -156,6 +156,17 @@ Everything ticked is merged on `main` (milestones M0–M7 and M9 are tagged).
 - [x] Task 15.1 — Geofence CRUD (main) — `core/data/place/PlaceRepository` (UUIDv7, SyncStamper in `db.transact`, tombstone delete, radius clamped 100–500 m; 5 Robolectric tests). Diet settings > Places: list with per-place switch, Add a place / edit (name, Use my current location via LocationManager.getCurrentLocation with the fine-location request just in time, or typed lat/lng, radius slider 100–500 m in 50 m steps, Ask when I leave, Delete place). No map, no Play services. `PlaceEditViewModelTest` 4. Waydroid: added "Food court" from a mock GPS fix (`cmd location providers add-test-provider gps`); without a fix the screen says it couldn't find a location and offers typed coordinates; uiautomator audit 0 small / 0 unlabelled
 - [x] Task 15.2 — Registration + exit prompt (main) — `feature/diet/geofence/`: `ProximityAlertBackend` (LocationManager.addProximityAlert, per-place mutable PendingIntent), `GeofenceRegistrar` (Reschedulable; registers enabled places only when diet is on and fine location is granted, unregisters the rest incl. tombstoned), `GeofenceExitHandler` (exit only, diet on, place on, not quiet, 60 min debounce per place; prompt_log GEOFENCE + place id) → PromptNotifier "Anything from %1$s?" (id GEOFENCE, reply source GEOFENCE_PROMPT), `GeofenceExitReceiver`. Places screen asks for location, then explains and opens settings for Allow all the time; Settings > Permissions has a Location all the time row. Diet off unregisters every place (DietEnablement + ModuleDisableTest). Tests: GeofenceTest 8, DietEnablementTest +1, PromptNotifierTest +1, PermissionModelTest +1, ModuleDisableTest extended (passes on Waydroid). Waydroid, real path: system GeofencingService listed `Geofence[(25.197197, 55.279638) 150.0m]`; moving the mock GPS ~2.7 km away posted "Anything from Food court?" (id 1005) and wrote prompt_log GEOFENCE/PENDING with the place id; debug Simulate leaving then showed the 60 min debounce; diet off removed the registration and the prompt, on re-registered it. Plan's `adb emu geo fix` doesn't exist on Waydroid; the test provider replaces it. Walking out of a real place is left for the phone (M16)
 
+## Today dashboard (`.hermes/plans/2026-11-09_153251-today-dashboard-and-p1-closeout.md`)
+
+- [x] A1 — Dashboard contracts (`core/ui/module/Dashboard.kt`: `DashboardSummaryProvider`, `DayActivityProvider`, `DashboardContributions` filtered by the module gate; `ModuleId.CORE`) — main
+- [ ] B1 — Greeting and week model (`app/today/TodayModel.kt`)
+- [ ] C1 — `SummaryTile` and `WeekOverview` in `:core:design`
+- [ ] D1–D5 — `TodayDashboardViewModel`, shell wiring, rebuilt `TodayScreen`, strings, shell test
+- [ ] E1 — Diet tiles and week activity (`DietDashboardProviders`)
+- [ ] E2 — Slim down the Diet dashboard card
+- [ ] E3 — Quiet-hours tile (app-owned)
+- [ ] E4 — Waydroid check of the dashboard
+
 ## M16 — Acceptance run on a real phone
 
 - [ ] Run every acceptance criterion in PLAN.md §8 M16 on a real phone; record results in `docs/acceptance-p1.md`
