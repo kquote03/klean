@@ -31,7 +31,20 @@ import app.klean.feature.diet.delivery.DeliveryAppsScreen
 import app.klean.feature.diet.widget.DietWidgetReceiver
 import app.klean.feature.diet.ui.today.DietScreen
 import app.klean.shared.module.ModuleId
+import app.klean.core.common.ZoneProvider
+import app.klean.core.data.prefs.DevicePrefs
+import app.klean.core.data.settings.SettingsRepository
+import app.klean.core.data.settings.SyncedKeys
+import app.klean.core.ui.module.DashboardSummaryProvider
+import app.klean.core.ui.module.DayActivityProvider
+import app.klean.feature.diet.data.DietRepository
+import app.klean.feature.diet.ui.DietFormatter
+import app.klean.feature.diet.ui.MinuteTicker
+import app.klean.feature.diet.ui.dashboard.AndroidDietSummaryText
+import app.klean.feature.diet.ui.dashboard.DietDashboardProviders
+import app.klean.feature.diet.ui.dashboard.DietSummaryText
 import dagger.Binds
+import dagger.Provides
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
@@ -111,4 +124,34 @@ private fun gapCaptureIntent(ctx: Context, gap: DietRow.GapRow) =
 @InstallIn(SingletonComponent::class)
 abstract class DietModuleBindings {
     @Binds @IntoSet abstract fun module(m: DietKleanModule): KleanModule
+}
+
+/** Diet's tiles and week activity on Today. */
+@Module
+@InstallIn(SingletonComponent::class)
+abstract class DietDashboardBindings {
+    @Binds abstract fun summaryText(impl: AndroidDietSummaryText): DietSummaryText
+
+    companion object {
+        @Provides @Singleton @JvmStatic
+        fun dashboardProviders(
+            repo: DietRepository,
+            fmt: DietFormatter,
+            text: DietSummaryText,
+            ticker: MinuteTicker,
+            zone: ZoneProvider,
+            prefs: DevicePrefs,
+            settings: SettingsRepository,
+        ): DietDashboardProviders = DietDashboardProviders(
+            repo, fmt, text, ticker, zone,
+            nextCheckIn = { prefs.nextPromptAt },
+            promptsOn = { settings.observe(SyncedKeys.DietPromptsEnabled) },
+        )
+
+        @Provides @IntoSet @JvmStatic
+        fun dietSummaries(p: DietDashboardProviders): DashboardSummaryProvider = p
+
+        @Provides @IntoSet @JvmStatic
+        fun dietActivity(p: DietDashboardProviders): DayActivityProvider = p
+    }
 }

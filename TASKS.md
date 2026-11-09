@@ -162,7 +162,7 @@ Everything ticked is merged on `main` (milestones M0–M7 and M9 are tagged).
 - [x] B1 — Greeting and week model (`app/today/TodayModel.kt`) — main
 - [x] C1 — `SummaryTile` and `WeekOverview` in `:core:design` (Robolectric `DashboardComponentsTest`: 48 dp targets, labelled days, no zero badges, future days inert) — main
 - [x] D1–D5 — `TodayDashboardViewModel` (4 tests), shell wiring, rebuilt `TodayScreen` (greeting header, tiles, week strip), strings, 3 new `ShellSmokeTest` cases — main
-- [ ] E1 — Diet tiles and week activity (`DietDashboardProviders`)
+- [x] E1 — Diet tiles and week activity (`feature/diet/ui/dashboard/DietDashboardProviders.kt`, 6 tests; shared `knownCalories` and `observeCountsByLogicalDay` now also used by Diet and History) — main
 - [ ] E2 — Slim down the Diet dashboard card
 - [ ] E3 — Quiet-hours tile (app-owned)
 - [ ] E4 — Waydroid check of the dashboard

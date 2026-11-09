@@ -3,12 +3,11 @@ package app.klean.feature.diet.ui.history
 import androidx.lifecycle.ViewModel
 import app.klean.core.common.ZoneProvider
 import app.klean.feature.diet.data.DietRepository
-import app.klean.shared.time.DayWindows
+import app.klean.feature.diet.ui.observeCountsByLogicalDay
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
@@ -47,17 +46,11 @@ class DietHistoryViewModel @Inject constructor(
     fun month(first: LocalDate): Flow<HistoryMonth> {
         val start = LocalDate(first.year, first.month, 1)
         val last = start.plus(1, DateTimeUnit.MONTH).minus(1, DateTimeUnit.DAY)
-        return repo.observeViewPrefs().flatMapLatest { prefs ->
-            val tz = zone.current()
-            val from = DayWindows.forDate(start, prefs.quietHours, tz).start
-            val to = DayWindows.forDate(last, prefs.quietHours, tz).end
-            repo.observeEatenTimes(from, to).map { times ->
-                val counts = times.groupingBy { DayWindows.logicalDate(it, prefs.quietHours, tz) }.eachCount()
-                val days = generateSequence(start) { d -> d.plus(1, DateTimeUnit.DAY).takeIf { it <= last } }
-                    .map { d -> HistoryDay(d, counts[d] ?: 0, isToday = d == today, isFuture = d > today) }
-                    .toList()
-                HistoryMonth(start, days, canGoNext = start < currentMonth, loaded = true)
-            }
+        return repo.observeCountsByLogicalDay(start, last) { zone.current() }.map { counts ->
+            val days = generateSequence(start) { d -> d.plus(1, DateTimeUnit.DAY).takeIf { it <= last } }
+                .map { d -> HistoryDay(d, counts[d] ?: 0, isToday = d == today, isFuture = d > today) }
+                .toList()
+            HistoryMonth(start, days, canGoNext = start < currentMonth, loaded = true)
         }
     }
 

@@ -168,4 +168,15 @@
     <string name="places_debug_simulate">Simulate leaving %1$s</string>
     <string name="places_debug_asked">%1$s: asked.</string>
     <string name="places_debug_not_asked">%1$s: not asked (diet off, place off, quiet hours, or asked within the hour).</string>
+    <string name="diet_summary_today">Today</string>
+    <string name="diet_summary_none">No entries yet</string>
+    <plurals name="diet_summary_count">
+        <item quantity="one">1 entry</item>
+        <item quantity="other">%d entries</item>
+    </plurals>
+    <string name="diet_summary_last">Last entry</string>
+    <string name="diet_summary_last_value">%1$s · %2$s</string>
+    <string name="diet_summary_next">Next check-in</string>
+    <string name="diet_summary_next_value">around %1$s</string>
+    <string name="diet_summary_kcal">So far</string>
 </resources>

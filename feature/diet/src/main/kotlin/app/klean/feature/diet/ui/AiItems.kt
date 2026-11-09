@@ -15,9 +15,13 @@ fun itemLine(item: FoodItemEntity, showCalories: Boolean, fmt: DietFormatter): S
 /** "~1,850 kcal so far" for the day's visible items, or null when calories are off or unknown. */
 fun caloriesSoFar(items: List<FoodItemEntity>, showCalories: Boolean, fmt: DietFormatter): String? {
     if (!showCalories) return null
+    return knownCalories(items)?.let(fmt::kcalSoFar)
+}
+
+/** Sum of the estimates on visible (not removed, not "Not right") items, or null when none has one. */
+fun knownCalories(items: List<FoodItemEntity>): Int? {
     val known = items.filter { !it.sync.deleted && it.state != FoodItemState.REJECTED }.mapNotNull { it.calories }
-    if (known.isEmpty()) return null
-    return fmt.kcalSoFar(known.sum())
+    return if (known.isEmpty()) null else known.sum()
 }
 
 /** Which provider produced an item, as a chip label. Null for items the user wrote. */
