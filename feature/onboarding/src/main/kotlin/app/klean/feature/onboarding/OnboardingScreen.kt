@@ -50,6 +50,8 @@ fun OnboardingScreen(
     onboarding: OnboardingState,
     permissions: PermissionChecker,
     onFinished: () -> Unit,
+    /** Opens Settings > AI providers; back returns to this page. Null hides the button. */
+    onOpenAiSettings: (() -> Unit)? = null,
     vm: OnboardingViewModel = viewModel { OnboardingViewModel(registry, quietHours, onboarding) },
 ) {
     val s by vm.state.collectAsStateWithLifecycle()
@@ -72,7 +74,7 @@ fun OnboardingScreen(
             )
             Spacer(Modifier.height(16.dp))
             Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())) {
-                StepBody(s, vm, permissions)
+                StepBody(s, vm, permissions, onOpenAiSettings)
             }
             Spacer(Modifier.height(16.dp))
             val first = s.current == OnboardingStep.Welcome
@@ -114,7 +116,7 @@ private fun stepTitle(step: OnboardingStep, vm: OnboardingViewModel): String = w
 }
 
 @Composable
-private fun StepBody(s: OnboardingUiState, vm: OnboardingViewModel, permissions: PermissionChecker) {
+private fun StepBody(s: OnboardingUiState, vm: OnboardingViewModel, permissions: PermissionChecker, onOpenAiSettings: (() -> Unit)?) {
     when (val step = s.current) {
         OnboardingStep.Welcome -> Body(R.string.onboarding_welcome_body)
         OnboardingStep.Modules -> {
@@ -138,6 +140,12 @@ private fun StepBody(s: OnboardingUiState, vm: OnboardingViewModel, permissions:
         }
         OnboardingStep.Ai -> {
             Body(R.string.onboarding_ai_body)
+            if (onOpenAiSettings != null) {
+                FilledTonalButton(
+                    onClick = onOpenAiSettings,
+                    modifier = Modifier.padding(horizontal = 8.dp).heightIn(min = 48.dp),
+                ) { Text(stringResource(R.string.onboarding_ai_open)) }
+            }
             Body(R.string.onboarding_ai_later)
         }
     }

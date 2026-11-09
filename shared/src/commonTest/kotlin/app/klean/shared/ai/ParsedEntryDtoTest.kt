@@ -57,4 +57,16 @@ class ParsedEntryDtoTest {
         assertTrue((meal["enum"] as JsonArray).size == 6)
         assertTrue(ENTRY_PARSE_SYSTEM.startsWith("You turn a short food log"))
     }
+
+    @Test fun fromJson_isLenientAboutNumbersAndNulls() {
+        val json = Json.parseToJsonElement(
+            """{"items":[{"name":"toast","portion":null,"calories":180.4},{"name":"butter","portion":"1 pat","calories":"35"},{"portion":"x"},5],"mealType":"Breakfast","extra":1}""",
+        )
+        assertEquals(
+            ParsedEntryDto(listOf(ParsedItemDto("toast", null, 180), ParsedItemDto("butter", "1 pat", 35)), "Breakfast"),
+            ParsedEntryDto.fromJson(json),
+        )
+        assertNull(ParsedEntryDto.fromJson(Json.parseToJsonElement("""{"foods":[]}""")))
+        assertNull(ParsedEntryDto.caloriesOf(Json.parseToJsonElement("null")))
+    }
 }

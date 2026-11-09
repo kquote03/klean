@@ -28,14 +28,10 @@ import app.klean.shared.diet.MealType
 import app.klean.shared.id.UuidV7
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import kotlin.math.roundToInt
 import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 
@@ -170,21 +166,6 @@ class FoodEnrichmentWorker @AssistedInject constructor(
     }
 }
 
-/** Reads an AI answer into the DTO, tolerating numbers written as decimals or strings. */
-internal fun parseEntry(json: JsonElement): ParsedEntryDto? = runCatching {
-    val o = json.jsonObject
-    val items = o["items"]!!.jsonArray.mapNotNull { el ->
-        val it = el as? JsonObject ?: return@mapNotNull null
-        val name = (it["name"] as? JsonPrimitive)?.takeIf { p -> p.isString }?.content ?: return@mapNotNull null
-        ParsedItemDto(
-            name = name,
-            portion = (it["portion"] as? JsonPrimitive)?.takeIf { p -> p.isString }?.content,
-            calories = calories(it["calories"]),
-        )
-    }
-    ParsedEntryDto(items, (o["mealType"] as? JsonPrimitive)?.takeIf { it.isString }?.content)
-}.getOrNull()
+internal fun parseEntry(json: JsonElement): ParsedEntryDto? = ParsedEntryDto.fromJson(json)
 
-private fun calories(el: JsonElement?): Int? =
-    (el as? JsonPrimitive)?.let { p -> p.doubleOrNull ?: p.content.trim().toDoubleOrNull() }?.roundToInt()
-
+private fun calories(el: JsonElement?): Int? = ParsedEntryDto.caloriesOf(el)

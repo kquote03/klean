@@ -9,6 +9,8 @@ import kotlinx.serialization.Serializable
 // Stubs: each is replaced by a real screen in a later milestone.
 @Serializable object AppearanceSettingsRoute
 @Serializable object AiProvidersSettingsRoute
+/** [provider] is a [app.klean.shared.ai.ProviderId] name. */
+@Serializable data class AiProviderSettingsRoute(val provider: String)
 @Serializable object BackupSettingsRoute
 @Serializable object PermissionsSettingsRoute
 @Serializable object AboutSettingsRoute

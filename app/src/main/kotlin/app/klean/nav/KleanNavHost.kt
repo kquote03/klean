@@ -8,6 +8,7 @@ import androidx.navigation.navDeepLink
 import app.klean.core.ui.module.KleanModule
 import app.klean.feature.onboarding.OnboardingRoute
 import app.klean.feature.onboarding.OnboardingScreen
+import app.klean.feature.settings.AiProvidersSettingsRoute
 import app.klean.feature.settings.SettingsScreen
 import app.klean.feature.settings.settingsGraph
 import app.klean.today.TodayScreen
@@ -37,6 +38,7 @@ fun KleanNavHost(nav: NavHostController, shell: ShellViewModel, enabled: List<Kl
                         launchSingleTop = true
                     }
                 },
+                onOpenAiSettings = { nav.navigate(AiProvidersSettingsRoute) },
             )
         }
         composable<TodayRoute>(deepLinks = listOf(navDeepLink { uriPattern = "klean://today" })) { TodayScreen(registry = registry, capture = shell.capture, clock = shell.clock, onOpen = { nav.navigate(it) }) }

@@ -1,5 +1,8 @@
 package app.klean.feature.settings
 
+import app.klean.feature.settings.ai.AiProviderScreen
+import app.klean.feature.settings.ai.AiProvidersScreen
+
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.LazyColumn
@@ -87,7 +90,10 @@ fun NavGraphBuilder.settingsGraph(nav: NavController, registry: ModuleRegistry, 
     composable<ModulesSettingsRoute> { ModulesSettingsScreen(registry = registry, onBack = back) }
     composable<QuietHoursSettingsRoute> { QuietHoursSettingsScreen(onBack = back) }
     composable<AppearanceSettingsRoute> { StubSettingsScreen(R.string.settings_appearance, back) }
-    composable<AiProvidersSettingsRoute> { StubSettingsScreen(R.string.settings_ai_providers, back) }
+    composable<AiProvidersSettingsRoute> {
+        AiProvidersScreen(onBack = back, onOpen = { nav.navigate(AiProviderSettingsRoute(it.name)) })
+    }
+    composable<AiProviderSettingsRoute> { AiProviderScreen(onBack = back) }
     composable<BackupSettingsRoute> { BackupSettingsScreen(onBack = back) }
     composable<PermissionsSettingsRoute>(deepLinks = listOf(navDeepLink { uriPattern = "klean://settings/permissions" })) {
         PermissionsSettingsScreen(checker = permissions, onBack = back)

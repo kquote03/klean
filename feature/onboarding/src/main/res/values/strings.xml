@@ -26,5 +26,6 @@
 
     <string name="onboarding_ai_title">AI help</string>
     <string name="onboarding_ai_body">Klean can use an AI service to fill in details about what you ate. Logging always works without it.</string>
-    <string name="onboarding_ai_later">You can set this up later in Settings.</string>
+    <string name="onboarding_ai_open">Set up AI providers</string>
+    <string name="onboarding_ai_later">You can also do this later in Settings.</string>
 </resources>
