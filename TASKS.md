@@ -159,7 +159,7 @@ Everything ticked is merged on `main` (milestones M0–M7 and M9 are tagged).
 ## Today dashboard (`.hermes/plans/2026-11-09_153251-today-dashboard-and-p1-closeout.md`)
 
 - [x] A1 — Dashboard contracts (`core/ui/module/Dashboard.kt`: `DashboardSummaryProvider`, `DayActivityProvider`, `DashboardContributions` filtered by the module gate; `ModuleId.CORE`) — main
-- [ ] B1 — Greeting and week model (`app/today/TodayModel.kt`)
+- [x] B1 — Greeting and week model (`app/today/TodayModel.kt`) — main
 - [ ] C1 — `SummaryTile` and `WeekOverview` in `:core:design`
 - [ ] D1–D5 — `TodayDashboardViewModel`, shell wiring, rebuilt `TodayScreen`, strings, shell test
 - [ ] E1 — Diet tiles and week activity (`DietDashboardProviders`)
