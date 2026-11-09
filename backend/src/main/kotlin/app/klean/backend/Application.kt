@@ -8,6 +8,8 @@ import app.klean.backend.dav.davRoutes
 import app.klean.backend.push.pushRoutes
 import app.klean.backend.google.googlePublicRoutes
 import app.klean.backend.google.googleRoutes
+import app.klean.backend.proxy.aiProxyRoutes
+import app.klean.backend.proxy.hermesRoutes
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
@@ -92,6 +94,8 @@ fun Application.kleanModule(services: Services) {
                 blobRoutes(services.blobs)
                 pushRoutes(services.push)
                 googleRoutes(services.google)
+                hermesRoutes(services.proxy, services.config)
+                aiProxyRoutes(services.proxy, services.config)
             }
         }
     }

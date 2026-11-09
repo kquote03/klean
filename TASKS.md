@@ -361,8 +361,8 @@ Schema v2 is frozen for the streams (decision 1). Each stream ticks only its own
 - [x] 24.9 — CardDAV/CalDAV (PROPFIND, REPORT sync-collection + multiget + query, GET/PUT/DELETE, ETags); vCard/iCal codecs in `:shared` with round-trip tests
 - [x] 24.10 — web push (VAPID, RFC 8291/8292) with JDK crypto (`nl.martijndwars:web-push` is barely maintained); keys generated once into `settings`
 - [x] 24.11 — Google server OAuth, Calendar read, Tasks list/patch (never create; `GoogleTest.neverCreatesGoogleTasks` checks every request), tested against a MockEngine fake
-- [ ] 24.12 — Hermes relay
-- [ ] 24.13 — AI proxy
+- [x] 24.12 — Hermes relay (`/hermes/{path...}` → `KLEAN_HERMES_URL` with the server-held token, SSE streamed)
+- [x] 24.13 — AI proxy (`/ai/v1/chat/completions`, `/ai/v1/models` → `KLEAN_AI_UPSTREAM`), same streaming proxy
 - [ ] 24.14 — `POST /admin/backup`
 
 Known gaps (shipped simpler, per plan risk 8):
