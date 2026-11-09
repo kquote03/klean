@@ -122,7 +122,7 @@ internal fun CaptureSheetContent(
                         onSubmit = { onSubmit(text) },
                         onMic = onMic,
                         onPhoto = photoPicker?.let { { photoMenu = true } },
-                        placeholder = stringResource(R.string.capture_placeholder),
+                        placeholder = stringResource(state.placeholderRes),
                         enabled = phase != CapturePhase.Saving,
                         listening = voice.listening,
                         modifier = Modifier.focusRequester(focus),

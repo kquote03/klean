@@ -40,6 +40,9 @@ interface KleanModule {
     /** The module's home-screen widget receiver, offered on the widget page of the setup wizard. */
     val widgetReceiver: Class<*>? get() = null
 
+    /** Placeholder of the capture sheet when it is opened for this module only (e.g. its widget). */
+    @get:StringRes val capturePlaceholderRes: Int? get() = null
+
     /** Cancel alarms/notifications/widgets on disable; reschedule on enable. */
     suspend fun onEnabledChanged(enabled: Boolean) {}
 }

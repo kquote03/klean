@@ -68,6 +68,21 @@ class CaptureViewModelTest {
         assertTrue(vm.state.value.finished)
     }
 
+    @Test fun universalSheetUsesTheHolisticPlaceholder() = runTest(dispatcher) {
+        assertEquals(R.string.capture_placeholder, vm().state.value.placeholderRes)
+    }
+
+    @Test fun moduleTargetedSheetKeepsTheModulePlaceholder() = runTest(dispatcher) {
+        val module = PlaceholderModule(ModuleId.DIET, placeholder = 4242)
+        val vm = CaptureViewModel(
+            UniversalCaptureService(setOf(diet), gate, DefaultCaptureRouter(null)),
+            ModuleRegistry(setOf(module), gate),
+            clock, rec, FakePhotoStorage(), DubaiZone,
+            SavedStateHandle(mapOf(CaptureActivity.EXTRA_TARGET_MODULE to "diet")),
+        )
+        assertEquals(4242, vm.state.value.placeholderRes)
+    }
+
     @Test fun blankTextAndDoubleSubmitAreIgnored() = runTest(dispatcher) {
         val vm = vm()
         vm.submit("   ")

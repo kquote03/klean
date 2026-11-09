@@ -22,11 +22,8 @@ import kotlinx.coroutines.launch
 /** What the tile shows for the set of enabled capture modules. */
 data class CaptureTileModel(val available: Boolean, @StringRes val labelRes: Int) {
     companion object {
-        fun from(enabled: List<ModuleId>): CaptureTileModel = when {
-            enabled.isEmpty() -> CaptureTileModel(false, R.string.tile_label_universal)
-            enabled == listOf(ModuleId.DIET) -> CaptureTileModel(true, R.string.tile_label)
-            else -> CaptureTileModel(true, R.string.tile_label_universal)
-        }
+        /** Always "Add to Klean": the tile is the holistic capture entry, whichever modules are on. */
+        fun from(enabled: List<ModuleId>): CaptureTileModel = CaptureTileModel(enabled.isNotEmpty(), R.string.tile_label)
     }
 }
 

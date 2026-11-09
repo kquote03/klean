@@ -109,6 +109,7 @@ class DietKleanModule @Inject constructor(private val enablement: DietEnablement
 
     override val onboardingTitleRes: Int = R.string.diet_onboarding_title
     override val widgetReceiver: Class<*> = DietWidgetReceiver::class.java
+    override val capturePlaceholderRes: Int = R.string.diet_capture_placeholder
 
     @Composable
     override fun OnboardingContent(modifier: Modifier) = DietOnboardingContent(modifier)

@@ -61,6 +61,8 @@ data class CaptureUiState(
     val eatenAtLabel: String = "",
     /** The sheet should close. */
     val finished: Boolean = false,
+    /** Field placeholder: the holistic one, or the target module's own (e.g. "What did you eat?"). */
+    val placeholderRes: Int = R.string.capture_placeholder,
 )
 
 @HiltViewModel
@@ -78,7 +80,13 @@ class CaptureViewModel @Inject constructor(
         ?.let { runCatching { CaptureSource.valueOf(it) }.getOrNull() }
         ?: CaptureActivity.DEFAULT_SOURCE
 
-    private val _state = MutableStateFlow(CaptureUiState(startVoice = savedState.get<Boolean>(CaptureActivity.EXTRA_START_VOICE) == true))
+    private val _state = MutableStateFlow(
+        CaptureUiState(
+            startVoice = savedState.get<Boolean>(CaptureActivity.EXTRA_START_VOICE) == true,
+            placeholderRes = target?.let { t -> registry.all.firstOrNull { it.id == t }?.capturePlaceholderRes }
+                ?: R.string.capture_placeholder,
+        ),
+    )
     val state: StateFlow<CaptureUiState> = _state.asStateFlow()
 
     init {
