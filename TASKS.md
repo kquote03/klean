@@ -347,3 +347,9 @@ Schema v2 is frozen for the streams (decision 1). Each stream ticks only its own
 - [ ] S6.4 — screens: `SleepRoute`, `SleepEditRoute`
 - [ ] S6.5 — `SleepImportSource` no-op (deferred)
 - [ ] S6 common — `SleepKleanModule`, tests, `SleepDisableTest`, Waydroid walk, gate
+
+## M16 — Holistic re-centre (`.hermes/plans/2026-11-09_165408-klean-holistic-full-product.md`)
+
+- [x] M16.1 — launcher and status icons: a day ring with a check, no food (`7a8b8c3`) — main
+- [x] M16.2 — QS tile "Add to Klean"; universal capture placeholder; module sheets keep their own (`KleanModule.capturePlaceholderRes`, `1a69c98`) — main
+- [x] M16.3 — `StatusFragment` / `StatusLineProvider` + `DashboardContributions.statusLine(max)` (gate-filtered, priority order; `DashboardContributionsTest` +2) — main

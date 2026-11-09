@@ -59,4 +59,32 @@ class DashboardContributionsTest {
         assertEquals(false, c.hasActivityProviders().first())
         assertEquals(emptyMap<LocalDate, DayActivity>(), c.activity(d1, d1).first())
     }
+
+    private fun status(id: ModuleId, key: String, priority: Int) = object : StatusLineProvider {
+        override val moduleId = id
+        override fun fragments() = flowOf(listOf(StatusFragment(key, key, priority)))
+    }
+
+    @Test fun statusLineIsHighestPriorityFirstAndCapped() = runTest {
+        val c = DashboardContributions(
+            emptySet(), emptySet(), Gate(),
+            statusProviders = setOf(
+                status(ModuleId.DIET, "a", 1), status(ModuleId.TASKS, "b", 5), status(ModuleId.CALENDAR, "c", 3),
+            ),
+        )
+        assertEquals(listOf("b", "c", "a"), c.statusLine().first().map { it.key })
+        assertEquals(listOf("b", "c"), c.statusLine(max = 2).first().map { it.key })
+    }
+
+    @Test fun statusLineSkipsDisabledModules() = runTest {
+        val gate = Gate()
+        val c = DashboardContributions(
+            emptySet(), emptySet(), gate,
+            statusProviders = setOf(status(ModuleId.DIET, "a", 1), status(ModuleId.TASKS, "b", 5)),
+        )
+        gate.setEnabled(ModuleId.TASKS, false)
+        assertEquals(listOf("a"), c.statusLine().first().map { it.key })
+        gate.setEnabled(ModuleId.DIET, false)
+        assertEquals(emptyList<StatusFragment>(), c.statusLine().first())
+    }
 }

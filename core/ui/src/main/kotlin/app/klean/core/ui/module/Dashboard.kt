@@ -48,6 +48,15 @@ interface DayActivityProvider {
 
 data class DayActivity(val count: Int, val route: Any?)
 
+/** One short fragment of the persistent "Today" status line, e.g. "2 tasks" or "Dentist 14:00". */
+data class StatusFragment(val key: String, val text: String, val priority: Int)
+
+/** A module's contribution to the persistent status notification. Bind with @IntoSet. */
+interface StatusLineProvider {
+    val moduleId: ModuleId
+    fun fragments(): Flow<List<StatusFragment>>
+}
+
 /**
  * Everything the enabled modules contribute to Today, filtered by the module gate.
  * Providers are ordered by module id, so app-owned "core" tiles (quiet hours) come first.
@@ -58,7 +67,25 @@ class DashboardContributions @Inject constructor(
     private val summaryProviders: Set<@JvmSuppressWildcards DashboardSummaryProvider>,
     private val activityProviders: Set<@JvmSuppressWildcards DayActivityProvider>,
     private val gate: ModuleGate,
+    private val statusProviders: Set<@JvmSuppressWildcards StatusLineProvider> = emptySet(),
 ) {
+    /** Gate-filtered status fragments, highest priority first, at most [max]. */
+    fun statusLine(max: Int = 3): Flow<List<StatusFragment>> = gate.disabledIds.distinctUntilChanged().flatMapLatest { off ->
+        val on = statusProviders.filter { it.moduleId !in off }.sortedBy { it.moduleId.value }
+        if (on.isEmpty()) {
+            flowOf(emptyList())
+        } else {
+            combine(on.map { it.fragments() }) { lists ->
+                lists.flatMap { it }.sortedByDescending { it.priority }.take(max)
+            }
+        }
+    }
+
+    /** True when any enabled module other than [except] contributes to the status line. */
+    fun hasOtherStatusProviders(except: ModuleId): Flow<Boolean> =
+        gate.disabledIds.map { off -> statusProviders.any { it.moduleId != except && it.moduleId !in off } }
+            .distinctUntilChanged()
+
     fun summaries(): Flow<List<SummaryItem>> = gate.disabledIds.distinctUntilChanged().flatMapLatest { off ->
         val on = summaryProviders.filter { it.moduleId !in off }.sortedBy { it.moduleId.value }
         if (on.isEmpty()) flowOf(emptyList()) else combine(on.map { it.summaries() }) { lists -> lists.flatMap { it } }
@@ -91,4 +118,5 @@ class DashboardContributions @Inject constructor(
 abstract class DashboardMultibindings {
     @Multibinds abstract fun summaries(): Set<DashboardSummaryProvider>
     @Multibinds abstract fun activity(): Set<DayActivityProvider>
+    @Multibinds abstract fun statusLine(): Set<StatusLineProvider>
 }
