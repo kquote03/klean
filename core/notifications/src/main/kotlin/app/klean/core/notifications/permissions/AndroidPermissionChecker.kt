@@ -34,6 +34,7 @@ class AndroidPermissionChecker @Inject constructor(
             exactAlarms = alarms.canExact(),
             batteryUnrestricted = ctx.getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(ctx.packageName),
             notificationListener = ctx.packageName in NotificationManagerCompat.getEnabledListenerPackages(ctx),
+            fullScreenIntent = NotificationManagerCompat.from(ctx).canUseFullScreenIntent(),
         )
     }
 }
@@ -49,6 +50,8 @@ object PermissionIntents {
                 .putExtra(Settings.EXTRA_APP_PACKAGE, ctx.packageName)
             PermissionKind.EXACT_ALARMS -> Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, pkg)
             PermissionKind.BATTERY -> Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, pkg)
+            // The row only exists on API 34+, where this screen does.
+            PermissionKind.FULL_SCREEN -> Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, pkg)
             PermissionKind.NOTIFICATION_LISTENER -> null
         }?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }

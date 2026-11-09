@@ -1,6 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Unlock sheet (M11): opens "Today so far" after a long break. On Android 14+ the user may
+         turn this off; the sheet then arrives as a heads-up notification instead. -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <application>
+        <activity
+            android:name=".unlock.UnlockSheetActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:launchMode="singleInstance"
+            android:showWhenLocked="false"
+            android:taskAffinity="app.klean.unlock"
+            android:theme="@style/Theme.Klean.Translucent"
+            android:windowSoftInputMode="adjustResize" />
         <receiver
             android:name=".notification.StatusRepostReceiver"
             android:exported="false" />

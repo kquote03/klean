@@ -129,9 +129,9 @@ Everything ticked is merged on `main` (milestones M0–M7 and M9 are tagged).
 
 ## M11 — Unlock sheet
 
-- [ ] Task 11.1 — Spike on the real phone (timebox 30 min)
+- [x] Task 11.1 — Spike on the real phone (timebox 30 min) — done on Waydroid (Android 13), see `feature/diet/src/main/kotlin/app/klean/feature/diet/unlock/NOTES.md`; Android 14+ recheck in M16; main
 - [x] Task 11.2 — ScreenStateMonitor + eligibility (TDD) — `UnlockSheetPolicy` (:shared) + `feature/diet/unlock/UnlockSheetTrigger` + runtime-registered `ScreenStateMonitor`; main
-- [ ] Task 11.3 — UnlockSheetActivity + notification
+- [x] Task 11.3 — UnlockSheetActivity + notification — FSI or heads-up fallback, prompt_log UNLOCK_SHEET row, Diet settings + setup switch, debug "Pretend the phone was locked for 3 h", FSI permission row (API 34+); verified on Waydroid; main
 
 ## M12 — Delivery-app trigger
 

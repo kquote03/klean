@@ -40,6 +40,20 @@ class PermissionModelTest {
         assertTrue(on.granted)
     }
 
+    /** M11: Android 14+ can refuse full-screen intents (unlock sheet); offered in setup and on the Permissions screen. */
+    @Test fun fullScreenRowOnlyFromApi34AfterBattery() {
+        assertFalse(PermissionModel.rows(allOff, 33, true).any { it.kind == PermissionKind.FULL_SCREEN })
+        val rows = PermissionModel.rows(allOff.copy(fullScreenIntent = false), 34, includeReadOnly = false)
+        assertEquals(
+            listOf(PermissionKind.NOTIFICATIONS, PermissionKind.EXACT_ALARMS, PermissionKind.BATTERY, PermissionKind.FULL_SCREEN),
+            rows.map { it.kind },
+        )
+        val row = rows.last()
+        assertEquals(PermissionAction.OPEN_SETTINGS, row.action)
+        assertEquals(R.string.permission_full_screen_why, row.whyRes)
+        assertTrue(PermissionModel.rows(allOff.copy(fullScreenIntent = true), 34, false).last().granted)
+    }
+
     @Test fun exactAlarmRowOnlyFromApi31() {
         assertFalse(PermissionModel.rows(allOff, 30, true).any { it.kind == PermissionKind.EXACT_ALARMS })
         val row = PermissionModel.rows(allOff, 31, true).single { it.kind == PermissionKind.EXACT_ALARMS }

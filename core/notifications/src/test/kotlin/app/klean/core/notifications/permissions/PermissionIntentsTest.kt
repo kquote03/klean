@@ -25,6 +25,10 @@ class PermissionIntentsTest {
         val notifications = PermissionIntents.settingsFor(ctx, PermissionKind.NOTIFICATIONS)!!
         assertEquals(Settings.ACTION_APP_NOTIFICATION_SETTINGS, notifications.action)
         assertEquals(ctx.packageName, notifications.getStringExtra(Settings.EXTRA_APP_PACKAGE))
+
+        val fullScreen = PermissionIntents.settingsFor(ctx, PermissionKind.FULL_SCREEN)!!
+        assertEquals(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, fullScreen.action)
+        assertEquals("package:${ctx.packageName}", fullScreen.dataString)
     }
 
     @Test fun listenerHasNoScreenYet() {

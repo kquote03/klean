@@ -59,10 +59,14 @@ data class DietSettingsState(
     val learnMealTimes: Boolean = true,
     val showCalories: Boolean = false,
     val statusNotification: Boolean = true,
+    /** "Show today's list after a long break" (unlock sheet). */
+    val unlockSheet: Boolean = true,
     /** Formatted time of the next check-in, or null when none is planned. */
     val nextCheckIn: String? = null,
     val debug: Boolean = false,
     val debugInfo: String? = null,
+    /** Debug: the next unlock will count as the end of a long break. */
+    val pretendArmed: Boolean = false,
 )
 
 @HiltViewModel
@@ -81,21 +85,25 @@ class DietSettingsViewModel @Inject constructor(
         settings.observe(SyncedKeys.DietLearnMealTimes),
         settings.observe(SyncedKeys.DietShowCalories),
         settings.observe(SyncedKeys.DietStatusNotification),
-    ) { prompts, learn, calories, statusLine -> listOf(prompts, learn, calories, statusLine) }
+        settings.observe(SyncedKeys.DietUnlockSheet),
+    ) { prompts, learn, calories, statusLine, unlock -> listOf(prompts, learn, calories, statusLine, unlock) }
 
     val uiState: StateFlow<DietSettingsState> = combine(
         switches,
         prefs.nextPromptAt,
         debugInfo,
-    ) { (prompts, learn, calories, statusLine), next, info ->
+        prefs.unlockSheetPretend,
+    ) { (prompts, learn, calories, statusLine, unlock), next, info, pretend ->
         DietSettingsState(
             promptsEnabled = prompts,
             learnMealTimes = learn,
             showCalories = calories,
             statusNotification = statusLine,
+            unlockSheet = unlock,
             nextCheckIn = next?.takeIf { prompts }?.let(fmt::time),
             debug = debug.enabled,
             debugInfo = info,
+            pretendArmed = debug.enabled && pretend,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DietSettingsState(debug = debug.enabled))
 
@@ -106,6 +114,11 @@ class DietSettingsViewModel @Inject constructor(
         settings.set(SyncedKeys.DietStatusNotification, v)
         status.refresh()
     }
+
+    fun setUnlockSheet(v: Boolean): Job = viewModelScope.launch { settings.set(SyncedKeys.DietUnlockSheet, v) }
+
+    /** Debug only: the next unlock shows the sheet, as if the phone had been locked for 3 h. */
+    fun pretendLongBreak(): Job = viewModelScope.launch { if (debug.enabled) prefs.setUnlockSheetPretend(true) }
 
     fun fireNow(): Job = viewModelScope.launch { if (debug.enabled) prompts.fireNow() }
 

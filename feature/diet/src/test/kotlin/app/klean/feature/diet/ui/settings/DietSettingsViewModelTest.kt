@@ -103,6 +103,24 @@ class DietSettingsViewModelTest {
         assertNull(s.nextCheckIn)
     }
 
+    /** M11: "Show today's list after a long break", on by default, in settings and the setup wizard. */
+    @Test fun unlockSheetSwitchDefaultsOnAndSaves() = runBlocking {
+        val v = vm()
+        assertTrue(v.uiState.first().unlockSheet)
+        v.setUnlockSheet(false).join()
+        assertFalse(settings.get(SyncedKeys.DietUnlockSheet))
+        assertFalse(v.uiState.first { !it.unlockSheet }.unlockSheet)
+    }
+
+    @Test fun pretendLongBreakIsDebugOnly() = runBlocking {
+        vm(debug = false).pretendLongBreak().join()
+        assertFalse(prefs.unlockSheetPretend.first())
+        val v = vm(debug = true)
+        v.pretendLongBreak().join()
+        assertTrue(prefs.unlockSheetPretend.first())
+        assertTrue(v.uiState.first { it.pretendArmed }.pretendArmed)
+    }
+
     @Test fun debugActionsFireAndDescribe() = runBlocking {
         prefs.setNextPromptAt(42L)
         val v = vm(debug = true)

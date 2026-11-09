@@ -37,6 +37,8 @@ fun DietSettingsScreen(onBack: () -> Unit, vm: DietSettingsViewModel = hiltViewM
         onLearn = { vm.setLearnMealTimes(it) },
         onCalories = { vm.setShowCalories(it) },
         onStatusLine = { vm.setStatusNotification(it) },
+        onUnlockSheet = { vm.setUnlockSheet(it) },
+        onPretendLongBreak = { vm.pretendLongBreak() },
         onFireNow = { vm.fireNow() },
         onShowNext = { vm.showNext() },
     )
@@ -53,6 +55,8 @@ fun DietSettingsContent(
     onFireNow: () -> Unit,
     onStatusLine: (Boolean) -> Unit = {},
     onShowNext: () -> Unit,
+    onUnlockSheet: (Boolean) -> Unit = {},
+    onPretendLongBreak: () -> Unit = {},
 ) {
     Scaffold(
         topBar = {
@@ -88,6 +92,12 @@ fun DietSettingsContent(
                 onChange = onStatusLine,
             )
             ToggleRow(
+                title = stringResource(R.string.diet_settings_unlock_sheet),
+                summary = stringResource(R.string.diet_settings_unlock_sheet_summary),
+                checked = state.unlockSheet,
+                onChange = onUnlockSheet,
+            )
+            ToggleRow(
                 title = stringResource(R.string.diet_settings_calories),
                 summary = stringResource(R.string.diet_settings_calories_summary),
                 checked = state.showCalories,
@@ -105,6 +115,16 @@ fun DietSettingsContent(
                 }
                 OutlinedButton(onClick = onShowNext, modifier = Modifier.padding(horizontal = 16.dp)) {
                     Text(stringResource(R.string.diet_debug_show_next))
+                }
+                OutlinedButton(onClick = onPretendLongBreak, modifier = Modifier.padding(horizontal = 16.dp)) {
+                    Text(stringResource(R.string.diet_debug_pretend_long_break))
+                }
+                if (state.pretendArmed) {
+                    Text(
+                        stringResource(R.string.diet_debug_pretend_long_break_done),
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                    )
                 }
                 state.debugInfo?.let {
                     Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(16.dp))

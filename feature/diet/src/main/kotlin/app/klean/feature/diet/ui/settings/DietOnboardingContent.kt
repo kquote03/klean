@@ -43,6 +43,12 @@ fun DietOnboardingContent(modifier: Modifier = Modifier, vm: DietSettingsViewMod
             onChange = { vm.setStatusNotification(it) },
         )
         ToggleRow(
+            title = stringResource(R.string.diet_settings_unlock_sheet),
+            summary = stringResource(R.string.diet_settings_unlock_sheet_summary),
+            checked = state.unlockSheet,
+            onChange = { vm.setUnlockSheet(it) },
+        )
+        ToggleRow(
             title = stringResource(R.string.diet_settings_calories),
             summary = stringResource(R.string.diet_settings_calories_summary),
             checked = state.showCalories,

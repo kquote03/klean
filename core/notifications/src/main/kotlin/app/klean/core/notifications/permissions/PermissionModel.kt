@@ -4,12 +4,12 @@ import androidx.annotation.StringRes
 import app.klean.core.notifications.R
 
 /** The permissions Klean shows on the Permissions screen and in setup, in display order. */
-enum class PermissionKind { NOTIFICATIONS, EXACT_ALARMS, BATTERY, NOTIFICATION_LISTENER }
+enum class PermissionKind { NOTIFICATIONS, EXACT_ALARMS, BATTERY, FULL_SCREEN, NOTIFICATION_LISTENER }
 
 /**
  * A snapshot of what the system currently allows. Plain booleans so the model is testable on the JVM.
- * Full-screen intent (unlock sheet, M11) and background location (place prompts, M15) join this when
- * those features exist; asking for them earlier would be asking for nothing.
+ * Background location (place prompts, M15) joins this when that feature exists; asking for it earlier
+ * would be asking for nothing.
  */
 data class PermissionStatus(
     /** The app-level notification switch (and, on 33+, the runtime grant) is on. */
@@ -20,6 +20,8 @@ data class PermissionStatus(
     val batteryUnrestricted: Boolean,
     /** Notification-listener access, shown read-only until the delivery listener exists (M12). */
     val notificationListener: Boolean,
+    /** Full-screen intents for the unlock sheet. Android 14+ lets the user refuse them; always true before. */
+    val fullScreenIntent: Boolean = true,
 )
 
 /** What tapping the row's button does. */
@@ -60,6 +62,7 @@ object PermissionModel {
         add(row(PermissionKind.NOTIFICATIONS, status.notificationsEnabled, notifAction))
         if (sdkInt >= 31) add(row(PermissionKind.EXACT_ALARMS, status.exactAlarms))
         add(row(PermissionKind.BATTERY, status.batteryUnrestricted))
+        if (sdkInt >= 34) add(row(PermissionKind.FULL_SCREEN, status.fullScreenIntent))
         if (includeReadOnly) {
             add(row(PermissionKind.NOTIFICATION_LISTENER, status.notificationListener, PermissionAction.NONE))
         }
@@ -74,6 +77,7 @@ object PermissionModel {
             PermissionKind.NOTIFICATIONS -> R.string.permission_notifications_title to R.string.permission_notifications_why
             PermissionKind.EXACT_ALARMS -> R.string.permission_exact_alarms_title to R.string.permission_exact_alarms_why
             PermissionKind.BATTERY -> R.string.permission_battery_title to R.string.permission_battery_why
+            PermissionKind.FULL_SCREEN -> R.string.permission_full_screen_title to R.string.permission_full_screen_why
             PermissionKind.NOTIFICATION_LISTENER -> R.string.permission_listener_title to R.string.permission_listener_why
         }
         return PermissionRowModel(kind, title, why, granted, if (granted) PermissionAction.NONE else action)
