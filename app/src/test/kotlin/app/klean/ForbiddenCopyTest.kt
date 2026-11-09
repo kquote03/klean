@@ -25,6 +25,35 @@ class ForbiddenCopyTest {
         assertTrue(offenders.joinToString("\n"), offenders.isEmpty())
     }
 
+    /** Zero guilt (Task 13.3): no exclamation marks and no guilt words in any string's text (resource names don't count). */
+    private val guilt = Regex("""(?i)\b(missed|streaks?|behind|forgot\w*|overdue|failed to log)\b""")
+    private val stringText = Regex(""">([^<]*)<""")
+
+    @Test fun userCopyIsCalm() {
+        val root = File("..").canonicalFile
+        val offenders = root.walkTopDown()
+            .onEnter { it.name !in skipDirs }
+            .filter { it.isFile && it.path.contains("/src/main/res/values") && it.name == "strings.xml" }
+            .flatMap { f ->
+                f.readLines().mapIndexedNotNull { i, l ->
+                    if (l.trimStart().startsWith("<!--")) return@mapIndexedNotNull null
+                    val text = stringText.findAll(l).joinToString(" ") { it.groupValues[1] }
+                    if ('!' in text || guilt.containsMatchIn(text)) "${f.relativeTo(root)}:${i + 1}: $l" else null
+                }
+            }
+            .toList()
+        assertTrue(offenders.joinToString("\n"), offenders.isEmpty())
+    }
+
+    @Test fun calmPatternCatchesGuiltWords() {
+        listOf("You missed lunch", "3-day streak", "You're behind", "Forgot to log?", "Overdue").forEach {
+            assertTrue(it, guilt.containsMatchIn(it))
+        }
+        listOf("Backup couldn't be saved", "Behold", "Nothing yet today").forEach {
+            assertTrue(it, !guilt.containsMatchIn(it))
+        }
+    }
+
     @Test fun patternCatchesTermsButAllowsTheVerbAdd() {
         listOf("ADHD", "adhd tips", "Autistic", "AuDHD", "neurodivergent", "ADD").forEach {
             assertTrue(it, forbidden.containsMatchIn(it))
