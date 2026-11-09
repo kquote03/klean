@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Local AI servers (Ollama, llama.cpp, LM Studio) on the user's own network are almost always plain
+  HTTP at a LAN address such as http://192.168.1.10:11434, and their addresses vary per home, so they
+  can't be listed as domains. Cleartext is therefore allowed. Gemini is always called over HTTPS.
+  Nothing is sent to any server unless the user switched that provider on.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

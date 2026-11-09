@@ -12,4 +12,5 @@ import dagger.multibindings.IntoSet
 @InstallIn(SingletonComponent::class)
 abstract class ProviderBindings {
     @Binds @IntoSet abstract fun gemini(p: GeminiProvider): AiProvider
+    @Binds @IntoSet abstract fun openAiCompat(p: OpenAiCompatProvider): AiProvider
 }
