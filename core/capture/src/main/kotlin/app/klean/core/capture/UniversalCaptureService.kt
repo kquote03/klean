@@ -4,6 +4,7 @@ import app.klean.core.data.module.ModuleGate
 import app.klean.shared.capture.CandidateAction
 import app.klean.shared.capture.CaptureHandler
 import app.klean.shared.capture.CaptureInput
+import app.klean.core.ai.AiCaptureClassifier
 import app.klean.shared.capture.CaptureRouter
 import app.klean.shared.capture.DefaultCaptureRouter
 import app.klean.shared.module.ModuleId
@@ -95,6 +96,9 @@ abstract class CaptureHandlersModule {
 @Module
 @InstallIn(SingletonComponent::class)
 object CaptureRouterModule {
-    /** No classifier in Prototype 1: with one module, routing never needs AI. */
-    @Provides fun router(): CaptureRouter = DefaultCaptureRouter(classifier = null)
+    /**
+     * The AI classifier is consulted only with two or more modules and an on-device (offline) provider
+     * assigned to "Sorting quick capture"; with Prototype 1's single module the router short-circuits.
+     */
+    @Provides fun router(classifier: AiCaptureClassifier): CaptureRouter = DefaultCaptureRouter(classifier)
 }
