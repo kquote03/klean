@@ -163,8 +163,8 @@ Everything ticked is merged on `main` (milestones M0–M7 and M9 are tagged).
 - [x] C1 — `SummaryTile` and `WeekOverview` in `:core:design` (Robolectric `DashboardComponentsTest`: 48 dp targets, labelled days, no zero badges, future days inert) — main
 - [x] D1–D5 — `TodayDashboardViewModel` (4 tests), shell wiring, rebuilt `TodayScreen` (greeting header, tiles, week strip), strings, 3 new `ShellSmokeTest` cases — main
 - [x] E1 — Diet tiles and week activity (`feature/diet/ui/dashboard/DietDashboardProviders.kt`, 6 tests; shared `knownCalories` and `observeCountsByLogicalDay` now also used by Diet and History) — main
-- [ ] E2 — Slim down the Diet dashboard card
-- [ ] E3 — Quiet-hours tile (app-owned)
+- [x] E2 — Slim down the Diet dashboard card — nothing to do: the card has no "N today" line (it shows the last 5 entries and the log field)
+- [x] E3 — Quiet-hours tile (`app/today/QuietHoursSummary.kt`, `ModuleId.CORE`, bound in `AppBindings.kt`; 3 tests) — main
 - [ ] E4 — Waydroid check of the dashboard
 
 ## M16 — Acceptance run on a real phone

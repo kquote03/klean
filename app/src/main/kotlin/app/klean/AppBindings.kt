@@ -4,16 +4,23 @@ import android.content.Context
 import android.content.Intent
 import app.klean.core.data.backup.BuildConfigProvider
 import app.klean.core.data.backup.ProcessRestarter
+import app.klean.core.ui.module.DashboardSummaryProvider
+import app.klean.today.QuietHoursSummary
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import dagger.multibindings.IntoSet
 import kotlin.system.exitProcess
 
 @Module
 @InstallIn(SingletonComponent::class)
 object AppBindingsModule {
+    /** The app's own tile on Today ("Quiet hours · until 8:00 AM"). */
+    @Provides @IntoSet
+    fun quietHoursTile(impl: QuietHoursSummary): DashboardSummaryProvider = impl
+
     @Provides
     fun buildConfig(): BuildConfigProvider = object : BuildConfigProvider {
         override val versionName: String = BuildConfig.VERSION_NAME

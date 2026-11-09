@@ -13,6 +13,8 @@
     <string name="today_week_of">Week of %1$s</string>
     <string name="today_week_previous">Previous week</string>
     <string name="today_week_next">Next week</string>
+    <string name="today_quiet_label">Quiet hours</string>
+    <string name="today_quiet_value">until %1$s</string>
     <string name="today_day_nothing">%1$s, nothing logged</string>
     <plurals name="today_day_description">
         <item quantity="one">%1$s, 1 thing logged</item>
