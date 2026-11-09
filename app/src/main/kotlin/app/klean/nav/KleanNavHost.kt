@@ -42,6 +42,7 @@ fun KleanNavHost(nav: NavHostController, shell: ShellViewModel, enabled: List<Kl
                 },
                 onOpenAiSettings = { nav.navigate(AiProvidersSettingsRoute) },
                 appWidgets = listOf(TodayWidgetReceiver::class.java),
+                steps = shell.onboardingSteps.toList(),
             )
         }
         composable<TodayRoute>(deepLinks = listOf(navDeepLink { uriPattern = "klean://today" })) {

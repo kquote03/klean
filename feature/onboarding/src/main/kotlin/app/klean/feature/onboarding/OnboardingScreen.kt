@@ -35,6 +35,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.klean.core.notifications.permissions.PermissionChecker
 import app.klean.core.ui.module.ModuleRegistry
+import app.klean.core.ui.module.OnboardingStepProvider
 import app.klean.feature.settings.permissions.PermissionRows
 import app.klean.feature.settings.permissions.PermissionsViewModel
 import app.klean.feature.settings.quiet.QuietHoursStore
@@ -55,7 +56,8 @@ fun OnboardingScreen(
     /** Opens Settings > AI providers; back returns to this page. Null hides the button. */
     onOpenAiSettings: (() -> Unit)? = null,
     appWidgets: List<Class<*>> = emptyList(),
-    vm: OnboardingViewModel = viewModel { OnboardingViewModel(registry, quietHours, onboarding, appWidgets) },
+    steps: List<OnboardingStepProvider> = emptyList(),
+    vm: OnboardingViewModel = viewModel { OnboardingViewModel(registry, quietHours, onboarding, appWidgets, steps) },
 ) {
     val s by vm.state.collectAsStateWithLifecycle()
     LaunchedEffect(s.finished) { if (s.finished) onFinished() }
@@ -123,6 +125,7 @@ private fun stepTitle(step: OnboardingStep, vm: OnboardingViewModel): String = w
     OnboardingStep.Widget -> stringResource(R.string.onboarding_widget_title)
     OnboardingStep.Permissions -> stringResource(R.string.onboarding_permissions_title)
     OnboardingStep.Ai -> stringResource(R.string.onboarding_ai_title)
+    is OnboardingStep.Extra -> vm.extra(step.key)?.titleRes?.let { stringResource(it) } ?: ""
 }
 
 @Composable
@@ -144,6 +147,7 @@ private fun StepBody(s: OnboardingUiState, vm: OnboardingViewModel, permissions:
             SleepWindowPicker(s.sleep, onStart = vm::setSleepStart, onEnd = vm::setSleepEnd)
         }
         is OnboardingStep.ModuleSetup -> vm.module(step.id)?.OnboardingContent(Modifier)
+        is OnboardingStep.Extra -> vm.extra(step.key)?.Content()
         OnboardingStep.Widget -> WidgetBody(vm.widgetReceivers())
         OnboardingStep.Permissions -> {
             Body(R.string.onboarding_permissions_body)

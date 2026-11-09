@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.klean.core.ui.module.KleanModule
 import app.klean.core.ui.module.ModuleRegistry
+import app.klean.core.ui.module.OnboardingStepProvider
 import app.klean.feature.settings.quiet.QuietHoursStore
 import app.klean.shared.module.ModuleId
 import app.klean.shared.time.QuietHours
@@ -28,6 +29,8 @@ sealed interface OnboardingStep {
     data object Widget : OnboardingStep
     data object Permissions : OnboardingStep
     data object Ai : OnboardingStep
+    /** A page from an [OnboardingStepProvider] (main phone, and later contacts, Google, ...). */
+    data class Extra(val key: String) : OnboardingStep
 }
 
 data class ModuleChoice(val id: ModuleId, @param:StringRes val labelRes: Int, val enabled: Boolean)
@@ -56,8 +59,10 @@ class OnboardingViewModel(
     private val onboarding: OnboardingState,
     /** App-level widgets (the holistic Today widget), offered before the modules' own. */
     private val appWidgets: List<Class<*>> = emptyList(),
+    /** Non-module pages, placed by their order. */
+    private val extras: List<OnboardingStepProvider> = emptyList(),
 ) : ViewModel() {
-    private val _state = MutableStateFlow(OnboardingUiState(steps = stepsFor(registry.all, registry.all, appWidgets.isNotEmpty())))
+    private val _state = MutableStateFlow(OnboardingUiState(steps = stepsFor(registry.all, registry.all, appWidgets.isNotEmpty(), extras)))
     val state: StateFlow<OnboardingUiState> = _state.asStateFlow()
     private var sleepEdited = false
 
@@ -66,7 +71,7 @@ class OnboardingViewModel(
             registry.enabled.collect { on ->
                 val onIds = on.map { it.id }.toSet()
                 _state.update { s ->
-                    val steps = stepsFor(registry.all, on, appWidgets.isNotEmpty())
+                    val steps = stepsFor(registry.all, on, appWidgets.isNotEmpty(), extras)
                     val current = if (s.current in steps) s.current else steps[(s.position - 1).coerceIn(0, steps.lastIndex)]
                     s.copy(
                         steps = steps,
@@ -81,6 +86,9 @@ class OnboardingViewModel(
             if (!sleepEdited) _state.update { it.copy(sleep = saved) }
         }
     }
+
+    /** Provider for an [OnboardingStep.Extra] page. */
+    fun extra(key: String): OnboardingStepProvider? = extras.firstOrNull { it.key == key }
 
     /** Module for a [OnboardingStep.ModuleSetup] page. */
     fun module(id: ModuleId): KleanModule? = registry.all.firstOrNull { it.id == id }
@@ -142,14 +150,34 @@ class OnboardingViewModel(
     }
 
     companion object {
-        fun stepsFor(all: List<KleanModule>, enabled: List<KleanModule>, appWidgets: Boolean = false): List<OnboardingStep> = buildList {
-            add(OnboardingStep.Welcome)
-            if (all.isNotEmpty()) add(OnboardingStep.Modules)
-            add(OnboardingStep.SleepWindow)
-            enabled.filter { it.onboardingTitleRes != null }.forEach { add(OnboardingStep.ModuleSetup(it.id)) }
-            if (appWidgets || enabled.any { it.widgetReceiver != null }) add(OnboardingStep.Widget)
-            add(OnboardingStep.Permissions)
-            add(OnboardingStep.Ai)
-        }
+        const val ORDER_WELCOME = 0
+        const val ORDER_MODULES = 100
+        const val ORDER_SLEEP = 200
+        const val ORDER_PERMISSIONS = 400
+        const val ORDER_WIDGET = 500
+        const val ORDER_AI = 700
+        /** Module pages (diet preferences) come last: Klean is set up as a whole first. */
+        const val ORDER_MODULE_SETUP = 900
+
+        /**
+         * Holistic order (plan M16.8): modules, sleep schedule, main phone, permissions, widget, contacts,
+         * AI, Google, pairing, Hermes, watch, then module preferences. Pages owned by later milestones
+         * appear once their provider is bound.
+         */
+        fun stepsFor(
+            all: List<KleanModule>,
+            enabled: List<KleanModule>,
+            appWidgets: Boolean = false,
+            extras: List<OnboardingStepProvider> = emptyList(),
+        ): List<OnboardingStep> = buildList<Pair<Int, OnboardingStep>> {
+            add(ORDER_WELCOME to OnboardingStep.Welcome)
+            if (all.isNotEmpty()) add(ORDER_MODULES to OnboardingStep.Modules)
+            add(ORDER_SLEEP to OnboardingStep.SleepWindow)
+            add(ORDER_PERMISSIONS to OnboardingStep.Permissions)
+            if (appWidgets || enabled.any { it.widgetReceiver != null }) add(ORDER_WIDGET to OnboardingStep.Widget)
+            add(ORDER_AI to OnboardingStep.Ai)
+            extras.forEach { add(it.order to OnboardingStep.Extra(it.key)) }
+            enabled.filter { it.onboardingTitleRes != null }.forEach { add(ORDER_MODULE_SETUP to OnboardingStep.ModuleSetup(it.id)) }
+        }.sortedBy { it.first }.map { it.second }
     }
 }

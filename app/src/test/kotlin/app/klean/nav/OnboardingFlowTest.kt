@@ -16,6 +16,7 @@ import app.klean.core.capture.UniversalCaptureService
 import app.klean.core.design.theme.KleanTheme
 import app.klean.core.ui.module.KleanModule
 import app.klean.core.ui.module.ModuleRegistry
+import app.klean.core.ui.module.OnboardingStepProvider
 import app.klean.feature.diet.DietEnablement
 import app.klean.feature.diet.DietKleanModule
 import app.klean.shared.capture.DefaultCaptureRouter
@@ -40,12 +41,21 @@ class OnboardingFlowTest {
         @Composable override fun OnboardingContent(modifier: Modifier) {}
     }
 
+    /** Stands in for the app's main-phone page (its real content needs DevicePrefs). */
+    private object MainPhonePage : OnboardingStepProvider {
+        override val key = "core.mainPhone"
+        override val order = 300
+        override val titleRes = app.klean.R.string.setup_main_phone_title
+        @Composable override fun Content() {}
+    }
+
     private fun start(show: Boolean = true) {
         onboarding.show = show
         val gate = FakeModuleGate()
         val vm = ShellViewModel(
             ModuleRegistry(setOf(diet()), gate), UniversalCaptureService(emptySet(), gate, DefaultCaptureRouter(null)), Clock.System,
             FakePermissionChecker(), onboarding, quiet,
+            onboardingSteps = setOf(MainPhonePage),
         )
         compose.setContent { KleanTheme { KleanAppUi(vm) } }
         compose.waitForIdle()
@@ -69,19 +79,22 @@ class OnboardingFlowTest {
         tap("Set up")
         compose.onNodeWithText("What to use").assertExists()
         tap("Next")
-        compose.onNodeWithText("When you sleep").assertExists()
+        compose.onNodeWithText("Sleep schedule").assertExists()
         tap("Next")
-        compose.onNodeWithText("Diet").assertExists()
-        tap("Skip")
-        compose.onNodeWithText("Home screen widget").assertExists()
+        compose.onNodeWithText("Main phone").assertExists()
         tap("Skip")
         compose.onNodeWithText("Permissions").assertExists()
         compose.onNodeWithText("Alarms and reminders").assertExists()
         // Delivery-app access is never asked for during setup.
         compose.onNodeWithText("Notification access").assertDoesNotExist()
         tap("Skip")
+        compose.onNodeWithText("Home screen widget").assertExists()
+        tap("Skip")
         compose.onNodeWithText("Set up AI providers").assertExists()
         compose.onNodeWithText("You can also do this later in Settings.").assertExists()
+        tap("Skip")
+        // Diet preferences come last: Klean is set up as a whole first.
+        compose.onNodeWithText("Diet preferences").assertExists()
         tap("Done")
         assertOnToday()
         assertEquals(1, onboarding.done)

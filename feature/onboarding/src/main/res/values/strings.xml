@@ -12,8 +12,8 @@
     <string name="onboarding_modules_title">What to use</string>
     <string name="onboarding_modules_body">Turn on the parts of Klean you want. The rest stays out of the way.</string>
 
-    <string name="onboarding_sleep_title">When you sleep</string>
-    <string name="onboarding_sleep_body">Klean stays quiet in this window. Check-ins wait until you\'re up, and a day runs from waking to sleeping.</string>
+    <string name="onboarding_sleep_title">Sleep schedule</string>
+    <string name="onboarding_sleep_body">When you usually go to bed and wake up. Klean stays quiet in between, nudges wait until you\'re up, and a day runs from waking to sleeping.</string>
 
     <string name="onboarding_widget_title">Home screen widget</string>
     <string name="onboarding_widget_body">A widget shows today at a glance and adds something in one tap.</string>

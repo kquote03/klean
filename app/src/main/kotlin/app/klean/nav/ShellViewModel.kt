@@ -10,6 +10,7 @@ import app.klean.feature.diet.ui.MinuteTicker
 import app.klean.shared.module.ModuleId
 import app.klean.core.notifications.permissions.PermissionChecker
 import app.klean.core.ui.module.ModuleRegistry
+import app.klean.core.ui.module.OnboardingStepProvider
 import app.klean.feature.onboarding.OnboardingState
 import app.klean.feature.settings.quiet.QuietHoursStore
 import app.klean.today.InMemoryTodayLayout
@@ -40,6 +41,7 @@ class ShellViewModel @Inject constructor(
     val ticker: MinuteTicker = MinuteTicker(),
     val todayLayout: TodayLayoutStore = InMemoryTodayLayout(),
     val newModules: NewModulesStore = InMemoryNewModules(),
+    val onboardingSteps: Set<@JvmSuppressWildcards OnboardingStepProvider> = emptySet(),
 ) : ViewModel() {
     private val _startWithSetup = MutableStateFlow<Boolean?>(null)
 

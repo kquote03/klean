@@ -23,6 +23,9 @@
         <item quantity="one">%d coming up</item>
         <item quantity="other">%d coming up</item>
     </plurals>
+    <string name="setup_main_phone_title">Main phone</string>
+    <string name="setup_main_phone_body">Is this your main phone? Alarms ring only on your main phone.</string>
+    <string name="setup_main_phone_switch">This is my main phone</string>
     <string name="today_empty">Nothing here yet. Turn on a module in Settings.</string>
     <string name="today_capture_saved">Saved</string>
     <string name="today_greeting_morning">Good morning</string>

@@ -33,6 +33,8 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import androidx.compose.runtime.Composable
+import app.klean.core.ui.module.OnboardingStepProvider
 
 class FakeOnboardingState(var show: Boolean = true) : OnboardingState {
     var done = 0
@@ -84,7 +86,7 @@ class OnboardingViewModelTest {
     @Test fun stepsInOrderWithAModuleStepAndWidget() {
         val vm = vm(FakeModule(ModuleId.DIET, widgetReceiver = Any::class.java))
         assertEquals(
-            listOf(Welcome, Modules, SleepWindow, ModuleSetup(ModuleId.DIET), Widget, Permissions, Ai),
+            listOf(Welcome, Modules, SleepWindow, Permissions, Widget, Ai, ModuleSetup(ModuleId.DIET)),
             vm.state.value.steps,
         )
         assertEquals(Welcome, vm.state.value.current)
@@ -167,5 +169,27 @@ class OnboardingViewModelTest {
         assertEquals(Ai, vm.state.value.current)
         assertTrue(vm.state.value.isLast)
         assertEquals(4, vm.state.value.position)
+    }
+
+    private class Page(override val key: String, override val order: Int) : OnboardingStepProvider {
+        override val titleRes = 1
+        @Composable override fun Content() {}
+    }
+
+    /** M16.8: holistic order. Non-module pages slot in by order; diet preferences come last. */
+    @Test fun extraPagesFollowTheirOrderAndModulePagesComeLast() {
+        val vm = OnboardingViewModel(
+            ModuleRegistry(setOf(FakeModule(ModuleId.DIET)), gate), quiet, state,
+            appWidgets = listOf(Any::class.java),
+            extras = listOf(Page("google", 800), Page("core.mainPhone", 300), Page("contacts", 600)),
+        )
+        assertEquals(
+            listOf(
+                Welcome, Modules, SleepWindow, OnboardingStep.Extra("core.mainPhone"), Permissions, Widget,
+                OnboardingStep.Extra("contacts"), Ai, OnboardingStep.Extra("google"), ModuleSetup(ModuleId.DIET),
+            ),
+            vm.state.value.steps,
+        )
+        assertEquals(listOf(Any::class.java), vm.widgetReceivers())
     }
 }
