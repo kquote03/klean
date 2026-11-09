@@ -9,7 +9,6 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import java.io.File
-import javax.inject.Inject
 import javax.inject.Qualifier
 import javax.inject.Singleton
 
@@ -43,19 +42,10 @@ class BackupInvalid(val reason: Reason, cause: Throwable? = null) : Exception(re
     }
 }
 
-/**
- * Plain-text access to secrets (API keys) for backups. The Keystore-backed SecretStore arrives in M10
- * and replaces [NoSecretBackup] as the binding.
- */
+/** Plain-text access to secrets (API keys) for backups. Implemented by the Keystore-backed SecretStore. */
 interface SecretBackup {
     suspend fun exportPlain(): Map<String, String>
     suspend fun importPlain(secrets: Map<String, String>)
-}
-
-/** No secrets exist before M10. */
-class NoSecretBackup @Inject constructor() : SecretBackup {
-    override suspend fun exportPlain(): Map<String, String> = emptyMap()
-    override suspend fun importPlain(secrets: Map<String, String>) = Unit
 }
 
 /** App build info for backup metadata. Bound in `:app`, which owns BuildConfig. */
@@ -84,6 +74,6 @@ object DatabaseFileModule {
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class SecretBackupModule {
-    @Binds abstract fun secretBackup(impl: NoSecretBackup): SecretBackup
+    @Binds abstract fun secretBackup(impl: app.klean.core.data.secret.SecretStore): SecretBackup
     @Binds abstract fun operations(impl: BackupManager): BackupOperations
 }

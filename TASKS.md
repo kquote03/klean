@@ -118,7 +118,7 @@ Everything ticked is merged on `main` (milestones M0–M7 and M9 are tagged).
 
 ## M10 — AI providers, enrichment, routing
 
-- [ ] Task 10.1 — SecretStore
+- [x] Task 10.1 — SecretStore
 - [ ] Task 10.2 — AiProvider interface + gateway (TDD)
 - [ ] Task 10.3 — Gemini provider (TDD with Ktor MockEngine)
 - [ ] Task 10.4 — OpenAI-compatible provider (TDD)
