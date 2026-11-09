@@ -16,6 +16,10 @@ interface GeofenceDao {
     @Query("SELECT * FROM geofence WHERE deleted = 0 AND enabled = 1")
     suspend fun enabled(): List<GeofenceEntity>
 
+    /** Including tombstoned rows, so their registrations can be removed too. */
+    @Query("SELECT id FROM geofence")
+    suspend fun allIds(): List<String>
+
     @Query("SELECT * FROM geofence WHERE id = :id")
     suspend fun get(id: String): GeofenceEntity?
 }
