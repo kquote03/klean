@@ -28,4 +28,13 @@ object DatabaseModule {
     @Provides fun settingDao(db: KleanDatabase) = db.settingDao()
     @Provides fun geofenceDao(db: KleanDatabase) = db.geofenceDao()
     @Provides fun changeCounterDao(db: KleanDatabase) = db.changeCounterDao()
+    @Provides fun taskListDao(db: KleanDatabase) = db.taskListDao()
+    @Provides fun taskDao(db: KleanDatabase) = db.taskDao()
+    @Provides fun reminderDao(db: KleanDatabase) = db.reminderDao()
+    @Provides fun eventDao(db: KleanDatabase) = db.eventDao()
+    @Provides fun contactDao(db: KleanDatabase) = db.contactDao()
+    @Provides fun workoutTemplateDao(db: KleanDatabase) = db.workoutTemplateDao()
+    @Provides fun workoutSessionDao(db: KleanDatabase) = db.workoutSessionDao()
+    @Provides fun workoutSetDao(db: KleanDatabase) = db.workoutSetDao()
+    @Provides fun sleepDao(db: KleanDatabase) = db.sleepDao()
 }
