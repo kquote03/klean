@@ -81,7 +81,7 @@ admin password: the login route is on the internet.
 
 Create an app password (web: Settings → Devices → "App password for DAV", or `POST /api/v1/devices/app-password`).
 In DAVx5 choose "Login with URL and user name": URL `KLEAN_PUBLIC_URL/dav/`, user `klean`, password = the app
-password. Contacts are at `/dav/contacts/`, the calendar at `/dav/calendars/klean/`.
+password. The address book is `/dav/contacts/klean/`, the calendar `/dav/calendars/klean/`.
 
 ## Backups
 

@@ -79,6 +79,17 @@ class RecordStoreTest {
         assertEquals(0, store.maxSeq("event"))
     }
 
+    @Test fun serverOnlyKeysSurviveAClientPushWithoutThem() = runTest {
+        val withExtras = rec("c", 1, table = "contact").let {
+            it.copy(json = kotlinx.serialization.json.JsonObject(it.json + ("dav_extras" to kotlinx.serialization.json.JsonPrimitive("X-A:b"))))
+        }
+        store.put(withExtras)
+        store.apply(listOf(rec("c", 2, table = "contact", title = "edited on phone")))
+        val json = store.get("contact", "c")!!.record.json
+        assertEquals("X-A:b", (json["dav_extras"] as kotlinx.serialization.json.JsonPrimitive).content)
+        assertEquals("edited on phone", (json["title"] as kotlinx.serialization.json.JsonPrimitive).content)
+    }
+
     @Test fun invalidTableNamesAreRejected() = runTest {
         val result = store.apply(listOf(rec("a", 1, table = "Robert'); DROP TABLE records;--")))
         assertEquals(0, result.accepted)

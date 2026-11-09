@@ -347,3 +347,28 @@ Schema v2 is frozen for the streams (decision 1). Each stream ticks only its own
 - [ ] S6.4 — screens: `SleepRoute`, `SleepEditRoute`
 - [ ] S6.5 — `SleepImportSource` no-op (deferred)
 - [ ] S6 common — `SleepKleanModule`, tests, `SleepDisableTest`, Waydroid walk, gate
+
+## M24 — Sync backend (`backend/`, branch `m24-backend`; plan `.hermes/plans/2026-11-09_165408-klean-holistic-full-product.md` §M24)
+
+- [x] 24.1 — `:backend` JVM module (Kotlin JVM + Jib + `application`), Ktor 3.6.1 (same as `:core:ai`) on CIO
+- [x] 24.2 — sync DTOs + `lww()` in `:shared` (`shared/.../sync/SyncProtocol.kt`), 8 tests
+- [x] 24.3 — generic `records` store on Exposed 1.6 + JDBC (SQLite default, Postgres via `KLEAN_DB_URL`)
+- [x] 24.4 — admin login (argon2id, BouncyCastle), pairing codes + QR payload, device tokens (sha256-hashed), revoke, DAV app passwords
+- [x] 24.5 — `POST /sync/push`, `GET /sync/pull` (LWW, tombstones, cursor paging, table filter)
+- [x] 24.6 — blobs (`PUT/GET/HEAD /blobs/{sha256}`, streaming hash check, size limit)
+- [x] 24.7 — `/health` (DB round trip), call ids, structured JSON logs (logstash encoder)
+- [x] 24.8 — Jib image `klean-backend:dev`, `deploy/docker-compose.yml`, Caddy/Traefik examples, `docs/deploy.md`
+- [x] 24.9 — CardDAV/CalDAV (PROPFIND, REPORT sync-collection + multiget + query, GET/PUT/DELETE, ETags); vCard/iCal codecs in `:shared` with round-trip tests
+- [ ] 24.10 — web push (VAPID, RFC 8291/8292)
+- [ ] 24.11 — Google server OAuth, Calendar read, Tasks list/patch (never create)
+- [ ] 24.12 — Hermes relay
+- [ ] 24.13 — AI proxy
+- [ ] 24.14 — `POST /admin/backup`
+
+Known gaps (shipped simpler, per plan risk 8):
+- DAV `addressbook-query` / `calendar-query` ignore filters and return every live member (correct superset; DAVx5 uses sync-collection).
+- One address book and one calendar; no MKCOL, PROPPATCH, ACL or scheduling (iTIP).
+- iCal: RECURRENCE-ID overrides are dropped on PUT; Klean-made times are written in UTC (no VTIMEZONE); unknown TZIDs fall back to the event zone.
+- No birthday calendar over CalDAV yet (birthdays travel as vCard BDAY).
+- DAVx5 compatibility not yet verified on a device (M29 session).
+

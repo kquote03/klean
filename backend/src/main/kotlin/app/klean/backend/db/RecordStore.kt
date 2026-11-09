@@ -48,7 +48,7 @@ class RecordStore(private val db: KleanDb) {
             val winner = lww(existing?.record, incoming)
             if (winner === incoming && existing?.record != incoming) {
                 seq += 1
-                store(incoming, seq)
+                store(carryOverServerKeys(existing?.record, incoming), seq)
                 accepted++
             }
         }
@@ -131,6 +131,14 @@ class RecordStore(private val db: KleanDb) {
     )
 
     companion object {
+        /** JSON keys only the server maintains (e.g. `dav_extras`); kept when a client pushes a row without them. */
+        const val SERVER_KEY_PREFIX = "dav_"
+
+        fun carryOverServerKeys(existing: SyncRecord?, incoming: SyncRecord): SyncRecord {
+            val keep = existing?.json?.filterKeys { it.startsWith(SERVER_KEY_PREFIX) && it !in incoming.json }.orEmpty()
+            return if (keep.isEmpty()) incoming else incoming.copy(json = JsonObject(incoming.json + keep))
+        }
+
         fun etagOf(record: SyncRecord): String = sha256Hex(KleanJson.encodeToString(SyncRecord.serializer(), record).toByteArray())
     }
 }

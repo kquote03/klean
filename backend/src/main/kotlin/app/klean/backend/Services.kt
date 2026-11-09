@@ -2,6 +2,7 @@ package app.klean.backend
 
 import app.klean.backend.auth.AuthService
 import app.klean.backend.blobs.BlobStore
+import app.klean.backend.dav.Dav
 import app.klean.backend.db.KleanDb
 import app.klean.backend.db.RecordStore
 import java.io.Closeable
@@ -16,6 +17,7 @@ class Services(
     val records = RecordStore(db)
     val auth = AuthService(db, config, clock)
     val blobs = BlobStore(db, config, clock)
+    val dav = Dav(records, clock)
 
     override fun close() {
         db.close()

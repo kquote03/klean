@@ -4,6 +4,7 @@ import app.klean.backend.auth.deviceAuthRoutes
 import app.klean.backend.auth.publicAuthRoutes
 import app.klean.backend.sync.syncRoutes
 import app.klean.backend.blobs.blobRoutes
+import app.klean.backend.dav.davRoutes
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
@@ -72,6 +73,7 @@ fun Application.kleanModule(services: Services) {
         }
     }
     routing {
+        davRoutes(services.dav)
         route("/api/v1") {
             get("/health") {
                 // Liveness plus a trivial DB round trip; no auth, no details.
