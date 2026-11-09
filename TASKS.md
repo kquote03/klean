@@ -165,7 +165,7 @@ Everything ticked is merged on `main` (milestones M0–M7 and M9 are tagged).
 - [x] E1 — Diet tiles and week activity (`feature/diet/ui/dashboard/DietDashboardProviders.kt`, 6 tests; shared `knownCalories` and `observeCountsByLogicalDay` now also used by Diet and History) — main
 - [x] E2 — Slim down the Diet dashboard card — nothing to do: the card has no "N today" line (it shows the last 5 entries and the log field)
 - [x] E3 — Quiet-hours tile (`app/today/QuietHoursSummary.kt`, `ModuleId.CORE`, bound in `AppBindings.kt`; 3 tests) — main
-- [ ] E4 — Waydroid check of the dashboard
+- [x] E4 — Waydroid check of the dashboard (see "Today dashboard (Waydroid)" under Device checks) — main
 
 ## M16 — Acceptance run on a real phone
 
@@ -236,6 +236,16 @@ Verified on Waydroid on 2026-11-09 (M12). Post with the whole command quoted, e.
 - [x] 12.3: a second post right away → `asked=false`, no new prompt and no new prompt_log row (45 min debounce); "Your order is on the way" → not a delivery (no log line, no prompt)
 - [x] 12.3: package not on the allowlist: a temporary build without the debug `com.android.shell` extra ignored the same post (listener live, no log line, no prompt); the restored build matched it again
 - [x] 12.3: debug `EXPORT_DB` broadcast + `sqlite3`: prompt_log holds one row `DELIVERY | com.android.shell | LOGGED`; `grep -a` on the exported file finds no "delivered", "Talabat", "Your order" or "on the way" (the only "talabat" is the hand-typed entry "talabat burger")
+
+Today dashboard (Waydroid, Android 13, 540×1212, en_US so the week starts on Sunday) on 2026-11-09. Screenshots in `~/.hermes/cache/scratch/today-e4/`:
+- [x] After Skip setup, Today shows "Good afternoon" / "Monday, November 9, 2026" (no top bar), the capture field, tiles "Today · No entries yet" and "Next check-in · around 9:55 PM", "This week" with 7 cells labelled "<full date>, nothing logged", and the Diet card. uiautomator audit: 0 small, 0 unlabelled
+- [x] Logging "toast" and "chicken shawarma" from Today updates the tiles at once ("2 entries", "Last entry · chicken shawarma · 3:56 PM") and today's cell ("Monday, November 9, 2026, 2 things logged"; "2" under the 9, nothing under empty days)
+- [x] Moving an entry to Nov 8 on the entry screen puts "1" under Sunday 8; tapping that cell opens the Diet day screen for Nov 8; tapping today's cell opens Diet; Back returns to Today
+- [x] Previous week → "Week of Nov 1" with the next arrow enabled; Next → "This week" again with the next arrow disabled
+- [x] Settings › Modules › Diet off → Today shows only the greeting, the capture field and "Nothing here yet. Turn on a module in Settings."; no tiles, no week strip, no Diet tab. Diet on brings them back
+- [x] Dark mode (`cmd uimode night yes`, `today-dark.png`): pastel dark scheme, readable tiles and day cells, today outlined in lavender
+- [x] Font scale 2.0 (`today-font2-top.png`, `today-font2-week.png`): tiles wrap and the day numbers fit (they step down to titleSmall above 1.5×); audit 0 small / 0 unlabelled. Found and fixed (`2683653`): tiles in one FlowRow row had different heights beside a two-line value; rows now share the tallest tile's height
+- [x] Crash buffer empty. The quiet-hours tile wasn't seen on the device (it was 4 PM, outside quiet hours); `QuietHoursSummaryTest` covers it, and F2 sets quiet hours over now
 
 Still needs hands-on checks by the user (airplane mode or a reboot would drop wireless adb):
 - [ ] 4.3: inline reply from the lock screen in airplane mode (needs adb over USB or no adb), under 5 s
