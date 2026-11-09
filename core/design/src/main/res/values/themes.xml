@@ -1,10 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.Klean" parent="android:Theme.Material.NoActionBar" />
+    <!-- Window theme only; Compose draws the real UI. Light here, dark in values-night, so the
+         window (launch, translucent sheets) follows the system setting. Colours = surface tokens. -->
+    <style name="Theme.Klean" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/klean_window_background</item>
+    </style>
 
     <style name="Theme.Klean.Translucent">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowNoTitle">true</item>
     </style>
+
+    <color name="klean_window_background">#FCF9FF</color>
 </resources>
