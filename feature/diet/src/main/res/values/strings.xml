@@ -70,9 +70,9 @@
     <string name="diet_widget_speak">Speak</string>
     <string name="diet_widget_open">Open</string>
     <string name="diet_widget_disabled_title">Klean</string>
-    <plurals name="diet_widget_summary">
-        <item quantity="one">%1$d entry today · last: %2$s</item>
-        <item quantity="other">%1$d today · last: %2$s</item>
+    <plurals name="diet_widget_count">
+        <item quantity="one">%d today</item>
+        <item quantity="other">%d today</item>
     </plurals>
     <!-- Check-in phrasings (PromptPhrasings). Calm, no exclamation marks. -->
     <string name="prompt_g1">What did you eat?</string>

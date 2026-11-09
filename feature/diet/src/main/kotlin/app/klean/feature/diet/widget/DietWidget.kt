@@ -150,26 +150,17 @@ private fun DietWidgetContent(state: DietWidgetState, surface: ColorProvider) {
 }
 
 @Composable
-private fun summary(state: DietWidgetState): String {
-    val ctx = LocalContext.current
-    val last = state.lastText
-    return if (state.count == 0 || last == null) {
-        ctx.getString(R.string.diet_widget_empty)
-    } else {
-        ctx.resources.getQuantityString(R.plurals.diet_widget_summary, state.count, state.count, last)
-    }
-}
-
-@Composable
 private fun CompactContent(state: DietWidgetState) {
     val ctx = LocalContext.current
-    Row(GlanceModifier.fillMaxWidth().padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(
-            summary(state),
-            modifier = GlanceModifier.defaultWeight().clickable(captureAction(ctx, voice = false)),
-            style = TextStyle(color = GlanceTheme.colors.onSurface, fontSize = 14.sp),
-            maxLines = 2,
-        )
+    // 2×1 leaves ~60 dp beside the 48 dp button: no extra padding, and up to 3 lines for the entry.
+    Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        val text = compactText(ctx, state)
+        Column(GlanceModifier.defaultWeight().clickable(captureAction(ctx, voice = false))) {
+            Text(text.primary, style = TextStyle(color = GlanceTheme.colors.onSurface, fontSize = 14.sp), maxLines = 3)
+            text.secondary?.let {
+                Text(it, style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = 12.sp), maxLines = 1)
+            }
+        }
         SquareIconButton(
             imageProvider = ImageProvider(R.drawable.ic_widget_add),
             contentDescription = ctx.getString(R.string.diet_widget_add),
