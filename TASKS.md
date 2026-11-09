@@ -137,7 +137,7 @@ Everything ticked is merged on `main` (milestones M0–M7 and M9 are tagged).
 
 - [x] Task 12.1 — DeliveryListenerService — `feature/diet/delivery/` (DeliveryRules allowlist + match words, DeliveryNotificationHandler, DeliveryPrompter 45 min debounce, prompt_log DELIVERY row with package only); debug builds also read com.android.shell; main
 - [x] Task 12.2 — Contextual offer — `feature/diet/delivery/DeliveryOffer.kt` (DeliveryOfferPolicy: ≥3 entries in 30 days + an allowlisted app installed or a delivery-sounding entry today, never when access is on; Set up → listener detail settings on API 30+, Not now = 30 days, No thanks = for good), `DeliveryScreens.kt` (offer card on the Diet screen, DeliveryAppsRoute editor in Diet settings); main
-- [ ] Task 12.3 — Verify with a simulated notification
+- [x] Task 12.3 — Verify with a simulated notification — on Waydroid, see "Verified on Waydroid (M12)" below; main
 
 ## M13 — Polish, disable audit, accessibility, copy audit
 
@@ -216,9 +216,20 @@ Verified on Waydroid on 2026-11-09 (M10), with a fake OpenAI-compatible server o
 - [x] 10.6: entry screen lists the items with Change / Not right and "Remove AI details"; Not right on fries hides it in the entry, the row and the day total
 - [x] 10.5: with the server stopped, "tea with mint" appears in the list at once; the worker logs `Worker result RETRY`; after restarting the server the retry ran 30 s later (exponential backoff) and the items appeared. Crash buffer empty
 
+Verified on Waydroid on 2026-11-09 (M12). Post with the whole command quoted, e.g. `adb shell "cmd notification post -S bigtext -t 'Talabat' tag 'Your order has been delivered'"`: unquoted, `adb shell` splits the words and the text arrives as just "Your":
+- [x] `connectedDebugAndroidTest`: 4/4 pass; gate BUILD SUCCESSFUL (427 unit tests, 0 failures)
+- [x] 12.2: after `pm clear` + Skip setup, the Diet screen showed no offer; after 3 entries ("talabat burger" among them, since no delivery app is installed on Waydroid) the calm "Food deliveries" card appears under the chips with No thanks / Not now / Set up. No thanks hides it; still hidden after force-stop + relaunch. The wizard never shows it
+- [x] 12.2: Set up opens `Settings$NotificationAccessDetailsActivity` for "Klean delivery check-ins" (API 33 detail screen); allowing there connects the listener (`delivery listener connected`), and back on the Diet screen the card is gone
+- [x] 12.2: Settings › Permissions shows Notification access On; Diet settings › Delivery apps lists the 4 built-in packages; "notapackage" → "That doesn't look like a package name…"; adding the word "rider dropped" makes "The rider dropped your bag" count (log `delivery from com.android.shell`)
+- [x] 12.3: a delivered post → heads-up "What did you order?" within ~1 s (channel `diet_prompt_heads_up`); inline reply "chicken shawarma wrap" → "Saved: …", saved with source `DELIVERY_PROMPT`, prompt_log outcome LOGGED
+- [x] 12.3: a second post right away → `asked=false`, no new prompt and no new prompt_log row (45 min debounce); "Your order is on the way" → not a delivery (no log line, no prompt)
+- [x] 12.3: package not on the allowlist: a temporary build without the debug `com.android.shell` extra ignored the same post (listener live, no log line, no prompt); the restored build matched it again
+- [x] 12.3: debug `EXPORT_DB` broadcast + `sqlite3`: prompt_log holds one row `DELIVERY | com.android.shell | LOGGED`; `grep -a` on the exported file finds no "delivered", "Talabat", "Your order" or "on the way" (the only "talabat" is the hand-typed entry "talabat burger")
+
 Still needs hands-on checks by the user (airplane mode or a reboot would drop wireless adb):
 - [ ] 4.3: inline reply from the lock screen in airplane mode (needs adb over USB or no adb), under 5 s
 - [ ] 4.7: compact widget size (resize the widget to one row)
+- [ ] 12.3: a real delivery from Talabat/Deliveroo/Careem/noon: its "delivered" wording matches and the offer card appears with the app installed (Waydroid has no delivery apps)
 - [ ] 9.4: export a backup through the picker, restore it, check the confirmation text
 - [ ] 5.7: swipe a check-in away, then fire again → the next format differs (a swipe counts as DISMISSED)
 - [ ] 5.7: set quiet hours over now, wait for a scheduled check-in → nothing shown (debug "Fire" deliberately skips quiet hours)
