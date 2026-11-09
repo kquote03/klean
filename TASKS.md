@@ -365,10 +365,20 @@ Schema v2 is frozen for the streams (decision 1). Each stream ticks only its own
 - [x] 24.13 — AI proxy (`/ai/v1/chat/completions`, `/ai/v1/models` → `KLEAN_AI_UPSTREAM`), same streaming proxy
 - [x] 24.14 — `POST /admin/backup` (zip: `VACUUM INTO` snapshot + blobs; Postgres → 501 with a `pg_dump` hint)
 
+Verified (2026-11-09): gate + `:backend:test` BUILD SUCCESSFUL (backend 62 tests, `:shared` sync/vcard/ical 18);
+`:backend:jibDockerBuild` → `klean-backend:dev`, `docker compose -f deploy/docker-compose.yml up -d`,
+`curl -s localhost:8080/api/v1/health` → `{"status":"ok"}`, then an e2e script (login, pair, push, pull, blob,
+DAV PUT/PROPFIND, backup zip) inside the container; the same script against Postgres 17 (backup → 501 hint);
+real SSE streaming through `/ai/v1/chat/completions` (chunks arrive 0.7 s apart, upstream key substituted).
+
 Known gaps (shipped simpler, per plan risk 8):
 - DAV `addressbook-query` / `calendar-query` ignore filters and return every live member (correct superset; DAVx5 uses sync-collection).
 - One address book and one calendar; no MKCOL, PROPPATCH, ACL or scheduling (iTIP).
 - iCal: RECURRENCE-ID overrides are dropped on PUT; Klean-made times are written in UTC (no VTIMEZONE); unknown TZIDs fall back to the event zone.
 - No birthday calendar over CalDAV yet (birthdays travel as vCard BDAY).
 - DAVx5 compatibility not yet verified on a device (M29 session).
+- No login rate limiting (argon2id cost is the only brake); put the server behind Tailscale or a proxy with limits.
+- Push subscription endpoints are any https URL (no allow-list of push services).
+- No automated Postgres test in `:backend:test` (verified manually against postgres:17-alpine).
+- The image runs as root (Jib default) so the named volume is writable without an init step.
 
