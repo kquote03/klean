@@ -265,3 +265,81 @@ Still needs hands-on checks by the user (airplane mode or a reboot would drop wi
 - [ ] 10.5: a photo entry sent to a provider with "Send photos too" / "This model understands images" on (needs a camera photo)
 - [x] Polish: the bottom bar highlights Diet on History / Day / Entry screens (diet routes live in a nested `DietGraph`; the bar matches `KleanModule.graphRoute`)
 - [x] Polish: after deleting from the entry screen it now goes back to the list, which shows "Entry removed · Undo" for 5 s
+
+## P2 — Life modules (`.hermes/plans/2026-11-09_170500-parallel-life-modules.md`)
+
+Schema v2 is frozen for the streams (decision 1). Each stream ticks only its own subsection, on its own branch.
+
+### P0 — Foundation (branch `p2-foundation`, then main; tag `p2-foundation`)
+
+- [x] P0.1 — skeleton modules `:feature:{tasks,reminders,calendar,contacts,workout,sleep}`, wired into `:app` — p2-foundation
+- [x] P0.2 — schema v2: 9 entities + DAOs, `AutoMigration(1 → 2)`, `2.json`, `MigrationV2Test` (v1 fixture migrates) — p2-foundation
+- [x] P0.3 — `ReminderRepository` + `ReminderChangeListener` (`@Multibinds`) in `:core:data` — p2-foundation
+- [x] P0.4 — new modules start off (`core.modules.known`, `seedNewModules`, `ModuleRegistry.seed()` at startup) — p2-foundation
+- [x] P0.5 — bottom bar: Today + 3 modules + More (`NavLayout`, `MoreRoute`/`MoreScreen`) — p2-foundation
+- [x] P0.6 — Klean Android account (stub authenticator + calendar/contacts sync adapters, debug `ENSURE_ACCOUNT`) — p2-foundation
+- [~] P0.7 — `NaturalTime` parser in `:shared` — branch `p2-parsers`, not merged yet
+- [~] P0.8 — `RuleCaptureClassifier` + `CompositeCaptureClassifier`; birthdays never reach AI — branch `p2-parsers`, not merged yet
+- [x] P0.9 — this section — p2-foundation
+
+### S1 — Tasks (`feature/tasks`, branch `p2-tasks`)
+
+- [ ] S1.1 — `RecurrenceRule` in `:shared` (S1 owns it)
+- [ ] S1.2 — default lists Personal and Work on first enable (`TasksKeys.seeded`)
+- [ ] S1.3 — screens: `TasksRoute` (list chips, Done section, undo), `TaskEditRoute` (incl. reminders section)
+- [ ] S1.4 — daily "Still want these?" review (`reviewNeeded`, `TaskReviewRoute`, debug `TASK_REVIEW`)
+- [ ] S1.5 — capture `add_task`
+- [ ] S1.6 — Today card, tile, activity
+- [ ] S1 common — `TasksKleanModule`, repository + tests, settings screen, `TasksDisableTest`, Waydroid walk, gate
+
+### S2 — Reminders (`feature/reminders`, branch `p2-reminders`)
+
+- [ ] S2.1 — `ReminderScheduler` (`ReminderChangeListener` + `Reschedulable`), `nextFireTime` tests
+- [ ] S2.2 — ping notification: Done, Snooze 10 min / 1 h, Tomorrow, "Mark task done"
+- [ ] S2.3 — full alarm: `AlarmActivity`, looping alarm sound, main-phone flag (`MainPhonePrefs`), 10 min auto-stop
+- [ ] S2.4 — screens: `RemindersRoute`, `ReminderEditRoute`, settings
+- [ ] S2.5 — capture `add_reminder`
+- [ ] S2.6 — Today card, tile, activity
+- [ ] S2 common — `RemindersKleanModule`, tests, `RemindersDisableTest`, Waydroid walk (incl. restart re-arm), gate
+
+### S3 — Calendar (`feature/calendar`, branch `p2-calendar`)
+
+- [ ] S3.1 — `DeviceCalendarSource` (read-only `Instances`, behind `DeviceCalendarQuery`)
+- [ ] S3.2 — `KleanCalendarMirror` (Klean calendar under the Klean account, `provider_event_id`)
+- [ ] S3.3 — screens: `CalendarRoute` (agenda + month), `EventEditRoute`
+- [ ] S3.4 — capture `add_event`
+- [ ] S3.5 — `DayItemsProvider` multibinding (own module; reconciled with S4 at merge)
+- [ ] S3.6 — Today card, tile, activity
+- [ ] S3 common — `CalendarKleanModule`, tests, `CalendarDisableTest`, Waydroid walk, gate
+
+### S4 — Contacts + Birthdays (`feature/contacts`, branch `p2-contacts`)
+
+- [ ] S4.1 — `ContactRepository` (JSON phones/emails, search, birthday validation)
+- [ ] S4.2 — `SystemContactsMirror` (`ContactsProviderOps`)
+- [ ] S4.3 — VCF import/export (`vcf/Vcf.kt`, fixtures)
+- [ ] S4.4 — `BirthdayScheduler`, `nextBirthday`; no AI anywhere in the module
+- [ ] S4.5 — screens: `ContactsRoute`, `ContactEditRoute`, `BirthdaysRoute`, settings
+- [ ] S4.6 — capture `add_birthday` (rules only)
+- [ ] S4.7 — calendar contribution + BIRTHDAYS activity
+- [ ] S4.8 — Today card, tile
+- [ ] S4 common — `ContactsKleanModule` + `BirthdaysKleanModule`, tests, `ContactsDisableTest`, Waydroid walk, gate
+
+### S5 — Workout (`feature/workout`, branch `p2-workout`)
+
+- [ ] S5.1 — `WorkoutItem` model
+- [ ] S5.2 — `TemplateText` parser/formatter (8-row table test)
+- [ ] S5.3 — screens: `WorkoutRoute`, `TemplateEditRoute`, `SessionRoute`, `SessionDetailRoute`
+- [ ] S5.4 — capture `log_workout`
+- [ ] S5.5 — gentle suggestion after quiet days (off by default)
+- [ ] S5.6 — Today card, tile, activity
+- [ ] S5.7 — `HealthConnectBridge` no-op (deferred)
+- [ ] S5 common — `WorkoutKleanModule`, tests, `WorkoutDisableTest`, Waydroid walk, gate
+
+### S6 — Sleep (`feature/sleep`, branch `p2-sleep`)
+
+- [ ] S6.1 — `SleepRepository` (`goToBed`, `wakeUp`, `duration`, `lastNight`)
+- [ ] S6.2 — one-tap surfaces: Today tile via `SleepToggleRoute`, optional ongoing notification, capture `log_sleep`
+- [ ] S6.3 — bedtime reminder (off by default)
+- [ ] S6.4 — screens: `SleepRoute`, `SleepEditRoute`
+- [ ] S6.5 — `SleepImportSource` no-op (deferred)
+- [ ] S6 common — `SleepKleanModule`, tests, `SleepDisableTest`, Waydroid walk, gate
