@@ -23,5 +23,9 @@ object PromptPhrasings {
         MealLabel.LATE -> listOf(Phrasing("m_n1", R.string.prompt_late), Phrasing("m_n2", R.string.prompt_late_2))
     }
 
-    fun byId(id: String): Phrasing? = (generic + MealLabel.entries.flatMap(::sinceMeal)).firstOrNull { it.id == id }
+    /** "What did you order?", after a delivery app says the order arrived (M12). Not rotated. */
+    const val DELIVERY_ID = "delivery"
+    val delivery = Phrasing(DELIVERY_ID, R.string.prompt_delivery)
+
+    fun byId(id: String): Phrasing? = (generic + MealLabel.entries.flatMap(::sinceMeal) + delivery).firstOrNull { it.id == id }
 }

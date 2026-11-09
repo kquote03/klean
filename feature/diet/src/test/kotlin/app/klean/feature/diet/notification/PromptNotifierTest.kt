@@ -112,6 +112,21 @@ class PromptNotifierTest {
         assertEquals(CaptureSource.NOTIFICATION_REPLY.name, shadowOf(statusReply.actionIntent).savedIntent.getStringExtra(DietReplyReceiver.EXTRA_SOURCE))
     }
 
+    /** M12: "What did you order?" has its own id (it doesn't replace a check-in) and its own reply source. */
+    @Test fun deliveryAsksWhatWasOrderedWithItsOwnIdAndSource() = runBlocking {
+        notifier.present("log-d", PromptFormat.HEADS_UP, PromptPhrasings.DELIVERY_ID, PromptTrigger.DELIVERY)
+        assertNull(prompt())
+        val n = shadowOf(nm).getNotification(NotificationIds.DELIVERY)!!
+        assertEquals(Channels.DIET_PROMPT_HEADS_UP, n.channelId)
+        assertEquals("What did you order?", n.title())
+        val reply = n.actions.single { it.remoteInputs?.isNotEmpty() == true }
+        assertEquals(CaptureSource.DELIVERY_PROMPT.name, shadowOf(reply.actionIntent).savedIntent.getStringExtra(DietReplyReceiver.EXTRA_SOURCE))
+        assertEquals("log-d", shadowOf(n.deleteIntent).savedIntent.getStringExtra(PromptDismissReceiver.EXTRA_LOG_ID))
+        // Logging something takes it away, like a check-in.
+        notifier.cancelActive()
+        assertNull(shadowOf(nm).getNotification(NotificationIds.DELIVERY))
+    }
+
     @Test fun headsUpUsesTheHighChannel() = runBlocking {
         notifier.present("log-2", PromptFormat.HEADS_UP, "g1", PromptTrigger.CADENCE)
         assertEquals(Channels.DIET_PROMPT_HEADS_UP, prompt()!!.channelId)

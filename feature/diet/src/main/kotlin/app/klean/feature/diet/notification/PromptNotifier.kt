@@ -53,6 +53,10 @@ class PromptNotifier @Inject constructor(
         val nm = NotificationManagerCompat.from(ctx)
         if (!canPost(nm)) return
         val phrasing = PromptPhrasings.byId(phrasingId) ?: PromptPhrasings.generic.first()
+        // A delivery question sits next to a check-in rather than replacing it, and its replies are told apart.
+        val delivery = trigger == PromptTrigger.DELIVERY
+        val replySource = if (delivery) CaptureSource.DELIVERY_PROMPT else CaptureSource.PROMPT_REPLY
+        val replyCode = if (delivery) RC_DELIVERY_REPLY else RC_PROMPT_REPLY
         val channel = when (format) {
             PromptFormat.HEADS_UP -> Channels.DIET_PROMPT_HEADS_UP
             PromptFormat.SILENT_VIBRATE -> Channels.DIET_PROMPT_VIBRATE
@@ -70,13 +74,14 @@ class PromptNotifier @Inject constructor(
             .setTimeoutAfter(TIMEOUT_MS)
             .setContentIntent(openDiet())
             .setDeleteIntent(dismissIntent(logId))
-            .addAction(DietStatusActions.logFood(ctx, CaptureSource.PROMPT_REPLY, RC_PROMPT_REPLY))
+            .addAction(DietStatusActions.logFood(ctx, replySource, replyCode))
             .addAction(DietStatusActions.capture(ctx))
-        post(nm, builder)
+        post(nm, if (delivery) NotificationIds.DELIVERY else NotificationIds.DIET_PROMPT, builder)
     }
 
     override suspend fun cancelActive() {
         NotificationManagerCompat.from(ctx).cancel(NotificationIds.DIET_PROMPT)
+        NotificationManagerCompat.from(ctx).cancel(NotificationIds.DELIVERY)
         if (prefs.highlightPromptId.first() != null) {
             prefs.setHighlightPromptId(null)
             refreshPassiveSurfaces()
@@ -95,7 +100,7 @@ class PromptNotifier @Inject constructor(
             )
 
     @SuppressLint("MissingPermission") // checked in canPost()
-    private fun post(nm: NotificationManagerCompat, b: NotificationCompat.Builder) = nm.notify(NotificationIds.DIET_PROMPT, b.build())
+    private fun post(nm: NotificationManagerCompat, id: Int, b: NotificationCompat.Builder) = nm.notify(id, b.build())
 
     private fun openDiet(): PendingIntent = PendingIntent.getActivity(
         ctx, RC_PROMPT_OPEN,
@@ -116,6 +121,7 @@ class PromptNotifier @Inject constructor(
         /** Distinct from the status line's reply (10): same receiver, so a shared code would overwrite its source extra. */
         internal const val RC_PROMPT_REPLY = 14
         internal const val RC_PROMPT_OPEN = 15
+        internal const val RC_DELIVERY_REPLY = 16
     }
 }
 

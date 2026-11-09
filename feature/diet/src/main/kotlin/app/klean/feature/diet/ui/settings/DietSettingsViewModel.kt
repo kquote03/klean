@@ -30,10 +30,18 @@ import kotlinx.coroutines.launch
 interface DietDebug {
     val enabled: Boolean
     fun exactAlarmsAllowed(): Boolean
+
+    /** Packages the delivery listener also reads, in debug builds only (`adb shell cmd notification post`). */
+    val extraDeliveryPackages: Set<String> get() = emptySet()
 }
 
 class BuildConfigDietDebug @Inject constructor(private val alarms: AlarmScheduler) : DietDebug {
     override val enabled: Boolean = BuildConfig.DEBUG
+    override val extraDeliveryPackages: Set<String> = if (BuildConfig.DEBUG) setOf(SHELL_PACKAGE) else emptySet()
+
+    private companion object {
+        const val SHELL_PACKAGE = "com.android.shell"
+    }
     override fun exactAlarmsAllowed() = alarms.canExact()
 }
 

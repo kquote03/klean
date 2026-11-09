@@ -135,7 +135,7 @@ Everything ticked is merged on `main` (milestones M0–M7 and M9 are tagged).
 
 ## M12 — Delivery-app trigger
 
-- [ ] Task 12.1 — DeliveryListenerService
+- [x] Task 12.1 — DeliveryListenerService — `feature/diet/delivery/` (DeliveryRules allowlist + match words, DeliveryNotificationHandler, DeliveryPrompter 45 min debounce, prompt_log DELIVERY row with package only); debug builds also read com.android.shell; main
 - [ ] Task 12.2 — Contextual offer
 - [ ] Task 12.3 — Verify with a simulated notification
 

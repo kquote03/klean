@@ -121,4 +121,6 @@
     <string name="diet_settings_unlock_sheet_summary">After the phone has been locked for 3 hours or more, today\'s list appears once you unlock. Not during quiet hours.</string>
     <string name="diet_debug_pretend_long_break">Pretend the phone was locked for 3 h</string>
     <string name="diet_debug_pretend_long_break_done">Lock and unlock the phone to see the sheet.</string>
+    <!-- Delivery prompts (M12) -->
+    <string name="delivery_listener_label">Klean delivery check-ins</string>
 </resources>

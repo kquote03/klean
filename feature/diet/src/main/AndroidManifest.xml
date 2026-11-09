@@ -3,7 +3,24 @@
     <!-- Unlock sheet (M11): opens "Today so far" after a long break. On Android 14+ the user may
          turn this off; the sheet then arrives as a heads-up notification instead. -->
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <!-- Delivery prompts (M12): lets Klean check whether these apps are installed before offering. -->
+    <queries>
+        <package android:name="com.talabat" />
+        <package android:name="com.deliveroo.orderapp" />
+        <package android:name="com.careem.acma" />
+        <package android:name="com.noon.buyerapp" />
+    </queries>
     <application>
+        <!-- Runs only once the user grants notification access; reads only delivery apps (plan 6.2). -->
+        <service
+            android:name=".delivery.DeliveryListenerService"
+            android:exported="true"
+            android:label="@string/delivery_listener_label"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
         <activity
             android:name=".unlock.UnlockSheetActivity"
             android:excludeFromRecents="true"
