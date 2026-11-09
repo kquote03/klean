@@ -24,6 +24,8 @@ class ModuleRegistryTest {
         override suspend fun setEnabled(id: ModuleId, enabled: Boolean) {
             state.value = if (enabled) state.value - id else state.value + id
         }
+        val seeded = mutableListOf<Set<ModuleId>>()
+        override suspend fun seedNew(registered: Set<ModuleId>) { seeded += registered }
     }
 
     private class FakeModule(
@@ -71,5 +73,11 @@ class ModuleRegistryTest {
         val registry = ModuleRegistry(setOf(contacts, diet), FakeGate())
         assertEquals(listOf(ModuleId.DIET), registry.dashboardCards.first().map { it.id })
         assertEquals(listOf(ModuleId.CONTACTS, ModuleId.DIET), registry.enabled.first().map { it.id })
+    }
+
+    @Test fun seedOffersEveryRegisteredModuleToTheGate() = runTest {
+        val gate = FakeGate()
+        ModuleRegistry(setOf(diet, tasks, sleep), gate).seed()
+        assertEquals(listOf(setOf(ModuleId.DIET, ModuleId.TASKS, ModuleId.SLEEP)), gate.seeded)
     }
 }
