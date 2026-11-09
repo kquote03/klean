@@ -80,7 +80,8 @@ class OnboardingFlowTest {
         // Delivery-app access is never asked for during setup.
         compose.onNodeWithText("Notification access").assertDoesNotExist()
         tap("Skip")
-        compose.onNodeWithText("You can set this up later in Settings.").assertExists()
+        compose.onNodeWithText("Set up AI providers").assertExists()
+        compose.onNodeWithText("You can also do this later in Settings.").assertExists()
         tap("Done")
         assertOnToday()
         assertEquals(1, onboarding.done)
