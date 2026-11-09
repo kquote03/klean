@@ -14,5 +14,12 @@ data class TaskListEntity(
     /** WORK, PERSONAL or CUSTOM. */
     val kind: String,
     val position: Int,
+    // v3 (M17)
+    /** KLEAN or GOOGLE. */
+    @ColumnInfo(defaultValue = "KLEAN") val source: String = "KLEAN",
+    /** Id in the remote system (Google Tasks tasklist id). */
+    @ColumnInfo(name = "remote_id") val remoteId: String? = null,
+    /** Shown in Klean (for Google lists, the user picks which ones). */
+    @ColumnInfo(defaultValue = "1") val selected: Boolean = true,
     @Embedded val sync: SyncColumns,
 )

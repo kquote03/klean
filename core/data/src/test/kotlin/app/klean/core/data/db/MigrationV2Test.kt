@@ -16,7 +16,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** The committed v1 file (a real backup) opens on schema v2 through the 1→2 AutoMigration, data intact. */
+/** The committed v1 file (a real backup) opens on the current schema through the 1→2→… AutoMigrations, data intact. */
 @RunWith(AndroidJUnit4::class)
 class MigrationV2Test {
     private val ctx: Context = ApplicationProvider.getApplicationContext()
@@ -37,7 +37,6 @@ class MigrationV2Test {
             db.foodEntryDao().range(0, Long.MAX_VALUE).map { it.rawText },
         )
         val version = db.useReaderConnection { c -> c.usePrepared("PRAGMA user_version") { s -> s.step(); s.getLong(0) } }
-        assertEquals(2L, version)
         assertEquals(KleanDatabase.VERSION.toLong(), version)
     }
 

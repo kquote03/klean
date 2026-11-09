@@ -15,5 +15,8 @@ data class SleepSessionEntity(
     /** MANUAL, HEALTH_CONNECT. */
     val source: String = "MANUAL",
     val notes: String? = null,
+    // v3 (M17)
+    /** Health Connect record id when imported or written there. */
+    @ColumnInfo(name = "hc_record_id") val hcRecordId: String? = null,
     @Embedded val sync: SyncColumns,
 )

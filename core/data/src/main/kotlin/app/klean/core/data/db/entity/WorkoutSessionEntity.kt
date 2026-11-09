@@ -16,5 +16,12 @@ data class WorkoutSessionEntity(
     val notes: String? = null,
     /** MANUAL, CAPTURE, HEALTH_CONNECT. */
     val source: String = "MANUAL",
+    // v3 (M17)
+    /** Blob-store key of the GPS route (file name), synced as a blob; null = none. */
+    @ColumnInfo(name = "route_blob") val routeBlob: String? = null,
+    /** Total distance in metres, for sessions with a route or a Health Connect record. */
+    @ColumnInfo(name = "distance_m") val distanceM: Int? = null,
+    /** Health Connect record id when imported or written there. */
+    @ColumnInfo(name = "hc_record_id") val hcRecordId: String? = null,
     @Embedded val sync: SyncColumns,
 )
