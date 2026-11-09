@@ -73,3 +73,37 @@ jobs:
           name: apk
           path: klean-debug-*.apk
           retention-days: 30
+
+  # The sync backend (M24): Ktor integration tests plus the container image as a tarball (no daemon needed).
+  # Separate from the gate so a backend failure never blocks the APK. The Android SDK is still set up because
+  # Gradle configures every project of the build.
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: "platforms;android-37.0 platforms;android-36 build-tools;36.0.0"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Backend tests
+        run: ./gradlew :backend:test --console=plain
+
+      - name: Backend image (tar)
+        run: ./gradlew :backend:jibBuildTar --console=plain
+
+      - name: Test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-reports
+          path: backend/build/reports/tests/
+          retention-days: 7
