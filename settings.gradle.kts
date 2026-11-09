@@ -14,3 +14,4 @@ include(
     ":feature:diet", ":feature:onboarding", ":feature:settings",
     ":feature:tasks", ":feature:reminders", ":feature:calendar", ":feature:contacts", ":feature:workout", ":feature:sleep",
 )
+include(":backend")

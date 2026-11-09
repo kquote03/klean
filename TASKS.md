@@ -374,3 +374,37 @@ Verified on Waydroid (Android 13, 540×1212) on 2026-11-09 (M16), screenshots in
 - [x] M17.2 — `SecretStore.GOOGLE_REFRESH`/`BACKEND_TOKEN`/`HERMES_TOKEN` (`google.refresh`, `backend.token`, `hermes.token`); kept out of backups unless "include keys" is on — m17-foundation2
 - [x] M17.3 — `DevicePrefs.isMainPhone` (default true; stored under the existing `mainPhone` key) + `DeviceRepository` (`registerThisDevice()` at startup in `KleanApp`, `setMainPhone`) — m17-foundation2
 - [x] M17.4 — `ReminderRepository.snooze(id, until)`, `markDone(id, nextFireAt?)`, `dismiss(id, nextFireAt?)`; dismiss never completes a task, new state `DISMISSED` — m17-foundation2
+## M24 — Sync backend (`backend/`, branch `m24-backend`; plan `.hermes/plans/2026-11-09_165408-klean-holistic-full-product.md` §M24)
+
+- [x] 24.1 — `:backend` JVM module (Kotlin JVM + Jib + `application`), Ktor 3.6.1 (same as `:core:ai`) on CIO
+- [x] 24.2 — sync DTOs + `lww()` in `:shared` (`shared/.../sync/SyncProtocol.kt`), 8 tests
+- [x] 24.3 — generic `records` store on Exposed 1.6 + JDBC (SQLite default, Postgres via `KLEAN_DB_URL`)
+- [x] 24.4 — admin login (argon2id, BouncyCastle), pairing codes + QR payload, device tokens (sha256-hashed), revoke, DAV app passwords
+- [x] 24.5 — `POST /sync/push`, `GET /sync/pull` (LWW, tombstones, cursor paging, table filter)
+- [x] 24.6 — blobs (`PUT/GET/HEAD /blobs/{sha256}`, streaming hash check, size limit)
+- [x] 24.7 — `/health` (DB round trip), call ids, structured JSON logs (logstash encoder)
+- [x] 24.8 — Jib image `klean-backend:dev`, `deploy/docker-compose.yml`, Caddy/Traefik examples, `docs/deploy.md`
+- [x] 24.9 — CardDAV/CalDAV (PROPFIND, REPORT sync-collection + multiget + query, GET/PUT/DELETE, ETags); vCard/iCal codecs in `:shared` with round-trip tests
+- [x] 24.10 — web push (VAPID, RFC 8291/8292) with JDK crypto (`nl.martijndwars:web-push` is barely maintained); keys generated once into `settings`
+- [x] 24.11 — Google server OAuth, Calendar read, Tasks list/patch (never create; `GoogleTest.neverCreatesGoogleTasks` checks every request), tested against a MockEngine fake
+- [x] 24.12 — Hermes relay (`/hermes/{path...}` → `KLEAN_HERMES_URL` with the server-held token, SSE streamed)
+- [x] 24.13 — AI proxy (`/ai/v1/chat/completions`, `/ai/v1/models` → `KLEAN_AI_UPSTREAM`), same streaming proxy
+- [x] 24.14 — `POST /admin/backup` (zip: `VACUUM INTO` snapshot + blobs; Postgres → 501 with a `pg_dump` hint)
+
+Verified (2026-11-09): gate + `:backend:test` BUILD SUCCESSFUL (backend 62 tests, `:shared` sync/vcard/ical 18);
+`:backend:jibDockerBuild` → `klean-backend:dev`, `docker compose -f deploy/docker-compose.yml up -d`,
+`curl -s localhost:8080/api/v1/health` → `{"status":"ok"}`, then an e2e script (login, pair, push, pull, blob,
+DAV PUT/PROPFIND, backup zip) inside the container; the same script against Postgres 17 (backup → 501 hint);
+real SSE streaming through `/ai/v1/chat/completions` (chunks arrive 0.7 s apart, upstream key substituted).
+
+Known gaps (shipped simpler, per plan risk 8):
+- DAV `addressbook-query` / `calendar-query` ignore filters and return every live member (correct superset; DAVx5 uses sync-collection).
+- One address book and one calendar; no MKCOL, PROPPATCH, ACL or scheduling (iTIP).
+- iCal: RECURRENCE-ID overrides are dropped on PUT; Klean-made times are written in UTC (no VTIMEZONE); unknown TZIDs fall back to the event zone.
+- No birthday calendar over CalDAV yet (birthdays travel as vCard BDAY).
+- DAVx5 compatibility not yet verified on a device (M29 session).
+- No login rate limiting (argon2id cost is the only brake); put the server behind Tailscale or a proxy with limits.
+- Push subscription endpoints are any https URL (no allow-list of push services).
+- No automated Postgres test in `:backend:test` (verified manually against postgres:17-alpine).
+- The image runs as root (Jib default) so the named volume is writable without an init step.
+
