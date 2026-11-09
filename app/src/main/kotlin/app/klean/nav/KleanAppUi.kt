@@ -5,6 +5,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.runtime.LaunchedEffect
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import androidx.compose.material.icons.rounded.MoreHoriz
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Today
 import androidx.compose.material3.Icon
@@ -53,7 +54,8 @@ fun KleanAppUi(vm: ShellViewModel = hiltViewModel(), deepLinks: Flow<Intent> = e
                 icon = { Icon(Icons.Rounded.Today, contentDescription = null) },
                 label = { Text(stringResource(R.string.nav_today)) },
             )
-            enabled.forEach { module ->
+            val layout = navLayout(enabled)
+            layout.primary.forEach { module ->
                 item(
                     selected = current.isOn(module.graphRoute),
                     onClick = { nav.navigateTopLevel(module.startRoute) },
@@ -61,12 +63,24 @@ fun KleanAppUi(vm: ShellViewModel = hiltViewModel(), deepLinks: Flow<Intent> = e
                     label = { Text(stringResource(module.labelRes)) },
                 )
             }
-            item(
-                selected = current.isOn(SettingsRoute),
-                onClick = { nav.navigateTopLevel(SettingsRoute) },
-                icon = { Icon(Icons.Rounded.Settings, contentDescription = null) },
-                label = { Text(stringResource(R.string.nav_settings)) },
-            )
+            if (layout.overflow.isEmpty()) {
+                item(
+                    selected = current.isOn(SettingsRoute),
+                    onClick = { nav.navigateTopLevel(SettingsRoute) },
+                    icon = { Icon(Icons.Rounded.Settings, contentDescription = null) },
+                    label = { Text(stringResource(R.string.nav_settings)) },
+                )
+            } else {
+                // More owns everything the other items don't: its list, the overflow modules, Settings and its pages.
+                val elsewhere = current.isOn(TodayRoute) || layout.primary.any { current.isOn(it.graphRoute) }
+                item(
+                    selected = current != null && !elsewhere,
+                    // Always lands on the list itself, not on whichever overflow page was open last.
+                    onClick = { nav.navigate(MoreRoute) { launchSingleTop = true; popUpTo(TodayRoute) } },
+                    icon = { Icon(Icons.Rounded.MoreHoriz, contentDescription = null) },
+                    label = { Text(stringResource(R.string.nav_more)) },
+                )
+            }
         },
     ) {
         startWithSetup?.let { KleanNavHost(nav = nav, shell = vm, enabled = enabled, startWithSetup = it) }
