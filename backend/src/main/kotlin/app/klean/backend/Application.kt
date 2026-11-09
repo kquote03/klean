@@ -3,6 +3,7 @@ package app.klean.backend
 import app.klean.backend.auth.deviceAuthRoutes
 import app.klean.backend.auth.publicAuthRoutes
 import app.klean.backend.sync.syncRoutes
+import app.klean.backend.blobs.blobRoutes
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
@@ -49,6 +50,7 @@ fun Application.kleanModule(services: Services) {
             authenticate(AUTH_DEVICE) {
                 deviceAuthRoutes(services.auth)
                 syncRoutes(services.records)
+                blobRoutes(services.blobs)
             }
         }
     }
