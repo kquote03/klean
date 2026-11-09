@@ -347,3 +347,10 @@ Schema v2 is frozen for the streams (decision 1). Each stream ticks only its own
 - [ ] S6.4 — screens: `SleepRoute`, `SleepEditRoute`
 - [ ] S6.5 — `SleepImportSource` no-op (deferred)
 - [ ] S6 common — `SleepKleanModule`, tests, `SleepDisableTest`, Waydroid walk, gate
+
+## M17 — Foundation 2 (`.hermes/plans/2026-11-09_165408-klean-holistic-full-product.md`, branch `m17-foundation2`)
+
+- [x] M17.1 — schema v3 by `AutoMigration(2 → 3, spec = KleanDatabase.V2ToV3)` (tables and columns only; post-migrate sets `task.status = DONE` where `completed_at` is set). New tables + DAOs: `delegation`/`DelegationDao`, `delegation_message`/`DelegationMessageDao`, `approval_request`/`ApprovalRequestDao`, `calendar_source`/`CalendarSourceDao`, `exercise_definition`/`ExerciseDefinitionDao`, `sleep_schedule`/`SleepScheduleDao`, `device`/`DeviceDao`, `sync_cursor`/`SyncCursorDao` (not synced). New columns on task, task_list, contact, event, workout_set, workout_session, sleep_session. `3.json`; `MigrationV3Test` (v2 fixture `backup-v2.sqlite` from `V2FixtureWriter`, plus v1→v3 chain) — m17-foundation2
+- [x] M17.2 — `SecretStore.GOOGLE_REFRESH`/`BACKEND_TOKEN`/`HERMES_TOKEN` (`google.refresh`, `backend.token`, `hermes.token`); kept out of backups unless "include keys" is on — m17-foundation2
+- [x] M17.3 — `DevicePrefs.isMainPhone` (default true; stored under the existing `mainPhone` key) + `DeviceRepository` (`registerThisDevice()` at startup in `KleanApp`, `setMainPhone`) — m17-foundation2
+- [x] M17.4 — `ReminderRepository.snooze(id, until)`, `markDone(id, nextFireAt?)`, `dismiss(id, nextFireAt?)`; dismiss never completes a task, new state `DISMISSED` — m17-foundation2
