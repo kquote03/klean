@@ -2,6 +2,8 @@ package app.klean.feature.settings
 
 import app.klean.feature.settings.ai.AiProviderScreen
 import app.klean.feature.settings.ai.AiProvidersScreen
+import app.klean.feature.settings.ai.OnDeviceScreen
+import app.klean.shared.ai.ProviderId
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
@@ -93,8 +95,12 @@ fun NavGraphBuilder.settingsGraph(nav: NavController, registry: ModuleRegistry, 
     composable<QuietHoursSettingsRoute> { QuietHoursSettingsScreen(onBack = back) }
     composable<AppearanceSettingsRoute> { AppearanceSettingsScreen(onBack = back) }
     composable<AiProvidersSettingsRoute> {
-        AiProvidersScreen(onBack = back, onOpen = { nav.navigate(AiProviderSettingsRoute(it.name)) })
+        AiProvidersScreen(
+            onBack = back,
+            onOpen = { if (it == ProviderId.ON_DEVICE) nav.navigate(OnDeviceSettingsRoute) else nav.navigate(AiProviderSettingsRoute(it.name)) },
+        )
     }
+    composable<OnDeviceSettingsRoute> { OnDeviceScreen(onBack = back) }
     composable<AiProviderSettingsRoute> { AiProviderScreen(onBack = back) }
     composable<BackupSettingsRoute> { BackupSettingsScreen(onBack = back) }
     composable<PermissionsSettingsRoute>(deepLinks = listOf(navDeepLink { uriPattern = "klean://settings/permissions" })) {

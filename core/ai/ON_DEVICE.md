@@ -27,9 +27,12 @@ device-specific model files.
 ## APK size
 
 The AAR ships `liblitertlm_jni.so` for **arm64-v8a (22.7 MB)** and **x86_64 (26.9 MB)** only. No 32-bit ABIs:
-on a 32-bit-only phone the library fails to load and the provider reports "This phone can't run the model"
-(it catches `UnsatisfiedLinkError`). The debug APK grows by about 20 MB compressed; a release build
-should split by ABI (or ship an App Bundle) so each phone downloads only its own ~10 MB.
+on a 32-bit-only phone the library fails to load and the provider reports "This model can't run on this phone"
+(it catches `UnsatisfiedLinkError`).
+
+Measured: the universal debug APK went from 86.2 MB to 139.6 MB (+53 MB), because AGP stores native
+libraries uncompressed and page-aligned. Installed on one phone that is ~23 MB (arm64). Before a public
+release: ship an App Bundle or ABI splits, so a phone downloads only its own library.
 
 ## Model
 
@@ -51,4 +54,12 @@ lenient extraction as the OpenAI-compatible provider (`extractJsonObject`), one 
 
 ## Waydroid (x86_64) result
 
-See TASKS.md 14.2 for what ran on Waydroid.
+- The native library loads on Waydroid (x86_64, CPU backend): a file with a valid `LITERTLM` header but
+  random contents reaches the native parser, which throws `LiteRtLmJniException` ("This reader doesn't
+  support version …"); the provider turns that into a calm "can't run" note.
+- A file without a model header made the native loader **abort the whole process** (a JNI abort while
+  building the error string, debuggable build with CheckJNI). Hence two guards in `OnDeviceProvider`:
+  only files starting with `LITERTLM` (or a zip `.task`) reach the runtime, and a `<model>.loading`
+  marker is left while loading, so a load that killed the process is never retried with the same file
+  (no crash loop from the background enrichment worker).
+- Real inference was not run: no model was downloaded (hundreds of MB). That check is for the real phone (M16).

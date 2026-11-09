@@ -24,7 +24,7 @@ class ModelDownloaderTest {
 
     private val cfg = FakeAiConfigStore(AiConfig(providers = AiProvidersConfig(onDevice = OnDeviceConfig())))
     private val models by lazy { OnDeviceModels(File(tmp.root, "models"), cfg) { null to null } }
-    private val modelBytes = ByteArray((OnDeviceModels.MIN_MODEL_BYTES + 1234).toInt()) { (it % 251).toByte() }
+    private val modelBytes = "LITERTLM".toByteArray() + ByteArray((OnDeviceModels.MIN_MODEL_BYTES + 1234).toInt()) { (it % 251).toByte() }
     private val url = "https://example.org/files/Qwen3-0.6B.litertlm?download=true"
 
     /** Serves [bytes]; honours Range unless [ignoreRange]; can drop the connection after [cutAt] bytes. */
@@ -96,6 +96,14 @@ class ModelDownloaderTest {
         assertEquals(DownloadResult.Done(ModelInstallResult.NotAModel), out)
         assertNull(cfg.current().providers.onDevice.modelPath)
         assertFalse(models.partFile.exists())
+    }
+
+    /** A big file that isn't a model (an HTML page, a random download) is refused before it's ever loaded. */
+    @Test fun aLargeFileWithoutAModelHeaderIsNotAModel() = runTest {
+        val junk = ByteArray(modelBytes.size) { 0xff.toByte() }
+        val out = ModelDownloader(models, FakeServer(bytes = junk)).download(url) { _, _ -> }
+        assertEquals(DownloadResult.Done(ModelInstallResult.NotAModel), out)
+        assertNull(cfg.current().providers.onDevice.modelPath)
     }
 
     @Test fun newModelReplacesTheOldAndRemoveCleansUp() = runTest {

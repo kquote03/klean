@@ -34,19 +34,26 @@ sealed interface ModelInstallResult {
  * again). Only one model is kept; installing a new one removes the old. Installing switches the
  * provider on, because getting a model is already the user saying yes; removing switches it off.
  */
+/** What the settings screen needs from [OnDeviceModels]; faked in view-model tests. */
+interface OnDeviceModelStore {
+    val current: Flow<ModelInfo?>
+    suspend fun importFrom(uri: Uri): ModelInstallResult
+    suspend fun remove()
+}
+
 @Singleton
 class OnDeviceModels internal constructor(
     val dir: File,
     private val config: AiConfigStore,
     private val opener: (Uri) -> Pair<String?, InputStream?>,
-) {
+) : OnDeviceModelStore {
     @Inject constructor(@ApplicationContext ctx: Context, config: AiConfigStore) : this(
         File(ctx.noBackupFilesDir, "models"),
         config,
         { uri -> displayName(ctx, uri) to ctx.contentResolver.openInputStream(uri) },
     )
 
-    val current: Flow<ModelInfo?> = config.config
+    override val current: Flow<ModelInfo?> = config.config
         .map { OnDeviceProvider.modelFile(it.providers.onDevice.modelPath)?.let { f -> ModelInfo(f.name, f.length()) } }
         .distinctUntilChanged()
 
@@ -54,7 +61,7 @@ class OnDeviceModels internal constructor(
     val partFile: File get() = File(dir, "download.part")
 
     /** Copies a file the user picked (SAF) into app storage and makes it the model. */
-    suspend fun importFrom(uri: Uri): ModelInstallResult = withContext(Dispatchers.IO) {
+    override suspend fun importFrom(uri: Uri): ModelInstallResult = withContext(Dispatchers.IO) {
         val tmp = File(dir.apply { mkdirs() }, "import.part")
         try {
             val (name, input) = opener(uri)
@@ -72,7 +79,7 @@ class OnDeviceModels internal constructor(
 
     /** Moves a finished file into place as the model. */
     suspend fun install(file: File, name: String): ModelInstallResult = withContext(Dispatchers.IO) {
-        if (!file.isFile || file.length() < MIN_MODEL_BYTES) {
+        if (!file.isFile || file.length() < MIN_MODEL_BYTES || !OnDeviceProvider.looksLikeModel(file)) {
             file.delete()
             return@withContext ModelInstallResult.NotAModel
         }
@@ -88,7 +95,7 @@ class OnDeviceModels internal constructor(
     }
 
     /** Deletes the model (and any half-finished download) and switches the provider off. */
-    suspend fun remove() = withContext(Dispatchers.IO) {
+    override suspend fun remove() = withContext(Dispatchers.IO) {
         dir.listFiles()?.forEach { it.delete() }
         config.updateProviders { it.copy(onDevice = it.onDevice.copy(enabled = false, modelPath = null)) }
     }

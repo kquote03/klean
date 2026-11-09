@@ -32,8 +32,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/** Providers that exist in this version, in card order. The on-device model arrives later (M14). */
-val SETTABLE_PROVIDERS = listOf(ProviderId.GEMINI, ProviderId.OPENAI_COMPAT)
+/** Providers that exist in this version, in card order. */
+val SETTABLE_PROVIDERS = listOf(ProviderId.GEMINI, ProviderId.OPENAI_COMPAT, ProviderId.ON_DEVICE)
 
 data class AiProvidersUiState(
     val loaded: Boolean = false,
@@ -229,6 +229,8 @@ class AiProviderViewModel @Inject constructor(
             AiReasons.NOT_FOUND -> R.string.ai_error_not_found
             AiReasons.NOT_CONFIGURED -> R.string.ai_error_not_configured
             AiReasons.BAD_RESPONSE -> R.string.ai_error_bad_response
+            AiReasons.MODEL_UNUSABLE -> R.string.ai_error_model_unusable
+            AiReasons.ENGINE -> R.string.ai_error_engine
             else -> R.string.ai_error_rejected
         }
     }

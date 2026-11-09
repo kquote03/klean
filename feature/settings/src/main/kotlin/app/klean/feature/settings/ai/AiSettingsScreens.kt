@@ -66,17 +66,17 @@ fun AiProvidersScreen(onBack: () -> Unit, onOpen: (ProviderId) -> Unit, vm: AiPr
             SETTABLE_PROVIDERS.forEach { id ->
                 ProviderCard(
                     title = stringResource(providerName(id)),
-                    summary = stringResource(if (id == ProviderId.GEMINI) R.string.ai_gemini_summary else R.string.ai_openai_summary),
+                    summary = stringResource(
+                        when (id) {
+                            ProviderId.GEMINI -> R.string.ai_gemini_summary
+                            ProviderId.OPENAI_COMPAT -> R.string.ai_openai_summary
+                            ProviderId.ON_DEVICE -> R.string.ai_on_device_summary
+                        },
+                    ),
                     status = stringResource(if (s.statusOf(id)) R.string.ai_status_on else R.string.ai_status_off),
                     onClick = { onOpen(id) },
                 )
             }
-            ProviderCard(
-                title = stringResource(R.string.ai_provider_on_device),
-                summary = stringResource(R.string.ai_on_device_later),
-                status = stringResource(R.string.ai_status_off),
-                onClick = null,
-            )
             Text(
                 stringResource(R.string.ai_use_for),
                 style = MaterialTheme.typography.labelLarge,

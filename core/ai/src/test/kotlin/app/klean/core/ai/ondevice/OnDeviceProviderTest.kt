@@ -50,7 +50,7 @@ class OnDeviceProviderTest {
     private val schema = JsonObject(mapOf("type" to JsonPrimitive("object")))
     private val req = StructuredRequest("You read food entries.", "2 manakish and tea", schema)
 
-    private fun model(): File = File(tmp.root, "model.litertlm").apply { if (!exists()) writeBytes(ByteArray(16)) }
+    private fun model(): File = File(tmp.root, "model.litertlm").apply { if (!exists()) writeBytes("LITERTLM".toByteArray() + ByteArray(16)) }
 
     private fun config(enabled: Boolean = true, path: String? = null) =
         FakeAiConfigStore(AiConfig(providers = AiProvidersConfig(onDevice = OnDeviceConfig(enabled = enabled, modelPath = path))))
@@ -167,11 +167,46 @@ class OnDeviceProviderTest {
         val cfg = config(path = model().path)
         val s = setup(cfg, answers = listOf("{}", "{}"))
         s.provider.generate(req)
-        val other = tmp.newFile("other.litertlm").apply { writeBytes(ByteArray(4)) }
+        val other = tmp.newFile("other.litertlm").apply { writeBytes("LITERTLM".toByteArray()) }
         cfg.updateProviders { it.copy(onDevice = it.onDevice.copy(modelPath = other.path)) }
         s.provider.generate(req)
         assertEquals(2, s.engines.size)
         assertTrue(s.engines[0].closed)
+    }
+
+    /** Found on Waydroid: a random file made the native loader abort the whole process. */
+    @Test fun aFileWithoutAModelHeaderIsNeverHandedToTheRuntime() = runTest {
+        val junk = tmp.newFile("junk.litertlm").apply { writeBytes(ByteArray(64) { 0xff.toByte() }) }
+        val s = setup(config(path = junk.path), answers = listOf("{}"))
+        assertEquals(AiOutcome.Failed(AiReasons.MODEL_UNUSABLE), s.provider.generate(req))
+        assertTrue(s.engines.isEmpty())
+    }
+
+    @Test fun zipTaskBundlesPassTheHeaderCheck() {
+        val task = tmp.newFile("m.task").apply { writeBytes(byteArrayOf(0x50, 0x4b, 0x03, 0x04, 0, 0)) }
+        assertTrue(OnDeviceProvider.looksLikeModel(task))
+        assertTrue(OnDeviceProvider.looksLikeModel(model()))
+        assertFalse(OnDeviceProvider.looksLikeModel(tmp.newFile("empty.litertlm")))
+    }
+
+    /** If the process died while loading (a native crash), the same file is not loaded again. */
+    @Test fun aModelThatCrashedWhileLoadingIsNotRetried() = runTest {
+        val m = model()
+        File(m.path + OnDeviceProvider.LOADING_SUFFIX).writeText("")
+        val s = setup(config(path = m.path), answers = listOf("{}"))
+        assertEquals(AiOutcome.Failed(AiReasons.MODEL_UNUSABLE), s.provider.generate(req))
+        assertTrue(s.engines.isEmpty())
+    }
+
+    @Test fun loadingMarkerIsClearedAfterALoad() = runTest {
+        val m = model()
+        val s = setup(config(path = m.path), answers = listOf("{}"))
+        s.provider.generate(req)
+        assertFalse(File(m.path + OnDeviceProvider.LOADING_SUFFIX).exists())
+        val bad = setup(config(path = m.path), createError = IllegalStateException("bad"))
+        bad.provider.release()
+        bad.provider.generate(req)
+        assertFalse("a caught failure isn't a crash", File(m.path + OnDeviceProvider.LOADING_SUFFIX).exists())
     }
 
     @Test fun waitsLongerThanCloudProviders() = runTest {

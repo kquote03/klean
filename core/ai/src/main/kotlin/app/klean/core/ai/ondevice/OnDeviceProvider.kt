@@ -147,7 +147,19 @@ class OnDeviceProvider(
     private fun engineFor(file: File): InferenceEngine {
         engine?.let { if (enginePath == file.path) return it }
         closeEngine()
-        return factory.create(file).also {
+        // The native loader can abort the whole process on a bad file (seen on Waydroid), which no catch
+        // survives. So: only hand it files that look like models, and leave a marker while loading; a
+        // marker still there means the last load took the process down, so don't try that file again.
+        if (!looksLikeModel(file)) throw IllegalArgumentException("not a model file: ${file.name}")
+        val marker = File(file.path + LOADING_SUFFIX)
+        if (marker.exists()) throw IllegalStateException("loading ${file.name} crashed before")
+        runCatching { marker.writeText("") }
+        val created = try {
+            factory.create(file)
+        } finally {
+            marker.delete()
+        }
+        return created.also {
             engine = it
             enginePath = file.path
         }
@@ -168,6 +180,17 @@ class OnDeviceProvider(
         private const val ATTEMPTS = 2
         private val THINKING = Regex("<think>[\\s\\S]*?</think>")
 
+        const val LOADING_SUFFIX = ".loading"
+        private val LITERTLM_MAGIC = "LITERTLM".toByteArray()
+        private val ZIP_MAGIC = byteArrayOf(0x50, 0x4b, 0x03, 0x04)
+
+        /** `.litertlm` files start with "LITERTLM"; older `.task` bundles are zip files. */
+        fun looksLikeModel(file: File): Boolean = runCatching {
+            val head = ByteArray(8)
+            val n = file.inputStream().use { it.read(head) }
+            (n >= 8 && head.contentEquals(LITERTLM_MAGIC)) || (n >= 4 && head.copyOf(4).contentEquals(ZIP_MAGIC))
+        }.getOrDefault(false)
+
         fun modelFile(path: String?): File? = path?.let(::File)?.takeIf { it.isFile && it.length() > 0 }
 
         internal fun stripThinking(text: String) = THINKING.replace(text, "")
@@ -186,4 +209,5 @@ abstract class OnDeviceModule {
     @Binds abstract fun trimSource(impl: AndroidMemoryTrimSource): MemoryTrimSource
     @Binds abstract fun modelHttp(impl: UrlConnectionModelHttp): ModelHttp
     @Binds abstract fun downloads(impl: WorkManagerModelDownloads): ModelDownloads
+    @Binds abstract fun modelStore(impl: OnDeviceModels): OnDeviceModelStore
 }

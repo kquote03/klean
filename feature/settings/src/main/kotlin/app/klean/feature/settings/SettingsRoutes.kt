@@ -11,6 +11,7 @@ import kotlinx.serialization.Serializable
 @Serializable object AiProvidersSettingsRoute
 /** [provider] is a [app.klean.shared.ai.ProviderId] name. */
 @Serializable data class AiProviderSettingsRoute(val provider: String)
+@Serializable object OnDeviceSettingsRoute
 @Serializable object BackupSettingsRoute
 @Serializable object PermissionsSettingsRoute
 @Serializable object AboutSettingsRoute
