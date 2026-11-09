@@ -141,7 +141,7 @@ Everything ticked is merged on `main` (milestones M0–M7 and M9 are tagged).
 
 ## M13 — Polish, disable audit, accessibility, copy audit
 
-- [ ] Task 13.1 — Disable audit
+- [x] Task 13.1 — Disable audit (main) — instrumented `ModuleDisableTest` passes on Waydroid: no DIET_* notifications, check-in + day-rollover alarms gone (FLAG_NO_CREATE), registry without diet, enrichment cancelled and not re-queued, unlock sheet and delivery prompt inactive, widget/tile disabled states. Gaps fixed: AlarmScheduler.cancel now also cancels the PendingIntent; the toggle re-arms/cancels DayRollover and cancels queued `ai-enrich` work; EnrichmentEnqueuer/Sweep respect the module gate
 - [ ] Task 13.2 — Accessibility pass
 - [ ] Task 13.3 — Copy audit
 - [ ] Task 13.4 — Appearance + About

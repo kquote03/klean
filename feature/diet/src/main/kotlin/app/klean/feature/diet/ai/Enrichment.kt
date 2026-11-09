@@ -17,6 +17,8 @@ import androidx.work.WorkerParameters
 import app.klean.core.ai.AiConfigListener
 import app.klean.core.ai.AiService
 import app.klean.core.data.db.KleanDatabase
+import app.klean.core.data.module.ModuleGate
+import app.klean.shared.module.ModuleId
 import app.klean.core.data.photo.PhotoStorage
 import app.klean.core.notifications.Reschedulable
 import app.klean.feature.diet.data.DietChange
@@ -75,6 +77,9 @@ class AndroidAiImageLoader @Inject constructor(private val photos: PhotoStorage)
 interface EnrichmentScheduler {
     /** [replace] = a newer version of the entry supersedes queued work; the sweep keeps what's queued. */
     fun enqueue(entryId: String, enqueuedUpdatedAt: Long, needsNetwork: Boolean, replace: Boolean = true)
+
+    /** Drops every queued enrichment (the diet module was switched off). */
+    fun cancelAll()
 }
 
 class WorkManagerEnrichmentScheduler @Inject constructor(@ApplicationContext private val ctx: Context) : EnrichmentScheduler {
@@ -96,6 +101,10 @@ class WorkManagerEnrichmentScheduler @Inject constructor(@ApplicationContext pri
         )
     }
 
+    override fun cancelAll() {
+        WorkManager.getInstance(ctx).cancelAllWorkByTag(TAG)
+    }
+
     companion object {
         const val TAG = "ai-enrich"
     }
@@ -109,8 +118,10 @@ class EnrichmentEnqueuer @Inject constructor(
     private val db: KleanDatabase,
     private val ai: AiService,
     private val scheduler: EnrichmentScheduler,
+    private val gate: ModuleGate,
 ) : DietChangeListener {
     override suspend fun onChange(change: DietChange) {
+        if (!gate.isEnabled(ModuleId.DIET)) return
         val id = when (change) {
             is DietChange.Logged -> change.id
             is DietChange.Edited -> change.id
@@ -129,8 +140,10 @@ class EnrichmentSweep @Inject constructor(
     private val ai: AiService,
     private val scheduler: EnrichmentScheduler,
     private val clock: Clock,
+    private val gate: ModuleGate,
 ) {
     suspend fun run(): Int {
+        if (!gate.isEnabled(ModuleId.DIET)) return 0
         val provider = ai.providerFor(AiTask.ENTRY_PARSE) ?: return 0
         val since = clock.now().toEpochMilliseconds() - LOOKBACK_MS
         val ids = db.foodEntryDao().awaitingEnrichment(since)

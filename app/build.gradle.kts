@@ -70,6 +70,7 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.core.ktx)
     androidTestImplementation(libs.datastore.preferences)
+    androidTestImplementation(libs.work.testing)
 }
 
 // ForbiddenCopyTest reads every module's res/ and manifest; declare them so the test is never stale.

@@ -14,7 +14,9 @@ import app.klean.core.ai.Capability
 import app.klean.core.ai.StructuredRequest
 import app.klean.core.data.db.entity.FoodItemEntity
 import app.klean.core.data.db.transact
+import app.klean.core.data.module.SettingsModuleGate
 import app.klean.core.data.settings.SettingsRepository
+import app.klean.shared.module.ModuleId
 import app.klean.core.data.sync.SyncStamper
 import app.klean.feature.diet.Dubai
 import app.klean.feature.diet.DubaiZone
@@ -68,6 +70,8 @@ class FakeAiService : AiService {
 
 class FakeEnrichmentScheduler : EnrichmentScheduler {
     val enqueued = mutableListOf<Triple<String, Long, Boolean>>()
+    var cancelledAll = 0
+    override fun cancelAll() { cancelledAll++ }
     override fun enqueue(entryId: String, enqueuedUpdatedAt: Long, needsNetwork: Boolean, replace: Boolean) {
         enqueued += Triple(entryId, enqueuedUpdatedAt, needsNetwork)
     }
@@ -89,6 +93,7 @@ class FoodEnrichmentWorkerTest {
             override suspend fun hasProviderFor(task: AiTask) = true
         }, scope,
     )
+    private val gate = SettingsModuleGate(SettingsRepository(db, stamper))
     private val ai = FakeAiService()
     private val scheduler = FakeEnrichmentScheduler()
     private val local = FakeAiProvider(ProviderId.OPENAI_COMPAT)
@@ -221,7 +226,7 @@ class FoodEnrichmentWorkerTest {
     }
 
     @Test fun enqueuerQueuesLoggedAndPendingEditsOnly() = runBlocking {
-        val enqueuer = EnrichmentEnqueuer(db, ai, scheduler)
+        val enqueuer = EnrichmentEnqueuer(db, ai, scheduler, gate)
         val (id, at) = logged()
         enqueuer.onChange(DietChange.Logged(id, "x"))
         assertTrue("no provider → nothing queued", scheduler.enqueued.isEmpty())
@@ -234,8 +239,17 @@ class FoodEnrichmentWorkerTest {
         assertEquals(1, scheduler.enqueued.size)
     }
 
+    @Test fun nothingIsQueuedWhileDietIsOff() = runBlocking {
+        ai.assigned[AiTask.ENTRY_PARSE] = local
+        val (id, _) = logged()
+        gate.setEnabled(ModuleId.DIET, false)
+        EnrichmentEnqueuer(db, ai, scheduler, gate).onChange(DietChange.Logged(id, "x"))
+        assertEquals(0, EnrichmentSweep(db, ai, scheduler, clock, gate).run())
+        assertTrue(scheduler.enqueued.isEmpty())
+    }
+
     @Test fun sweepQueuesRecentEntriesWithoutDetailsOnlyWhenAProviderIsOn() = runBlocking {
-        val sweep = EnrichmentSweep(db, ai, scheduler, clock)
+        val sweep = EnrichmentSweep(db, ai, scheduler, clock, gate)
         val (a, atA) = logged("toast")
         val (b, _) = logged("tea")
         db.transact {

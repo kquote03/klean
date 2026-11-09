@@ -51,6 +51,16 @@ class AlarmSchedulerTest {
         assertNull(shadowOf(am).peekNextScheduledAlarm())
     }
 
+    /** ModuleDisableTest checks `getBroadcast(FLAG_NO_CREATE) == null`; that needs the PendingIntent itself gone. */
+    @Test fun cancelAlsoDropsThePendingIntent() {
+        scheduler.schedule(3_000_000L, pi)
+        scheduler.cancel(pi)
+        val again = PendingIntent.getBroadcast(
+            ctx, 1, Intent("test.ALARM").setPackage(ctx.packageName), PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE,
+        )
+        assertNull(again)
+    }
+
     @Test fun inexactAlwaysUsesTheWindowlessIdleSafeCall() {
         scheduler.scheduleInexact(4_000_000L, pi)
         val a = shadowOf(am).peekNextScheduledAlarm()!!

@@ -3,6 +3,12 @@ package app.klean.feature.diet
 import android.Manifest
 import android.app.Application
 import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Intent
+import app.klean.core.notifications.AlarmScheduler
+import app.klean.feature.diet.ai.FakeEnrichmentScheduler
+import app.klean.feature.diet.prompt.DayRollover
+import app.klean.feature.diet.prompt.DayRolloverReceiver
 import android.content.Context
 import androidx.core.app.NotificationCompat
 import androidx.test.core.app.ApplicationProvider
@@ -59,9 +65,17 @@ class DietEnablementTest {
         override suspend fun reschedule() { calls += "reschedule" }
         override suspend fun cancel() { calls += "cancel" }
     }
+    private val widget = DietWidgetUpdater(ctx)
+    private val rollover = DayRollover(ctx, AlarmScheduler(ctx), settings, gate, clock, DubaiZone, status, widget)
+    private val enrichment = FakeEnrichmentScheduler()
     private val registry = ModuleRegistry(
-        setOf(DietKleanModule(DefaultDietEnablement(ctx, status, prompts, DietWidgetUpdater(ctx)))),
+        setOf(DietKleanModule(DefaultDietEnablement(ctx, status, prompts, widget, rollover, enrichment))),
         gate,
+    )
+
+    private fun rolloverAlarm(): PendingIntent? = PendingIntent.getBroadcast(
+        ctx, DayRollover.REQUEST_CODE, Intent(ctx, DayRolloverReceiver::class.java),
+        PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE,
     )
 
     @Before fun setUp() {
@@ -90,11 +104,20 @@ class DietEnablementTest {
         assertEquals(listOf("cancel"), calls)
     }
 
+    @Test fun disablingCancelsTheDayRolloverAndQueuedEnrichment() = runBlocking {
+        rollover.reschedule()
+        assertNotNull(rolloverAlarm())
+        registry.setEnabled(ModuleId.DIET, false)
+        assertNull(rolloverAlarm())
+        assertEquals(1, enrichment.cancelledAll)
+    }
+
     @Test fun enablingBringsBackTheStatusAndReschedules() = runBlocking {
         registry.setEnabled(ModuleId.DIET, false)
         calls.clear()
         registry.setEnabled(ModuleId.DIET, true)
         assertNotNull(shadowOf(nm).getNotification(NotificationIds.DIET_STATUS))
         assertEquals(listOf("reschedule"), calls)
+        assertNotNull("day rollover re-armed", rolloverAlarm())
     }
 }

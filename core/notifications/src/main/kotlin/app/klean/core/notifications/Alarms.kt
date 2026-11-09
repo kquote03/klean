@@ -64,7 +64,11 @@ class AlarmScheduler @Inject constructor(@ApplicationContext private val ctx: Co
     /** For work where a few minutes late doesn't matter (day rollover). */
     fun scheduleInexact(at: Long, pi: PendingIntent) = am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, pi)
 
-    fun cancel(pi: PendingIntent) = am.cancel(pi)
+    /** Cancels the alarm and the PendingIntent itself, so `FLAG_NO_CREATE` lookups see nothing pending. */
+    fun cancel(pi: PendingIntent) {
+        am.cancel(pi)
+        pi.cancel()
+    }
 }
 
 /** Declares the set so it is legal before any module contributes one. */
