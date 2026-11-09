@@ -12,19 +12,17 @@ import app.klean.shared.module.ModuleId
 import app.klean.shared.diet.CaptureSource
 import app.klean.core.notifications.R as NotifR
 
-/** Action buttons shared by the status notification and (M5) prompt notifications. */
+/** Action buttons of the diet check-in notifications. The holistic status line has its own (\:core:capture). */
 internal object DietStatusActions {
-    fun addTo(ctx: Context, builder: NotificationCompat.Builder) {
-        builder.addAction(logFood(ctx, CaptureSource.NOTIFICATION_REPLY, DietStatusNotifier.RC_REPLY))
-        builder.addAction(capture(ctx))
-    }
+    const val DEEP_LINK_DIET = "klean://diet"
+    internal const val RC_CAPTURE = 13
 
     /** Opens the capture sheet over the current screen, for photos, voice or repeats. */
     fun capture(ctx: Context): NotificationCompat.Action {
         val intent = CaptureActivity.intent(ctx, CaptureSource.NOTIFICATION_REPLY, ModuleId.DIET)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         val pi = PendingIntent.getActivity(
-            ctx, DietStatusNotifier.RC_CAPTURE, intent,
+            ctx, RC_CAPTURE, intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
         return NotificationCompat.Action.Builder(NotifR.drawable.ic_stat_klean, ctx.getString(R.string.diet_status_action_capture), pi).build()

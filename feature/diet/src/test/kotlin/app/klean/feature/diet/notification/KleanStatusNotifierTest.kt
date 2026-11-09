@@ -9,6 +9,7 @@ import androidx.core.app.NotificationCompat
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.klean.core.ai.EnrichmentPolicy
+import app.klean.core.capture.status.StatusReplyReceiver
 import app.klean.core.data.module.SettingsModuleGate
 import app.klean.core.data.settings.SettingsRepository
 import app.klean.core.data.settings.SyncedKeys
@@ -16,15 +17,16 @@ import app.klean.core.data.sync.SyncStamper
 import app.klean.core.notifications.ChannelRegistrar
 import app.klean.core.notifications.Channels
 import app.klean.core.notifications.NotificationIds
+import app.klean.core.ui.module.StatusFragment
+import app.klean.core.ui.module.StatusLineProvider
 import app.klean.feature.diet.Dubai
 import app.klean.feature.diet.DubaiZone
 import app.klean.feature.diet.FakeClock
+import app.klean.feature.diet.StatusStack
 import app.klean.feature.diet.data.DefaultDietRepository
 import app.klean.feature.diet.data.DietChangeDispatcher
 import app.klean.feature.diet.inMemoryDb
 import app.klean.feature.diet.tempDevicePrefs
-import app.klean.feature.diet.notification.PromptHighlight
-import app.klean.feature.diet.ui.AndroidDietFormatter
 import app.klean.shared.ai.AiTask
 import app.klean.shared.diet.CaptureSource
 import app.klean.shared.module.ModuleId
@@ -33,6 +35,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.LocalDate
 import org.junit.After
@@ -45,8 +48,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Shadows.shadowOf
 
+/** The holistic "Today" status notification, with diet's real line and an optional second module. */
 @RunWith(AndroidJUnit4::class)
-class DietStatusNotifierTest {
+class KleanStatusNotifierTest {
     private val ctx = ApplicationProvider.getApplicationContext<Context>()
     private val nm = ctx.getSystemService(NotificationManager::class.java)
     private val clock = FakeClock(atMinute(LocalDate(2026, 11, 9), 12 * 60, Dubai))
@@ -57,7 +61,13 @@ class DietStatusNotifierTest {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
     private val noAi = object : EnrichmentPolicy { override suspend fun hasProviderFor(task: AiTask) = false }
     private val repo = DefaultDietRepository(db, stamper, clock, DubaiZone, settings, DietChangeDispatcher(emptySet()), noAi, scope)
-    private val notifier = DietStatusNotifier(ctx, { repo }, gate, settings, AndroidDietFormatter(ctx, DubaiZone), PromptHighlight { null })
+    private val taskLine = MutableStateFlow(listOf(StatusFragment("tasks.count", "2 tasks", 5)))
+    private val tasks = object : StatusLineProvider {
+        override val moduleId = ModuleId.TASKS
+        override fun fragments() = taskLine
+    }
+
+    private fun stack(withTasks: Boolean = false) = StatusStack(ctx, repo, gate, settings, others = if (withTasks) setOf(tasks) else emptySet())
 
     @Before fun setUp() {
         ChannelRegistrar.ensure(ctx)
@@ -69,77 +79,98 @@ class DietStatusNotifierTest {
         db.close()
     }
 
-    private fun posted(): Notification? = shadowOf(nm).getNotification(NotificationIds.DIET_STATUS)
+    private fun posted(): Notification? = shadowOf(nm).getNotification(NotificationIds.STATUS)
     private fun Notification.text() = extras.getCharSequence(Notification.EXTRA_TEXT)?.toString()
     private fun Notification.title() = extras.getCharSequence(Notification.EXTRA_TITLE)?.toString()
+    private fun Notification.sub() = extras.getCharSequence(Notification.EXTRA_SUB_TEXT)?.toString()
 
-    @Test fun emptyDayPostsCalmOngoingStatus() = runBlocking {
-        notifier.refresh()
-        val n = posted()
-        assertNotNull(n)
-        n!!
-        assertEquals("What did you eat?", n.title())
-        assertEquals("Nothing logged yet today", n.text())
-        assertEquals(Channels.DIET_STATUS, n.channelId)
+    @Test fun emptyDayPostsCalmOngoingTodayStatus() = runBlocking {
+        stack().notifier.refresh()
+        val n = posted()!!
+        assertEquals("Today", n.title())
+        assertEquals("Nothing planned. Add anything here.", n.text())
+        assertEquals(Channels.STATUS, n.channelId)
         assertTrue(n.flags and Notification.FLAG_ONGOING_EVENT != 0)
         assertTrue(n.flags and Notification.FLAG_ONLY_ALERT_ONCE != 0)
         assertEquals(NotificationCompat.CATEGORY_STATUS, n.category)
         assertNotNull(n.deleteIntent)
-        assertNotNull(n.contentIntent)
+        assertEquals("klean://today", shadowOf(n.contentIntent).savedIntent.dataString)
     }
 
-    @Test fun summaryShowsCountAndLastItemAndPrivatePublicVersion() = runBlocking {
+    @Test fun dietAloneShowsCountAndLastEntry() = runBlocking {
         repo.logEntry("toast", CaptureSource.MODULE_SCREEN, eatenAt = clock.nowMs - 60_000)
         repo.logEntry("tea", CaptureSource.MODULE_SCREEN)
-        notifier.refresh()
+        stack().notifier.refresh()
+        val text = posted()!!.text()!!
+        assertTrue(text, text.startsWith("2 food entries · last: tea "))
+    }
+
+    @Test fun textJoinsFragmentsHighestPriorityFirst() = runBlocking {
+        repo.logEntry("shawarma", CaptureSource.MODULE_SCREEN)
+        stack(withTasks = true).notifier.refresh()
+        // With another module, diet keeps to its count.
+        assertEquals("2 tasks · 1 food entry", posted()!!.text())
+    }
+
+    @Test fun publicVersionSaysHowManyButNeverWhat() = runBlocking {
+        repo.logEntry("shawarma", CaptureSource.MODULE_SCREEN)
+        stack(withTasks = true).notifier.refresh()
         val n = posted()!!
-        assertTrue(n.text(), n.text()!!.startsWith("2 today · last: tea at "))
         assertEquals(Notification.VISIBILITY_PRIVATE, n.visibility)
-        assertEquals("2 entries today", n.publicVersion.extras.getCharSequence(Notification.EXTRA_TITLE).toString())
-        // The public version never carries what was eaten.
+        assertEquals("Today · 2 items", n.publicVersion.extras.getCharSequence(Notification.EXTRA_TITLE).toString())
         assertNull(n.publicVersion.extras.getCharSequence(Notification.EXTRA_TEXT))
     }
 
-    @Test fun logFoodActionIsAnInlineReplyThatNeedsNoUnlock() = runBlocking {
-        notifier.refresh()
-        val action = posted()!!.actions.single { it.title.toString() == "Log food" }
-        assertEquals(DietReplyReceiver.KEY_TEXT, action.remoteInputs.single().resultKey)
-        assertEquals("What did you eat?", action.remoteInputs.single().label.toString())
+    @Test fun addSomethingIsOneInlineReplyThatNeedsNoUnlock() = runBlocking {
+        stack().notifier.refresh()
+        val action = posted()!!.actions.single()
+        assertEquals("Add something", action.title.toString())
+        assertEquals(StatusReplyReceiver.KEY_TEXT, action.remoteInputs.single().resultKey)
         assertTrue(!action.isAuthenticationRequired)
         assertTrue(action.allowGeneratedReplies.not())
+        assertEquals(StatusReplyReceiver::class.java.name, shadowOf(action.actionIntent).savedIntent.component?.className)
     }
 
-    @Test fun captureActionOpensTheSheet() = runBlocking {
-        notifier.refresh()
-        val action = posted()!!.actions.single { it.title.toString() == "Capture…" }
-        val intent = shadowOf(action.actionIntent).savedIntent
-        assertEquals("app.klean.core.capture.CaptureActivity", intent.component?.className)
-        assertEquals("diet", intent.getStringExtra("target_module"))
+    @Test fun savedToStaysUntilTheLineChanges() = runBlocking {
+        val s = stack()
+        repo.logEntry("toast", CaptureSource.NOTIFICATION_REPLY)
+        s.notifier.refresh(savedTo = "Diet")
+        assertEquals("Saved to Diet", posted()!!.sub())
+        s.notifier.refresh()
+        assertEquals("Saved to Diet", posted()!!.sub())
+        repo.logEntry("tea", CaptureSource.MODULE_SCREEN)
+        s.notifier.refresh()
+        assertNull(posted()!!.sub())
     }
 
-    @Test fun savedTextIsShownAfterReply() = runBlocking {
-        notifier.refresh(savedText = "shawarma and fries")
-        assertEquals("Saved: shawarma and fries", posted()!!.text())
-    }
-
-    @Test fun cancelledWhenDietDisabled() = runBlocking {
-        notifier.refresh()
-        assertNotNull(posted())
+    @Test fun disabledModulesDropOutAndNoLineMeansNoNotification() = runBlocking {
+        repo.logEntry("toast", CaptureSource.MODULE_SCREEN)
+        val s = stack(withTasks = true)
+        gate.setEnabled(ModuleId.TASKS, false)
+        s.notifier.refresh()
+        assertTrue(posted()!!.text()!!.startsWith("1 food entry · last: toast"))
         gate.setEnabled(ModuleId.DIET, false)
-        notifier.refresh()
+        s.notifier.refresh()
         assertNull(posted())
     }
 
+    @Test fun highlightedCheckInLeadsTheLine() = runBlocking {
+        val s = StatusStack(ctx, repo, gate, settings, highlight = { PromptPhrasings.generic.first() })
+        s.notifier.refresh()
+        assertEquals(ctx.getString(PromptPhrasings.generic.first().res), posted()!!.text())
+    }
+
     @Test fun cancelledWhenSettingOff() = runBlocking {
-        notifier.refresh()
+        val s = stack()
+        s.notifier.refresh()
         settings.set(SyncedKeys.DietStatusNotification, false)
-        notifier.refresh()
+        s.notifier.refresh()
         assertNull(posted())
     }
 
     @Test fun silentlySkipsWithoutPermission() = runBlocking {
         shadowOf(ctx as Application).denyPermissions(Manifest.permission.POST_NOTIFICATIONS)
-        notifier.refresh()
+        stack().notifier.refresh()
         assertNull(posted())
     }
 }

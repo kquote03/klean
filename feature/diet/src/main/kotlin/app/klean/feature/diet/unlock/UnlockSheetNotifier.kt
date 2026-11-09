@@ -37,7 +37,7 @@ fun interface FullScreenIntentCheck {
  */
 class UnlockSheetNotifier @Inject constructor(
     @ApplicationContext private val ctx: Context,
-    // A Provider, like DietStatusNotifier: the repository starts collecting settings when built, and the
+    // A Provider, like DietStatusLine's lazy repository: the repository starts collecting settings when built, and the
     // screen monitor builds this at app start.
     private val repo: Provider<DietRepository>,
     private val fullScreen: FullScreenIntentCheck,

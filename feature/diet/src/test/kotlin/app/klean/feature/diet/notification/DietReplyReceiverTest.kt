@@ -32,7 +32,7 @@ import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
 /**
- * Robolectric stand-in for the on-device inline-reply check: the real Hilt receiver, the real
+ * Check-in replies (the status line's reply is [StatusReplyReceiverTest]): the real Hilt receiver, the real
  * repository and dispatcher, an in-memory database. No activity is involved.
  */
 @HiltAndroidTest
@@ -50,7 +50,7 @@ class DietReplyReceiverTest {
         shadowOf(ctx as Application).grantPermissions(Manifest.permission.POST_NOTIFICATIONS)
     }
 
-    private fun replyIntent(text: String, source: CaptureSource? = CaptureSource.NOTIFICATION_REPLY): Intent {
+    private fun replyIntent(text: String, source: CaptureSource? = CaptureSource.PROMPT_REPLY): Intent {
         val intent = Intent(ctx, DietReplyReceiver::class.java)
         source?.let { intent.putExtra(DietReplyReceiver.EXTRA_SOURCE, it.name) }
         RemoteInput.addResultsToIntent(
@@ -61,40 +61,32 @@ class DietReplyReceiverTest {
         return intent
     }
 
-    private suspend fun awaitStatusText(expected: String): String? {
+    private suspend fun awaitStatus(extra: String, expected: String): String? {
         val nm = ctx.getSystemService(NotificationManager::class.java)
         var last: String? = null
         repeat(100) {
-            last = shadowOf(nm).getNotification(NotificationIds.DIET_STATUS)
-                ?.extras?.getCharSequence(Notification.EXTRA_TEXT)?.toString()
+            last = shadowOf(nm).getNotification(NotificationIds.STATUS)
+                ?.extras?.getCharSequence(extra)?.toString()
             if (last == expected) return last
             delay(50)
         }
         return last
     }
 
-    @Test fun replySavesEntryWithNotificationSourceAndConfirms() = runBlocking {
-        DietReplyReceiver().onReceive(ctx, replyIntent("  shawarma and fries "))
+    @Test fun promptReplyKeepsItsSourceAndConfirmsOnTheStatusLine() = runBlocking {
+        DietReplyReceiver().onReceive(ctx, replyIntent(" tea ", CaptureSource.PROMPT_REPLY))
         val entry = withTimeout(5_000) {
             db.foodEntryDao().observeRange(0, Long.MAX_VALUE).first { it.isNotEmpty() }.single()
         }
-        assertEquals("shawarma and fries", entry.rawText)
-        assertEquals(CaptureSource.NOTIFICATION_REPLY, entry.source)
-        assertEquals("Saved: shawarma and fries", awaitStatusText("Saved: shawarma and fries"))
-    }
-
-    @Test fun promptReplyKeepsItsSource() = runBlocking {
-        DietReplyReceiver().onReceive(ctx, replyIntent("tea", CaptureSource.PROMPT_REPLY))
-        val entry = withTimeout(5_000) {
-            db.foodEntryDao().observeRange(0, Long.MAX_VALUE).first { it.isNotEmpty() }.single()
-        }
+        assertEquals("tea", entry.rawText)
         assertEquals(CaptureSource.PROMPT_REPLY, entry.source)
+        assertEquals("Saved to Diet", awaitStatus(Notification.EXTRA_SUB_TEXT, "Saved to Diet"))
     }
 
     @Test fun blankReplySavesNothingButClearsTheSpinner() = runBlocking {
         DietReplyReceiver().onReceive(ctx, replyIntent("   "))
         // The re-post is what clears the reply spinner, so it must still happen.
-        assertEquals("Nothing logged yet today", awaitStatusText("Nothing logged yet today"))
+        assertEquals("Nothing planned. Add anything here.", awaitStatus(Notification.EXTRA_TEXT, "Nothing planned. Add anything here."))
         assertTrue(db.foodEntryDao().observeRange(0, Long.MAX_VALUE).first().isEmpty())
     }
 }

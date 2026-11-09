@@ -8,7 +8,7 @@ import app.klean.core.data.settings.SettingsRepository
 import app.klean.core.data.settings.SyncedKeys
 import app.klean.core.notifications.AlarmScheduler
 import app.klean.feature.diet.BuildConfig
-import app.klean.feature.diet.notification.DietStatusNotifier
+import app.klean.feature.diet.notification.DietStatusLine
 import app.klean.feature.diet.prompt.DietPrompts
 import app.klean.feature.diet.ui.DietFormatter
 import dagger.Binds
@@ -59,7 +59,7 @@ fun interface DietStatusRefresh {
 @Module
 @InstallIn(SingletonComponent::class)
 object DietStatusRefreshModule {
-    @dagger.Provides fun refresh(notifier: DietStatusNotifier): DietStatusRefresh = DietStatusRefresh { notifier.refresh() }
+    @dagger.Provides fun refresh(line: DietStatusLine): DietStatusRefresh = DietStatusRefresh { line.refresh() }
 }
 
 data class DietSettingsState(

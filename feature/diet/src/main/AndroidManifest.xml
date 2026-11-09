@@ -39,9 +39,6 @@
             android:theme="@style/Theme.Klean.Translucent"
             android:windowSoftInputMode="adjustResize" />
         <receiver
-            android:name=".notification.StatusRepostReceiver"
-            android:exported="false" />
-        <receiver
             android:name=".notification.DietReplyReceiver"
             android:exported="false" />
         <receiver

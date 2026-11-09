@@ -41,7 +41,7 @@ import app.klean.core.notifications.R as NotifR
 class PromptNotifier @Inject constructor(
     @ApplicationContext private val ctx: Context,
     private val prefs: DevicePrefs,
-    private val status: DietStatusNotifier,
+    private val status: DietStatusLine,
     private val widget: DietWidgetUpdater,
 ) : PromptPresenter {
     override suspend fun present(logId: String, format: PromptFormat, phrasingId: String, trigger: PromptTrigger, placeLabel: String?) {
@@ -112,7 +112,7 @@ class PromptNotifier @Inject constructor(
 
     private fun openDiet(): PendingIntent = PendingIntent.getActivity(
         ctx, RC_PROMPT_OPEN,
-        Intent(Intent.ACTION_VIEW, DietStatusNotifier.DEEP_LINK_DIET.toUri())
+        Intent(Intent.ACTION_VIEW, DietStatusActions.DEEP_LINK_DIET.toUri())
             .setPackage(ctx.packageName)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,

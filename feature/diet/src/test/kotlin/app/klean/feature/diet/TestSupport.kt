@@ -37,3 +37,26 @@ fun tempDevicePrefs(clock: Clock, scope: CoroutineScope = CoroutineScope(Supervi
     val file = File(createTempDirectory("prefs").toFile(), "device_prefs.preferences_pb")
     return DevicePrefs(PreferenceDataStoreFactory.create(scope = scope, produceFile = { file }), clock)
 }
+
+/** The holistic status stack with diet as its only line: diet's provider wired to the real notifier. */
+class StatusStack(
+    ctx: Context,
+    repo: app.klean.feature.diet.data.DietRepository,
+    gate: app.klean.core.data.module.ModuleGate,
+    settings: app.klean.core.data.settings.SettingsRepository,
+    highlight: app.klean.feature.diet.notification.PromptHighlight = app.klean.feature.diet.notification.PromptHighlight { null },
+    others: Set<app.klean.core.ui.module.StatusLineProvider> = emptySet(),
+) {
+    lateinit var notifier: app.klean.core.capture.status.KleanStatusNotifier
+        private set
+    val line: app.klean.feature.diet.notification.DietStatusLine = app.klean.feature.diet.notification.DietStatusLine(
+        ctx, { repo }, gate, { others + line }, app.klean.feature.diet.ui.AndroidDietFormatter(ctx, DubaiZone), highlight,
+        { app.klean.core.ui.module.StatusRefresh { setOf(notifier) } },
+    )
+
+    init {
+        notifier = app.klean.core.capture.status.KleanStatusNotifier(
+            ctx, app.klean.core.ui.module.DashboardContributions(emptySet(), emptySet(), gate, others + line), settings,
+        )
+    }
+}

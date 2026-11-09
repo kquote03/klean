@@ -6,6 +6,14 @@
     <string name="capture_no_module">Turn on a module in Settings to save this.</string>
     <string name="capture_repeats_label">Log again</string>
     <string name="tile_label">Add to Klean</string>
+    <string name="status_title">Today</string>
+    <string name="status_empty">Nothing planned. Add anything here.</string>
+    <string name="status_action_add">Add something</string>
+    <string name="status_reply_hint">A task, a time, a meal…</string>
+    <plurals name="status_public">
+        <item quantity="one">Today · %d item</item>
+        <item quantity="other">Today · %d items</item>
+    </plurals>
     <string name="voice_listening">Listening…</string>
     <string name="voice_listening_heard">Listening… %1$s</string>
     <string name="voice_permission_rationale">Klean uses the mic only while you tap it to speak an entry.</string>

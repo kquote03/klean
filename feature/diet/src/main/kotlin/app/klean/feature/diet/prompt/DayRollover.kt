@@ -14,7 +14,7 @@ import app.klean.core.notifications.AlarmScheduler
 import app.klean.core.notifications.Reschedulable
 import app.klean.feature.diet.data.DietChange
 import app.klean.feature.diet.data.DietChangeListener
-import app.klean.feature.diet.notification.DietStatusNotifier
+import app.klean.feature.diet.notification.DietStatusLine
 import app.klean.feature.diet.widget.DietWidgetUpdater
 import app.klean.shared.module.ModuleId
 import app.klean.shared.time.DayWindows
@@ -46,7 +46,7 @@ class DayRollover @Inject constructor(
     private val gate: ModuleGate,
     private val clock: Clock,
     private val zone: ZoneProvider,
-    private val status: DietStatusNotifier,
+    private val status: DietStatusLine,
     private val widget: DietWidgetUpdater,
 ) : Reschedulable, DietChangeListener {
     /** Cheap, and keeps the alarm right after a sleep-window change made while the app was open. */

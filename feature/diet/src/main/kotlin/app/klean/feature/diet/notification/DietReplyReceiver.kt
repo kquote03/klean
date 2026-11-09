@@ -5,7 +5,10 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import androidx.core.app.RemoteInput
+import app.klean.core.capture.status.KleanStatusNotifier
 import app.klean.core.common.ApplicationScope
+import app.klean.feature.diet.R
+import dagger.hilt.android.qualifiers.ApplicationContext
 import app.klean.feature.diet.data.DietRepository
 import app.klean.shared.diet.CaptureSource
 import dagger.hilt.android.AndroidEntryPoint
@@ -16,8 +19,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 
 /**
- * Inline "Log food" reply from the status or prompt notification (plan §5.2, §6.1).
- * Broadcast → repository → Room, with no UI: works from the lock screen without unlocking.
+ * Inline "Log food" reply from a diet check-in (prompt, delivery, place; plan §6.1). Broadcast →
+ * repository → Room, with no UI: works from the lock screen without unlocking. The holistic status
+ * line's "Add something" goes through universal capture instead (`StatusReplyReceiver` in :core:capture).
  */
 @AndroidEntryPoint
 class DietReplyReceiver : BroadcastReceiver() {
@@ -49,8 +53,9 @@ class DietReplyReceiver : BroadcastReceiver() {
 
 /** The save path of [DietReplyReceiver], kept free of Android receiver plumbing. */
 class DietReplyHandler @Inject constructor(
+    @ApplicationContext private val ctx: Context,
     private val repo: DietRepository,
-    private val status: DietStatusNotifier,
+    private val status: KleanStatusNotifier,
 ) {
     suspend fun handle(rawText: String?, source: CaptureSource) {
         val text = rawText?.trim()?.takeIf { it.isNotEmpty() }
@@ -59,7 +64,7 @@ class DietReplyHandler @Inject constructor(
                 // logEntry awaits the dispatcher, so widget and prompts are current before we confirm.
                 if (text != null) repo.logEntry(text, source)
                 // Re-posting is also what clears the reply spinner, so it happens even for a blank reply.
-                status.refresh(savedText = text)
+                status.refresh(savedTo = text?.let { ctx.getString(R.string.diet_label) })
             }
         } catch (e: CancellationException) {
             if (e !is kotlinx.coroutines.TimeoutCancellationException) throw e

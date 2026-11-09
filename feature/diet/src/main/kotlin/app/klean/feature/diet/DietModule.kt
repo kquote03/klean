@@ -12,7 +12,7 @@ import app.klean.feature.diet.geofence.PlaceEditScreen
 import app.klean.feature.diet.geofence.PlacesScreen
 import androidx.navigation.compose.navigation
 import androidx.navigation.navDeepLink
-import app.klean.feature.diet.notification.DietStatusNotifier
+import app.klean.feature.diet.notification.DietStatusActions
 import app.klean.core.ui.module.DashboardSlot
 import app.klean.core.ui.module.KleanModule
 import app.klean.feature.diet.ui.dashboard.DietDashboardCard
@@ -66,7 +66,7 @@ class DietKleanModule @Inject constructor(private val enablement: DietEnablement
 
     override fun registerGraph(builder: NavGraphBuilder, nav: NavController) = with(builder) {
         navigation<DietGraph>(startDestination = DietRoute) {
-            composable<DietRoute>(deepLinks = listOf(navDeepLink { uriPattern = DietStatusNotifier.DEEP_LINK_DIET })) { entry ->
+            composable<DietRoute>(deepLinks = listOf(navDeepLink { uriPattern = DietStatusActions.DEEP_LINK_DIET })) { entry ->
                 val ctx = LocalContext.current
                 DietScreen(
                     onOpenEntry = { nav.navigate(FoodEntryRoute(it)) },

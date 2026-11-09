@@ -20,6 +20,13 @@
             android:theme="@style/Theme.Klean.Translucent"
             android:windowSoftInputMode="adjustResize|stateVisible" />
 
+        <receiver
+            android:name=".status.StatusReplyReceiver"
+            android:exported="false" />
+        <receiver
+            android:name=".status.StatusRepostReceiver"
+            android:exported="false" />
+
         <service
             android:name=".CaptureTileService"
             android:exported="true"

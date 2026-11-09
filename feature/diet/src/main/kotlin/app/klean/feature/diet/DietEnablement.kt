@@ -5,7 +5,7 @@ import android.util.Log
 import androidx.core.app.NotificationManagerCompat
 import app.klean.core.capture.CaptureTileService
 import app.klean.core.notifications.NotificationIds
-import app.klean.feature.diet.notification.DietStatusNotifier
+import app.klean.feature.diet.notification.DietStatusLine
 import app.klean.feature.diet.ai.EnrichmentScheduler
 import app.klean.feature.diet.geofence.GeofenceRegistrar
 import app.klean.feature.diet.prompt.DayRollover
@@ -30,7 +30,7 @@ fun interface DietEnablement {
  */
 class DefaultDietEnablement @Inject constructor(
     @ApplicationContext private val ctx: Context,
-    private val status: DietStatusNotifier,
+    private val status: DietStatusLine,
     private val prompts: DietPrompts,
     private val widget: DietWidgetUpdater,
     private val rollover: DayRollover,
@@ -46,6 +46,8 @@ class DefaultDietEnablement @Inject constructor(
             DIET_NOTIFICATIONS.forEach(nm::cancel)
             step("prompts") { prompts.cancel() }
             step("enrichment") { enrichment.cancelAll() }
+            // The holistic status line drops diet's part, or goes when nothing else has one.
+            step("status") { status.refresh() }
         }
         // Reads the gate itself: arms the alarm when on, cancels it when off.
         step("rollover") { rollover.reschedule() }
@@ -67,7 +69,7 @@ class DefaultDietEnablement @Inject constructor(
 
     companion object {
         val DIET_NOTIFICATIONS = listOf(
-            NotificationIds.DIET_STATUS, NotificationIds.DIET_PROMPT, NotificationIds.UNLOCK,
+            NotificationIds.DIET_PROMPT, NotificationIds.UNLOCK,
             NotificationIds.DELIVERY, NotificationIds.GEOFENCE,
         )
     }

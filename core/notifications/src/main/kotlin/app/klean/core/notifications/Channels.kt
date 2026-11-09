@@ -10,9 +10,10 @@ object Channels {
     /**
      * v2: DEFAULT importance, silenced at the channel. Pixel hides IMPORTANCE_LOW notifications from
      * the lock screen by default, which defeated the lock-screen count. Importance can't be raised
-     * on an existing channel, hence the new id.
+     * on an existing channel, hence the new id. v1 of the holistic "Today" status (M16) replaced
+     * diet_status_v2 with the same settings.
      */
-    const val DIET_STATUS = "diet_status_v2"
+    const val STATUS = "status_v1"
     const val DIET_PROMPT = "diet_prompt"
     const val DIET_PROMPT_HEADS_UP = "diet_prompt_heads_up"
     const val DIET_PROMPT_VIBRATE = "diet_prompt_vibrate"
@@ -25,7 +26,8 @@ object Channels {
 
 /** Fixed notification ids, one per kind, so each kind replaces itself instead of stacking. */
 object NotificationIds {
-    const val DIET_STATUS = 1001
+    /** The holistic "Today" status line (was the diet status, same id). */
+    const val STATUS = 1001
     const val DIET_PROMPT = 1002
     const val UNLOCK = 1003
     const val DELIVERY = 1004
@@ -44,10 +46,10 @@ object ChannelRegistrar {
     )
 
     /** Ids replaced by a newer channel; deleted so they don't linger in system settings. */
-    internal val retired = listOf("diet_status")
+    internal val retired = listOf("diet_status", "diet_status_v2")
 
     internal val specs = listOf(
-        Spec(Channels.DIET_STATUS, R.string.channel_diet_status, NotificationManager.IMPORTANCE_DEFAULT, silent = true),
+        Spec(Channels.STATUS, R.string.channel_status, NotificationManager.IMPORTANCE_DEFAULT, silent = true),
         Spec(Channels.DIET_PROMPT, R.string.channel_diet_prompt, NotificationManager.IMPORTANCE_DEFAULT),
         Spec(Channels.DIET_PROMPT_HEADS_UP, R.string.channel_diet_prompt_heads_up, NotificationManager.IMPORTANCE_HIGH),
         Spec(Channels.DIET_PROMPT_VIBRATE, R.string.channel_diet_prompt_vibrate, NotificationManager.IMPORTANCE_DEFAULT, vibrateOnly = true),
@@ -70,7 +72,7 @@ object ChannelRegistrar {
                         setSound(null, null)
                         enableVibration(false)
                     }
-                    if (s.id == Channels.DIET_STATUS) setShowBadge(false)
+                    if (s.id == Channels.STATUS) setShowBadge(false)
                 }
             },
         )

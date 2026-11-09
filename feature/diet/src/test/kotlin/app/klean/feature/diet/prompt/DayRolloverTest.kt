@@ -1,5 +1,7 @@
 package app.klean.feature.diet.prompt
 
+import app.klean.feature.diet.StatusStack
+
 import android.Manifest
 import android.app.AlarmManager
 import android.app.Application
@@ -21,7 +23,6 @@ import app.klean.feature.diet.FakeClock
 import app.klean.feature.diet.data.DefaultDietRepository
 import app.klean.feature.diet.data.DietChangeDispatcher
 import app.klean.feature.diet.inMemoryDb
-import app.klean.feature.diet.notification.DietStatusNotifier
 import app.klean.feature.diet.notification.PromptHighlight
 import app.klean.feature.diet.tempDevicePrefs
 import app.klean.feature.diet.ui.AndroidDietFormatter
@@ -60,7 +61,7 @@ class DayRolloverTest {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
     private val noAi = object : EnrichmentPolicy { override suspend fun hasProviderFor(task: AiTask) = false }
     private val repo = DefaultDietRepository(db, stamper, clock, DubaiZone, settings, DietChangeDispatcher(emptySet()), noAi, scope)
-    private val status = DietStatusNotifier(ctx, { repo }, gate, settings, AndroidDietFormatter(ctx, DubaiZone), PromptHighlight { null })
+    private val status = StatusStack(ctx, repo, gate, settings).line
     private val rollover = DayRollover(ctx, AlarmScheduler(ctx), settings, gate, clock, DubaiZone, status, DietWidgetUpdater(ctx))
 
     @Before fun setUp() {
@@ -99,7 +100,7 @@ class DayRolloverTest {
     @Test fun rolloverRefreshesTheStatusLineAndReArms() = runBlocking {
         clock.nowMs = t(4, day = 10)
         rollover.onRollover()
-        assertNotNull(shadowOf(nm).getNotification(NotificationIds.DIET_STATUS))
+        assertNotNull(shadowOf(nm).getNotification(NotificationIds.STATUS))
         assertEquals(t(4, day = 11), rolloverAlarms().single().triggerAtMs)
     }
 
@@ -108,6 +109,6 @@ class DayRolloverTest {
         gate.setEnabled(ModuleId.DIET, false)
         rollover.reschedule()
         assertEquals(emptyList<Any>(), rolloverAlarms())
-        assertNull(shadowOf(nm).getNotification(NotificationIds.DIET_STATUS))
+        assertNull(shadowOf(nm).getNotification(NotificationIds.STATUS))
     }
 }

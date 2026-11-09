@@ -40,6 +40,8 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.LocalDate
+import app.klean.core.capture.status.StatusReplyReceiver
+import app.klean.feature.diet.StatusStack
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -62,9 +64,8 @@ class PromptNotifierTest {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
     private val noAi = object : EnrichmentPolicy { override suspend fun hasProviderFor(task: AiTask) = false }
     private val repo = DefaultDietRepository(db, stamper, clock, DubaiZone, settings, DietChangeDispatcher(emptySet()), noAi, scope)
-    private val status = DietStatusNotifier(
-        ctx, { repo }, gate, settings, AndroidDietFormatter(ctx, DubaiZone), DefaultPromptHighlight(prefs, db),
-    )
+    private val stack = StatusStack(ctx, repo, gate, settings, DefaultPromptHighlight(prefs, db))
+    private val status = stack.line
     private val notifier = PromptNotifier(ctx, prefs, status, DietWidgetUpdater(ctx))
     private val writer = PromptLogWriter(db, stamper, clock)
 
@@ -79,8 +80,8 @@ class PromptNotifierTest {
     }
 
     private fun prompt(): Notification? = shadowOf(nm).getNotification(NotificationIds.DIET_PROMPT)
-    private fun statusTitle() = shadowOf(nm).getNotification(NotificationIds.DIET_STATUS)
-        ?.extras?.getCharSequence(Notification.EXTRA_TITLE)?.toString()
+    private fun statusText() = shadowOf(nm).getNotification(NotificationIds.STATUS)
+        ?.extras?.getCharSequence(Notification.EXTRA_TEXT)?.toString()
     private fun Notification.title() = extras.getCharSequence(Notification.EXTRA_TITLE)?.toString()
 
     private suspend fun insertPending(id: String, format: PromptFormat, phrasing: String) = db.transact {
@@ -108,8 +109,9 @@ class PromptNotifierTest {
     @Test fun promptReplyDoesNotReplaceTheStatusReplyIntent() = runBlocking {
         status.refresh()
         notifier.present("log-1", PromptFormat.STANDARD, "g1", PromptTrigger.CADENCE)
-        val statusReply = shadowOf(nm).getNotification(NotificationIds.DIET_STATUS)!!.actions.first { it.remoteInputs?.isNotEmpty() == true }
-        assertEquals(CaptureSource.NOTIFICATION_REPLY.name, shadowOf(statusReply.actionIntent).savedIntent.getStringExtra(DietReplyReceiver.EXTRA_SOURCE))
+        val statusReply = shadowOf(nm).getNotification(NotificationIds.STATUS)!!.actions.first { it.remoteInputs?.isNotEmpty() == true }
+        // The Today line's reply goes to universal capture, never to the check-in receiver.
+        assertEquals(StatusReplyReceiver::class.java.name, shadowOf(statusReply.actionIntent).savedIntent.component?.className)
     }
 
     /** M12: "What did you order?" has its own id (it doesn't replace a check-in) and its own reply source. */
@@ -158,7 +160,7 @@ class PromptNotifierTest {
         notifier.present("log-4", PromptFormat.WIDGET_HIGHLIGHT, "g5", PromptTrigger.CADENCE)
         assertNull(prompt())
         assertEquals("log-4", prefs.highlightPromptId.first())
-        assertEquals("Add a snack or a meal?", statusTitle())
+        assertEquals("Add a snack or a meal?", statusText())
     }
 
     @Test fun cancelActiveClearsNotificationAndHighlight() = runBlocking {
@@ -168,7 +170,7 @@ class PromptNotifierTest {
         notifier.cancelActive()
         assertNull(prompt())
         assertNull(prefs.highlightPromptId.first())
-        assertEquals("What did you eat?", statusTitle())
+        assertEquals("Nothing planned. Add anything here.", statusText())
     }
 
     @Test fun dismissMarksOnlyPendingRows() = runBlocking {

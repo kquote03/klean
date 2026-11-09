@@ -21,11 +21,11 @@ class ChannelRegistrarTest {
     @Test fun createsAllChannelsWithPlannedImportance() {
         ChannelRegistrar.ensure(ctx)
         val byId = nm.notificationChannels.associateBy { it.id }
-        assertEquals(NotificationManager.IMPORTANCE_DEFAULT, byId.getValue(Channels.DIET_STATUS).importance)
+        assertEquals(NotificationManager.IMPORTANCE_DEFAULT, byId.getValue(Channels.STATUS).importance)
         assertEquals(NotificationManager.IMPORTANCE_DEFAULT, byId.getValue(Channels.DIET_PROMPT).importance)
         assertEquals(NotificationManager.IMPORTANCE_HIGH, byId.getValue(Channels.DIET_PROMPT_HEADS_UP).importance)
         assertEquals(NotificationManager.IMPORTANCE_HIGH, byId.getValue(Channels.UNLOCK_SHEET).importance)
-        assertEquals("Food status", byId.getValue(Channels.DIET_STATUS).name)
+        assertEquals("Today", byId.getValue(Channels.STATUS).name)
         assertEquals("Backups", byId.getValue(Channels.BACKUP).name)
         assertEquals(6, byId.size)
     }
@@ -44,7 +44,7 @@ class ChannelRegistrarTest {
      */
     @Test fun statusChannelShowsOnLockScreenButNeverMakesNoise() {
         ChannelRegistrar.ensure(ctx)
-        val c = nm.getNotificationChannel(Channels.DIET_STATUS)
+        val c = nm.getNotificationChannel(Channels.STATUS)
         assertEquals(NotificationManager.IMPORTANCE_DEFAULT, c.importance)
         assertNull(c.sound)
         assertFalse(c.shouldVibrate())
@@ -55,6 +55,13 @@ class ChannelRegistrarTest {
         nm.createNotificationChannel(NotificationChannel("diet_status", "old", NotificationManager.IMPORTANCE_LOW))
         ChannelRegistrar.ensure(ctx)
         assertNull(nm.getNotificationChannel("diet_status"))
+    }
+
+    @Test fun dietStatusV2IsRetiredForTheHolisticChannel() {
+        nm.createNotificationChannel(NotificationChannel("diet_status_v2", "old", NotificationManager.IMPORTANCE_DEFAULT))
+        ChannelRegistrar.ensure(ctx)
+        assertNull(nm.getNotificationChannel("diet_status_v2"))
+        assertEquals(NotificationManager.IMPORTANCE_DEFAULT, nm.getNotificationChannel(Channels.STATUS).importance)
     }
 
     @Test fun ensureIsIdempotent() {

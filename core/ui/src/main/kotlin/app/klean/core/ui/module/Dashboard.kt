@@ -81,6 +81,10 @@ class DashboardContributions @Inject constructor(
         }
     }
 
+    /** True when any enabled module contributes to the status line. */
+    fun hasStatusProviders(): Flow<Boolean> =
+        gate.disabledIds.map { off -> statusProviders.any { it.moduleId !in off } }.distinctUntilChanged()
+
     /** True when any enabled module other than [except] contributes to the status line. */
     fun hasOtherStatusProviders(except: ModuleId): Flow<Boolean> =
         gate.disabledIds.map { off -> statusProviders.any { it.moduleId != except && it.moduleId !in off } }
@@ -112,6 +116,32 @@ class DashboardContributions @Inject constructor(
         }
 }
 
+/** A holistic surface that shows the status line or Today items (the notification, the Today widget). */
+interface StatusSurface {
+    suspend fun refresh()
+}
+
+/**
+ * The core hook every module calls after a write, so the holistic surfaces follow at once instead of
+ * waiting for their flows. Surfaces are looked up lazily: they depend on the providers that call this.
+ */
+@Singleton
+class StatusRefresh @Inject constructor(
+    private val surfaces: javax.inject.Provider<Set<@JvmSuppressWildcards StatusSurface>>,
+) {
+    suspend fun refresh() {
+        for (s in surfaces.get()) {
+            try {
+                s.refresh()
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                android.util.Log.w("Klean", "status surface refresh failed", e)
+            }
+        }
+    }
+}
+
 /** Declares both sets so the app builds even when nothing contributes to Today. */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -119,4 +149,5 @@ abstract class DashboardMultibindings {
     @Multibinds abstract fun summaries(): Set<DashboardSummaryProvider>
     @Multibinds abstract fun activity(): Set<DayActivityProvider>
     @Multibinds abstract fun statusLine(): Set<StatusLineProvider>
+    @Multibinds abstract fun statusSurfaces(): Set<StatusSurface>
 }

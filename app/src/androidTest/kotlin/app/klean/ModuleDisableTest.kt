@@ -37,7 +37,7 @@ import app.klean.feature.diet.data.DietChange
 import app.klean.feature.diet.data.DietRepository
 import app.klean.feature.diet.delivery.DeliveryOffer
 import app.klean.feature.diet.delivery.DeliveryPrompter
-import app.klean.feature.diet.notification.DietStatusNotifier
+import app.klean.feature.diet.notification.DietStatusLine
 import app.klean.feature.diet.prompt.DayRollover
 import app.klean.feature.diet.prompt.DayRolloverReceiver
 import app.klean.feature.diet.prompt.DietPrompts
@@ -79,7 +79,7 @@ class ModuleDisableTest {
     @Inject lateinit var db: KleanDatabase
     @Inject lateinit var prefs: DevicePrefs
     @Inject lateinit var clock: Clock
-    @Inject lateinit var status: DietStatusNotifier
+    @Inject lateinit var status: DietStatusLine
     @Inject lateinit var prompts: DietPrompts
     @Inject lateinit var rollover: DayRollover
     @Inject lateinit var unlock: UnlockSheetTrigger
@@ -163,7 +163,7 @@ class ModuleDisableTest {
         val scheduler: EnrichmentScheduler = WorkManagerEnrichmentScheduler(ctx)
         val id = repo.logEntry("tea", CaptureSource.MODULE_SCREEN)
         scheduler.enqueue(id, 0L, needsNetwork = true)
-        assertTrue("status posted while on", NotificationIds.DIET_STATUS in awaitDietNotifications { NotificationIds.DIET_STATUS in it })
+        assertTrue("status posted while on", NotificationIds.STATUS in awaitDietNotifications { NotificationIds.STATUS in it })
         assertNotNull("check-in armed while on", pending(PromptAlarms.REQUEST_CODE, PromptAlarmReceiver::class.java))
         assertNotNull("rollover armed while on", pending(DayRollover.REQUEST_CODE, DayRolloverReceiver::class.java))
         assertEquals(1, activeEnrichment().size)
@@ -214,7 +214,7 @@ class ModuleDisableTest {
         registry.setEnabled(ModuleId.DIET, false)
         registry.setEnabled(ModuleId.DIET, true)
         assertTrue(registry.enabled.first().any { it.id == ModuleId.DIET })
-        assertTrue(NotificationIds.DIET_STATUS in awaitDietNotifications { NotificationIds.DIET_STATUS in it })
+        assertTrue(NotificationIds.STATUS in awaitDietNotifications { NotificationIds.STATUS in it })
         assertNotNull(pending(DayRollover.REQUEST_CODE, DayRolloverReceiver::class.java))
         assertTrue(dietWidgetStates(repo, gate.disabledIds, prefs.highlightPromptId, timeLabel = { "" }).first().dietEnabled)
         assertTrue(CaptureTileModel.from(capture.availableHandlers.first().map { it.moduleId }).available)

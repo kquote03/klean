@@ -10,6 +10,7 @@ dependencies {
     implementation(project(":core:ai"))
     implementation(project(":core:design"))
     implementation(project(":core:ui"))
+    implementation(project(":core:notifications"))
     implementation(libs.core.ktx)
     implementation(libs.activity.compose)
     implementation(libs.lifecycle.runtime.compose)

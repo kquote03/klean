@@ -9,7 +9,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
 import androidx.test.runner.lifecycle.Stage
 import app.klean.core.data.db.KleanDatabase
-import app.klean.feature.diet.notification.DietReplyReceiver
+import app.klean.core.capture.status.StatusReplyReceiver
 import app.klean.shared.diet.CaptureSource
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -33,12 +33,12 @@ class InlineReplySaveTest {
 
     @Test fun replySavesEntryWithoutLaunchingUi() = runBlocking {
         val ctx = ApplicationProvider.getApplicationContext<Context>()
-        val intent = Intent(ctx, DietReplyReceiver::class.java)
-            .putExtra(DietReplyReceiver.EXTRA_SOURCE, CaptureSource.NOTIFICATION_REPLY.name)
+        // The Today status line's "Add something": universal capture, plain text falls back to diet.
+        val intent = Intent(ctx, StatusReplyReceiver::class.java)
         RemoteInput.addResultsToIntent(
-            arrayOf(RemoteInput.Builder(DietReplyReceiver.KEY_TEXT).build()),
+            arrayOf(RemoteInput.Builder(StatusReplyReceiver.KEY_TEXT).build()),
             intent,
-            Bundle().apply { putCharSequence(DietReplyReceiver.KEY_TEXT, "shawarma and fries") },
+            Bundle().apply { putCharSequence(StatusReplyReceiver.KEY_TEXT, "shawarma and fries") },
         )
         val started = System.currentTimeMillis()
         ctx.sendBroadcast(intent)
