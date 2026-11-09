@@ -44,9 +44,17 @@ class KleanDb private constructor(val database: Database, val isSqlite: Boolean,
     suspend fun putSetting(key: String, value: String) = write { upsertSetting(key, value) }
 
     /** For admin backup: a consistent SQLite snapshot via `VACUUM INTO`. */
-    suspend fun vacuumInto(path: String) = write {
+    suspend fun vacuumInto(path: String) {
         require(isSqlite) { "VACUUM INTO needs SQLite" }
-        exec("VACUUM INTO '${path.replace("'", "''")}'")
+        // VACUUM can't run inside a transaction: use a plain autocommit connection, still under the write lock.
+        writeLock.withLock {
+            withContext(Dispatchers.IO) {
+                dataSource.connection.use { c ->
+                    c.autoCommit = true
+                    c.createStatement().use { it.execute("VACUUM INTO '${path.replace("'", "''")}'") }
+                }
+            }
+        }
     }
 
     override fun close() {

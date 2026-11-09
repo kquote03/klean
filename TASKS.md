@@ -363,7 +363,7 @@ Schema v2 is frozen for the streams (decision 1). Each stream ticks only its own
 - [x] 24.11 — Google server OAuth, Calendar read, Tasks list/patch (never create; `GoogleTest.neverCreatesGoogleTasks` checks every request), tested against a MockEngine fake
 - [x] 24.12 — Hermes relay (`/hermes/{path...}` → `KLEAN_HERMES_URL` with the server-held token, SSE streamed)
 - [x] 24.13 — AI proxy (`/ai/v1/chat/completions`, `/ai/v1/models` → `KLEAN_AI_UPSTREAM`), same streaming proxy
-- [ ] 24.14 — `POST /admin/backup`
+- [x] 24.14 — `POST /admin/backup` (zip: `VACUUM INTO` snapshot + blobs; Postgres → 501 with a `pg_dump` hint)
 
 Known gaps (shipped simpler, per plan risk 8):
 - DAV `addressbook-query` / `calendar-query` ignore filters and return every live member (correct superset; DAVx5 uses sync-collection).

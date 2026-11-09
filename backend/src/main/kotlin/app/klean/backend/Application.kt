@@ -96,6 +96,7 @@ fun Application.kleanModule(services: Services) {
                 googleRoutes(services.google)
                 hermesRoutes(services.proxy, services.config)
                 aiProxyRoutes(services.proxy, services.config)
+                services.backup.routes(this)
             }
         }
     }

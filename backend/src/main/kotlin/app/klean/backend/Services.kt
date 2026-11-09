@@ -8,6 +8,7 @@ import app.klean.backend.db.RecordStore
 import app.klean.backend.push.PushService
 import app.klean.backend.google.GoogleService
 import app.klean.backend.proxy.StreamingProxy
+import app.klean.backend.admin.BackupService
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.HttpTimeout
@@ -31,6 +32,7 @@ class Services(
     val push = PushService(db, config, httpClient, clock)
     val google = GoogleService(db, config, httpClient, clock)
     val proxy = StreamingProxy(httpClient)
+    val backup = BackupService(db, config, clock)
 
     override fun close() {
         httpClient.close()
