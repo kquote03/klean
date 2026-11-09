@@ -247,6 +247,9 @@ Today dashboard (Waydroid, Android 13, 540×1212, en_US so the week starts on Su
 - [x] Font scale 2.0 (`today-font2-top.png`, `today-font2-week.png`): tiles wrap and the day numbers fit (they step down to titleSmall above 1.5×); audit 0 small / 0 unlabelled. Found and fixed (`2683653`): tiles in one FlowRow row had different heights beside a two-line value; rows now share the tallest tile's height
 - [x] Crash buffer empty. The quiet-hours tile wasn't seen on the device (it was 4 PM, outside quiet hours); `QuietHoursSummaryTest` covers it, and F2 sets quiet hours over now
 
+Waydroid close-out (Android 13), 2026-11-09 (plan Part F):
+- [x] F8 — the four diet VM test classes (`DeliveryAppsViewModelTest`, `PlaceEditViewModelTest`, `DietDashboardViewModelTest`, `DietSettingsViewModelTest`) track their view models in a `ViewModelStore` and clear it in `@After` before `resetMain()`/`db.close()`; `:feature:diet:testDebugUnitTest --rerun` 3× in a row: BUILD SUCCESSFUL, 177 tests, 0 failures
+
 Still needs hands-on checks by the user (airplane mode or a reboot would drop wireless adb):
 - [ ] 4.3: inline reply from the lock screen in airplane mode (needs adb over USB or no adb), under 5 s
 - [ ] 4.7: compact widget size (resize the widget to one row)

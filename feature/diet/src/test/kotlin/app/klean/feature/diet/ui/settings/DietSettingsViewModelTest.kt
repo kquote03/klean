@@ -1,5 +1,7 @@
 package app.klean.feature.diet.ui.settings
 
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelStore
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.cash.turbine.test
 import app.klean.core.data.settings.SettingsRepository
@@ -49,10 +51,19 @@ class DietSettingsViewModelTest {
     private fun vm(debug: Boolean = false) = DietSettingsViewModel(settings, prefs, prompts, fmt, object : DietDebug {
         override val enabled = debug
         override fun exactAlarmsAllowed() = true
-    })
+    }).tracked()
 
     @Before fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
-    @After fun tearDown() { Dispatchers.resetMain(); db.close() }
+    private val vms = ViewModelStore()
+    private fun <T : ViewModel> T.tracked(): T = also { vms.put("vm-${System.nanoTime()}", it) }
+
+    @After fun tearDown() {
+        // Cancel VM collectors while Main is still the test dispatcher and the database is open;
+        // otherwise a late emission resumes on the real (absent) Main and fails a later test.
+        vms.clear()
+        Dispatchers.resetMain()
+        db.close()
+    }
 
     @Test fun showsDefaultsAndTheNextCheckIn() = runBlocking {
         prefs.setNextPromptAt(42L)
@@ -74,7 +85,7 @@ class DietSettingsViewModelTest {
         val v = DietSettingsViewModel(settings, prefs, prompts, fmt, object : DietDebug {
             override val enabled = false
             override fun exactAlarmsAllowed() = true
-        }, DietStatusRefresh { calls += "status" })
+        }, DietStatusRefresh { calls += "status" }).tracked()
         v.setStatusNotification(false).join()
         assertFalse(settings.get(SyncedKeys.DietStatusNotification))
         assertEquals(listOf("status"), calls)

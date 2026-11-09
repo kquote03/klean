@@ -1,5 +1,7 @@
 package app.klean.feature.diet.delivery
 
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelStore
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.klean.core.data.settings.SettingsRepository
 import app.klean.core.data.settings.SyncedKeys
@@ -32,15 +34,24 @@ class DeliveryAppsViewModelTest {
     private val settings = SettingsRepository(db, SyncStamper(db, tempDevicePrefs(clock), clock))
 
     @Before fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
-    @After fun tearDown() { Dispatchers.resetMain(); db.close() }
+    private val vms = ViewModelStore()
+    private fun <T : ViewModel> T.tracked(): T = also { vms.put("vm-${System.nanoTime()}", it) }
+
+    @After fun tearDown() {
+        // Cancel VM collectors while Main is still the test dispatcher and the database is open;
+        // otherwise a late emission resumes on the real (absent) Main and fails a later test.
+        vms.clear()
+        Dispatchers.resetMain()
+        db.close()
+    }
 
     @Test fun startsWithTheBuiltInApps() = runBlocking {
-        val vm = DeliveryAppsViewModel(settings)
+        val vm = DeliveryAppsViewModel(settings).tracked()
         assertEquals(DeliveryMatcher.DEFAULT_APPS, vm.uiState.first { it.loaded }.packages)
     }
 
     @Test fun addsAndRemovesPackages() = runBlocking {
-        val vm = DeliveryAppsViewModel(settings)
+        val vm = DeliveryAppsViewModel(settings).tracked()
         assertTrue(vm.addPackage("  com.example.food ").await())
         assertFalse(vm.addPackage("not a package").await())
         assertFalse(vm.addPackage("com.talabat").await()) // already there
@@ -52,7 +63,7 @@ class DeliveryAppsViewModelTest {
     }
 
     @Test fun addsAndRemovesMatchWords() = runBlocking {
-        val vm = DeliveryAppsViewModel(settings)
+        val vm = DeliveryAppsViewModel(settings).tracked()
         assertTrue(vm.addWord(" rider dropped ").await())
         assertFalse(vm.addWord("   ").await())
         assertFalse(vm.addWord("Rider dropped").await())

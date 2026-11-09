@@ -2,6 +2,8 @@ package app.klean.feature.diet.ui.dashboard
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelStore
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.cash.turbine.test
 import app.klean.core.ai.EnrichmentPolicy
@@ -52,11 +54,19 @@ class DietDashboardViewModelTest {
     }
 
     @Before fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
-    @After fun tearDown() = Dispatchers.resetMain()
+    private val vms = ViewModelStore()
+    private fun <T : ViewModel> T.tracked(): T = also { vms.put("vm-${System.nanoTime()}", it) }
+
+    @After fun tearDown() {
+        // Cancel VM collectors while Main is still the test dispatcher and the database is open;
+        // otherwise a late emission resumes on the real (absent) Main and fails a later test.
+        vms.clear()
+        Dispatchers.resetMain()
+    }
 
     @Test fun submitLogsWithDashboardSource() = runTest {
         val repo = FakeDietRepository(clock)
-        val vm = DietDashboardViewModel(repo, fmt, oneTick)
+        val vm = DietDashboardViewModel(repo, fmt, oneTick).tracked()
         vm.onSubmit(" tea ")
         vm.onSubmit(" ")
         assertEquals(listOf(FakeDietRepository.LogCall("tea", CaptureSource.DASHBOARD, null)), repo.logs)
@@ -65,7 +75,7 @@ class DietDashboardViewModelTest {
     @Test fun showsLastFiveEntriesInTimeOrder() = runTest {
         val repo = FakeDietRepository(clock)
         repo.entries.value = (0 until 7).map { i -> repo.entry("e$i", "item $i", atMinute(nov9, (9 + i) * 60, Dubai)) }
-        val vm = DietDashboardViewModel(repo, fmt, oneTick)
+        val vm = DietDashboardViewModel(repo, fmt, oneTick).tracked()
         vm.uiState.test {
             var s = awaitItem()
             while (s.entries.size < 5) s = awaitItem()
@@ -87,8 +97,8 @@ class DietDashboardViewModelTest {
         val repo = DefaultDietRepository(
             db, stamper, clock, DubaiZone, SettingsRepository(db, stamper), DietChangeDispatcher(emptySet()), noAi, scope,
         )
-        val dashboard = DietDashboardViewModel(repo, fmt, oneTick)
-        val diet = DietViewModel(repo, clock, fmt, oneTick, app.klean.feature.diet.FakeVoice(), app.klean.feature.diet.FakePhotos())
+        val dashboard = DietDashboardViewModel(repo, fmt, oneTick).tracked()
+        val diet = DietViewModel(repo, clock, fmt, oneTick, app.klean.feature.diet.FakeVoice(), app.klean.feature.diet.FakePhotos()).tracked()
         diet.uiState.test {
             var s = awaitItem()
             while (!s.loaded) s = awaitItem()
@@ -98,6 +108,7 @@ class DietDashboardViewModelTest {
             assertEquals(listOf("hummus wrap"), s.rows.filterIsInstance<DietRow.Entry>().map { it.text })
             cancelAndIgnoreRemainingEvents()
         }
+        vms.clear() // before the repository scope and the database go away
         scope.cancel()
         db.close()
     }
