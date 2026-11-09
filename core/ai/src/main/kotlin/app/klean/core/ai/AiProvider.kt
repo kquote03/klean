@@ -45,6 +45,15 @@ interface AiProvider {
     suspend fun generate(req: StructuredRequest): AiOutcome
 }
 
+/** What features use; [AiGateway] is the implementation, tests use fakes. */
+interface AiService : EnrichmentPolicy {
+    suspend fun providerFor(task: AiTask): AiProvider?
+    suspend fun run(task: AiTask, req: StructuredRequest, sendImage: Boolean = true): AiOutcome
+    /** Calls [p] directly with the same image and timeout rules. Callers must have checked consent. */
+    suspend fun runWith(p: AiProvider, req: StructuredRequest, sendImage: Boolean = true): AiOutcome
+    fun provider(id: ProviderId): AiProvider?
+}
+
 /**
  * The single way to use AI. Enforces: a provider is used only if assigned to the task and explicitly
  * enabled; images go only to providers that support them and only when the user allowed photos;
@@ -54,24 +63,23 @@ interface AiProvider {
 class AiGateway @Inject constructor(
     private val providers: Set<@JvmSuppressWildcards AiProvider>,
     private val config: AiConfigStore,
-) : EnrichmentPolicy {
-    suspend fun providerFor(task: AiTask): AiProvider? {
+) : AiService {
+    override suspend fun providerFor(task: AiTask): AiProvider? {
         val id = config.assignment(task) ?: return null
         return providers.firstOrNull { it.id == id && it.isConfiguredAndEnabled() }
     }
 
     /** The provider with [id], enabled or not (settings and the "Test connection" path). */
-    fun provider(id: ProviderId): AiProvider? = providers.firstOrNull { it.id == id }
+    override fun provider(id: ProviderId): AiProvider? = providers.firstOrNull { it.id == id }
 
     override suspend fun hasProviderFor(task: AiTask): Boolean = providerFor(task) != null
 
-    suspend fun run(task: AiTask, req: StructuredRequest, sendImage: Boolean = true): AiOutcome {
+    override suspend fun run(task: AiTask, req: StructuredRequest, sendImage: Boolean): AiOutcome {
         val p = providerFor(task) ?: return AiOutcome.NoProvider
         return runWith(p, req, sendImage)
     }
 
-    /** Calls [p] directly with the same image and timeout rules. Callers must have checked consent. */
-    suspend fun runWith(p: AiProvider, req: StructuredRequest, sendImage: Boolean = true): AiOutcome {
+    override suspend fun runWith(p: AiProvider, req: StructuredRequest, sendImage: Boolean): AiOutcome {
         val keepImage = req.imageJpeg != null && sendImage &&
             Capability.IMAGE_INPUT in p.capabilities() && p.photosAllowed()
         val r = if (req.imageJpeg != null && !keepImage) req.withoutImage() else req
@@ -93,5 +101,6 @@ class AiGateway @Inject constructor(
 @InstallIn(SingletonComponent::class)
 abstract class AiGatewayModule {
     @Binds abstract fun policy(impl: AiGateway): EnrichmentPolicy
+    @Binds abstract fun service(impl: AiGateway): AiService
     @Multibinds abstract fun providers(): Set<AiProvider>
 }

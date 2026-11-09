@@ -11,8 +11,9 @@ android {
         applicationId = "app.klean"
         minSdk = KleanSdk.MIN
         targetSdk = KleanSdk.TARGET
-        versionCode = 1
-        versionName = "0.1.0"
+        // Commit count: every CI/nightly APK installs as an upgrade over the previous one.
+        versionCode = gitOutput("rev-list", "--count", "HEAD")?.toIntOrNull() ?: 1
+        versionName = "0.1.0-$versionCode-${gitOutput("rev-parse", "--short", "HEAD") ?: "dev"}"
         testInstrumentationRunner = "app.klean.HiltTestRunner"
     }
     buildTypes {
@@ -74,3 +75,8 @@ tasks.withType<Test>().configureEach {
         },
     ).withPathSensitivity(PathSensitivity.RELATIVE).withPropertyName("userFacingResources")
 }
+
+fun gitOutput(vararg args: String): String? = providers.exec {
+    commandLine("git", *args)
+    isIgnoreExitValue = true
+}.standardOutput.asText.orNull?.trim()?.takeIf { it.isNotEmpty() }

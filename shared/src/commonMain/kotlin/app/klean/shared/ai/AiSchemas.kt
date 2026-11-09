@@ -42,3 +42,28 @@ const val ENTRY_PARSE_SYSTEM: String =
         "Estimate a typical portion if none is given. Estimate calories per item for the whole portion as an integer. " +
         "Choose mealType from breakfast, lunch, dinner, snack, drink using the foods and the local time. " +
         "Never add foods that are not mentioned. Reply with JSON only."
+
+/** Second pass when calorie estimates come from a different provider: `{items:[{name, calories}]}`. */
+val CALORIE_ESTIMATE_SCHEMA: JsonObject = buildJsonObject {
+    put("type", "object")
+    putJsonObject("properties") {
+        putJsonObject("items") {
+            put("type", "array")
+            putJsonObject("items") {
+                put("type", "object")
+                putJsonObject("properties") {
+                    putJsonObject("name") { put("type", "string") }
+                    putJsonObject("calories") { putJsonArray("type") { add("integer"); add("null") } }
+                }
+                putJsonArray("required") { add("name"); add("calories") }
+                put("additionalProperties", false)
+            }
+        }
+    }
+    putJsonArray("required") { add("items") }
+    put("additionalProperties", false)
+}
+
+const val CALORIE_ESTIMATE_SYSTEM: String =
+    "You estimate calories for foods. For each item, in the same order, give the calories of the whole portion as an integer. " +
+        "Reply with JSON only."

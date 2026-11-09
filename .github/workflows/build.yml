@@ -1,0 +1,66 @@
+# Reusable build: the milestone gate (build + unit tests + instrumented-test compile)
+# plus the signed debug APK as an artifact. Called by ci.yml and nightly.yml.
+name: build
+
+on:
+  workflow_call:
+    outputs:
+      version_name:
+        value: ${{ jobs.gate.outputs.version_name }}
+    secrets:
+      DEBUG_KEYSTORE_B64:
+        required: false
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    outputs:
+      version_name: ${{ steps.version.outputs.name }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # versionCode = commit count
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: "platforms;android-37.0 platforms;android-36 build-tools;36.0.0"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      # Same key as local debug builds, so a nightly APK installs over a local install
+      # (and vice versa) without losing data. Absent on fork PRs: AGP then makes a throwaway key.
+      - name: Install debug signing key
+        env:
+          KEYSTORE: ${{ secrets.DEBUG_KEYSTORE_B64 }}
+        if: env.KEYSTORE != ''
+        run: mkdir -p ~/.android && echo "$KEYSTORE" | base64 -d > ~/.android/debug.keystore
+
+      - name: Gate
+        run: ./gradlew assembleDebug :app:assembleDebugAndroidTest :shared:jvmTest testDebugUnitTest --console=plain
+
+      - name: Version
+        id: version
+        run: echo "name=0.1.0-$(git rev-list --count HEAD)-$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: "**/build/reports/tests/"
+          retention-days: 7
+
+      - name: Rename APK
+        run: cp app/build/outputs/apk/debug/app-debug.apk "klean-debug-${{ steps.version.outputs.name }}.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk
+          path: klean-debug-*.apk
+          retention-days: 30

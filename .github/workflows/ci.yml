@@ -1,0 +1,47 @@
+# Every push and PR runs the gate. Every push to main also refreshes the rolling
+# "nightly" pre-release, so the newest APK is always at:
+#   https://github.com/<owner>/<repo>/releases/download/nightly/klean-debug.apk
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+    secrets: inherit
+
+  rolling-release:
+    needs: build
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: rolling-release
+      cancel-in-progress: true
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: apk
+      - name: Replace the "nightly" pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          VERSION: ${{ needs.build.outputs.version_name }}
+        run: |
+          cp klean-debug-*.apk klean-debug.apk
+          gh release delete nightly --cleanup-tag --yes || true
+          gh release create nightly klean-debug.apk klean-debug-*.apk \
+            --prerelease --target "$GITHUB_SHA" \
+            --title "Latest main ($VERSION)" \
+            --notes "Debug build of ${GITHUB_SHA::7}: $(gh api repos/$GH_REPO/commits/$GITHUB_SHA --jq '.commit.message | split("\n")[0]')
+
+          Installs as app.klean.debug, over any earlier nightly or local debug build. This release is replaced on every push to main."
