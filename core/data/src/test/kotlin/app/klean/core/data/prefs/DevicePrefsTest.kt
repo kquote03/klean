@@ -85,7 +85,7 @@ class DevicePrefsTest {
         assertEquals(3, prefs.autoBackupKeep.first())
         assertEquals(42L, prefs.nextPromptAt.first())
         assertFalse(prefs.onboardingDone.first())
-        assertTrue(prefs.mainPhone.first())
+        assertTrue(prefs.isMainPhone.first())
         assertEquals(id, prefs.deviceId())
         assertTrue(prefs.autoBackupEnabled.first())
         assertEquals("content://tree", prefs.autoBackupTreeUri.first())
