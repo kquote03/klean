@@ -34,7 +34,15 @@
     <string name="backup_auto_keep">Keep last %1$d</string>
     <string name="backup_auto_keep_fewer">Keep fewer</string>
     <string name="backup_auto_keep_more">Keep more</string>
-    <string name="backup_confirm_text">Replace everything on this phone? This deletes the %1$d entries, photos and settings currently in Klean and replaces them with the backup from %2$s (%3$d entries, %4$d photos). This can\'t be undone.</string>
+    <string name="backup_confirm_text">Replace everything on this phone? This deletes the %1$s, photos and settings currently in Klean and replaces them with the backup from %2$s (%3$s, %4$s). This can\'t be undone.</string>
+    <plurals name="backup_confirm_entries">
+        <item quantity="one">%d entry</item>
+        <item quantity="other">%d entries</item>
+    </plurals>
+    <plurals name="backup_confirm_photos">
+        <item quantity="one">%d photo</item>
+        <item quantity="other">%d photos</item>
+    </plurals>
     <string name="backup_confirm_replace">Replace</string>
     <string name="backup_confirm_cancel">Cancel</string>
     <string name="backup_msg_exported">Backup saved.</string>

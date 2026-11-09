@@ -139,7 +139,7 @@ fun BackupSettingsScreen(onBack: () -> Unit, vm: BackupViewModel = hiltViewModel
         AlertDialog(
             onDismissRequest = vm::dismissRestore,
             text = {
-                Text(stringResource(R.string.backup_confirm_text, c.currentEntries, date, c.backup.entryCount, c.backup.photoCount))
+                Text(restoreConfirmText(LocalContext.current.resources, c.currentEntries, date, c.backup.entryCount, c.backup.photoCount))
             },
             confirmButton = { TextButton(onClick = vm::confirmRestore) { Text(stringResource(R.string.backup_confirm_replace)) } },
             dismissButton = { TextButton(onClick = vm::dismissRestore) { Text(stringResource(R.string.backup_confirm_cancel)) } },
