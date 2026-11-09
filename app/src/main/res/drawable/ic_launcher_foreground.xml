@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Launcher glyph: a bowl with a spoon resting in it, inside the 66dp adaptive-icon safe zone
+     (x/y 21..87 of the 108dp canvas). Also used as the themed (monochrome) icon. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Spoon: oval head above the rim, handle dipping into the bowl. -->
+    <group
+        android:pivotX="58"
+        android:pivotY="54"
+        android:rotation="22">
+        <path
+            android:fillColor="#4C3F8B"
+            android:pathData="M56,36 L60,36 L60,56 L56,56 Z" />
+        <path
+            android:fillColor="#4C3F8B"
+            android:pathData="M51.5,30 a6.5,8.5 0 1,0 13,0 a6.5,8.5 0 1,0 -13,0 Z" />
+    </group>
+    <!-- Bowl: a rounded arc under a flat rim, on a small foot. -->
+    <path
+        android:fillColor="#4C3F8B"
+        android:pathData="M27,52 L81,52 Q83,52 82.6,54.5 A28,24 0 0,1 25.4,54.5 Q25,52 27,52 Z" />
+    <path
+        android:fillColor="#4C3F8B"
+        android:pathData="M45,77 L63,77 Q65,77 65,79 L65,80 Q65,82 63,82 L45,82 Q43,82 43,80 L43,79 Q43,77 45,77 Z" />
+</vector>

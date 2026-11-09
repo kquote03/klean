@@ -249,6 +249,7 @@ Today dashboard (Waydroid, Android 13, 540×1212, en_US so the week starts on Su
 
 Waydroid close-out (Android 13), 2026-11-09 (plan Part F):
 - [x] F8 — the four diet VM test classes (`DeliveryAppsViewModelTest`, `PlaceEditViewModelTest`, `DietDashboardViewModelTest`, `DietSettingsViewModelTest`) track their view models in a `ViewModelStore` and clear it in `@After` before `resetMain()`/`db.close()`; `:feature:diet:testDebugUnitTest --rerun` 3× in a row: BUILD SUCCESSFUL, 177 tests, 0 failures
+- [x] F7 — adaptive launcher icon (`app/src/main/res/drawable/ic_launcher_{foreground,background}.xml`, `mipmap-anydpi-v26/ic_launcher{,_round}.xml` with a monochrome layer): a lavender `#4C3F8B` bowl and spoon on `#E6DEFF`; the Waydroid app drawer shows it (`~/.hermes/cache/scratch/f7-drawer.png`)
 
 Still needs hands-on checks by the user (airplane mode or a reboot would drop wireless adb):
 - [ ] 4.3: inline reply from the lock screen in airplane mode (needs adb over USB or no adb), under 5 s
@@ -258,7 +259,6 @@ Still needs hands-on checks by the user (airplane mode or a reboot would drop wi
 - [ ] 5.7: swipe a check-in away, then fire again → the next format differs (a swipe counts as DISMISSED)
 - [ ] 5.7: set quiet hours over now, wait for a scheduled check-in → nothing shown (debug "Fire" deliberately skips quiet hours)
 - [ ] 5.2: after a real reboot, `adb shell dumpsys alarm | grep -A3 app.klean.debug` shows the check-in alarm
-- [ ] Polish: the app uses the default Android launcher icon; none has been designed yet
 - [ ] 6.1: on a real phone, speak "two manakish" (also in airplane mode) → saved with `via_voice=1`, and Undo shows for 5 s; where offline voice is missing → "Voice isn't available offline on this phone"
 - [ ] 6.2: take a real camera photo (capture sheet and entry screen) → thumbnail in the row, EXIF stripped; log one without a photo too
 - [ ] 10.3: Gemini with a real API key (covered only by MockEngine tests and the screen rendering; no key was used)
