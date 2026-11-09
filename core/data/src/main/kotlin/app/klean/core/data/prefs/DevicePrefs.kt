@@ -37,6 +37,7 @@ class DevicePrefs @Inject constructor(
         val onboardingDone = booleanPreferencesKey("onboardingDone")
         val dynamicColor = booleanPreferencesKey("dynamicColor")
         val lastScreenOffAt = longPreferencesKey("lastScreenOffAt")
+        val unlockSheetPretend = booleanPreferencesKey("unlockSheetPretend")
         val nextPromptAt = longPreferencesKey("nextPromptAt")
         val highlightPromptId = stringPreferencesKey("highlightPromptId")
         val autoBackupEnabled = booleanPreferencesKey("autoBackupEnabled")
@@ -64,6 +65,10 @@ class DevicePrefs @Inject constructor(
 
     val lastScreenOffAt: Flow<Long?> = nullable(K.lastScreenOffAt)
     suspend fun setLastScreenOffAt(v: Long?) = put(K.lastScreenOffAt, v)
+
+    /** Debug only: the next wake counts as the end of a long break (unlock sheet). Never exported. */
+    val unlockSheetPretend: Flow<Boolean> = flow(K.unlockSheetPretend, false)
+    suspend fun setUnlockSheetPretend(v: Boolean) = put(K.unlockSheetPretend, v)
 
     val nextPromptAt: Flow<Long?> = nullable(K.nextPromptAt)
     suspend fun setNextPromptAt(v: Long?) = put(K.nextPromptAt, v)

@@ -130,7 +130,7 @@ Everything ticked is merged on `main` (milestones M0–M7 and M9 are tagged).
 ## M11 — Unlock sheet
 
 - [ ] Task 11.1 — Spike on the real phone (timebox 30 min)
-- [~] Task 11.2 — ScreenStateMonitor + eligibility (TDD) — pure `UnlockSheetPolicy` + tests done in `:shared` (M2); Android `ScreenStateMonitor` not started
+- [x] Task 11.2 — ScreenStateMonitor + eligibility (TDD) — `UnlockSheetPolicy` (:shared) + `feature/diet/unlock/UnlockSheetTrigger` + runtime-registered `ScreenStateMonitor`; main
 - [ ] Task 11.3 — UnlockSheetActivity + notification
 
 ## M12 — Delivery-app trigger
