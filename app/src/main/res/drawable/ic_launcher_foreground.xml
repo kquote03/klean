@@ -1,28 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Launcher glyph: a bowl with a spoon resting in it, inside the 66dp adaptive-icon safe zone
-     (x/y 21..87 of the 108dp canvas). Also used as the themed (monochrome) icon. -->
+<!-- Klean mark: a day ring (open circle) with a check inside and a dot in the ring's opening
+     ("your day, handled"). No food imagery. The glyph sits inside the 66dp adaptive-icon safe zone
+     centred at 54,54. Also used as the themed (monochrome) icon, which only reads the alpha. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Spoon: oval head above the rim, handle dipping into the bowl. -->
-    <group
-        android:pivotX="58"
-        android:pivotY="54"
-        android:rotation="22">
-        <path
-            android:fillColor="#4C3F8B"
-            android:pathData="M56,36 L60,36 L60,56 L56,56 Z" />
-        <path
-            android:fillColor="#4C3F8B"
-            android:pathData="M51.5,30 a6.5,8.5 0 1,0 13,0 a6.5,8.5 0 1,0 -13,0 Z" />
-    </group>
-    <!-- Bowl: a rounded arc under a flat rim, on a small foot. -->
+    <!-- ring: 300° arc, radius 22, centred (54,54), opening 60° wide at the top right (-75°..-15°) -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M 59.69,32.75 A 22,22 0 1,0 75.25,48.31"
+        android:strokeWidth="6"
+        android:strokeColor="#4C3F8B"
+        android:strokeLineCap="round" />
+    <!-- dot: on the ring's radius, in the middle of the opening (-45°) -->
     <path
         android:fillColor="#4C3F8B"
-        android:pathData="M27,52 L81,52 Q83,52 82.6,54.5 A28,24 0 0,1 25.4,54.5 Q25,52 27,52 Z" />
+        android:pathData="M 69.56,38.44 m -3.5,0 a 3.5,3.5 0 1,0 7,0 a 3.5,3.5 0 1,0 -7,0" />
+    <!-- check -->
     <path
-        android:fillColor="#4C3F8B"
-        android:pathData="M45,77 L63,77 Q65,77 65,79 L65,80 Q65,82 63,82 L45,82 Q43,82 43,80 L43,79 Q43,77 45,77 Z" />
+        android:fillColor="#00000000"
+        android:pathData="M 43.5,55 L 50.5,62 L 63,49.5"
+        android:strokeWidth="6"
+        android:strokeColor="#4C3F8B"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
 </vector>
