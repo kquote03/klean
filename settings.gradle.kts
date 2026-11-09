@@ -12,4 +12,5 @@ include(
     ":core:common", ":core:design", ":core:data", ":core:ui",
     ":core:notifications", ":core:ai", ":core:capture",
     ":feature:diet", ":feature:onboarding", ":feature:settings",
+    ":feature:tasks", ":feature:reminders", ":feature:calendar", ":feature:contacts", ":feature:workout", ":feature:sleep",
 )

@@ -40,7 +40,7 @@ android {
 dependencies {
     implementation(project(":shared"))
     listOf("common", "design", "data", "ui", "notifications", "ai", "capture").forEach { implementation(project(":core:$it")) }
-    listOf("diet", "onboarding", "settings").forEach { implementation(project(":feature:$it")) }
+    listOf("diet", "onboarding", "settings", "tasks", "reminders", "calendar", "contacts", "workout", "sleep").forEach { implementation(project(":feature:$it")) }
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
     implementation(libs.compose.material3)
