@@ -23,7 +23,9 @@ import app.klean.feature.diet.ui.history.DietDayScreen
 import app.klean.feature.diet.ui.history.DietHistoryScreen
 import app.klean.shared.diet.CaptureSource
 import app.klean.feature.diet.ui.popAfterRemove
+import app.klean.feature.diet.ui.settings.DietOnboardingContent
 import app.klean.feature.diet.ui.settings.DietSettingsScreen
+import app.klean.feature.diet.widget.DietWidgetReceiver
 import app.klean.feature.diet.ui.today.DietScreen
 import app.klean.shared.module.ModuleId
 import dagger.Binds
@@ -79,6 +81,12 @@ class DietKleanModule @Inject constructor(private val enablement: DietEnablement
 
     @Composable
     override fun DashboardCard(onOpen: () -> Unit, modifier: Modifier) = DietDashboardCard(onOpen, modifier)
+
+    override val onboardingTitleRes: Int = R.string.diet_onboarding_title
+    override val widgetReceiver: Class<*> = DietWidgetReceiver::class.java
+
+    @Composable
+    override fun OnboardingContent(modifier: Modifier) = DietOnboardingContent(modifier)
 
     override suspend fun onEnabledChanged(enabled: Boolean) = enablement.onEnabledChanged(enabled)
 }

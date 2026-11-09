@@ -1,0 +1,30 @@
+<resources>
+    <string name="onboarding_progress">%1$d of %2$d</string>
+    <string name="onboarding_start">Set up</string>
+    <string name="onboarding_skip_setup">Skip setup</string>
+    <string name="onboarding_next">Next</string>
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_done">Done</string>
+
+    <string name="onboarding_welcome_title">Welcome to Klean</string>
+    <string name="onboarding_welcome_body">A few quick choices to fit Klean to your day. Every page can be skipped, and everything can be changed later in Settings.</string>
+
+    <string name="onboarding_modules_title">What to use</string>
+    <string name="onboarding_modules_body">Turn on the parts of Klean you want. The rest stays out of the way.</string>
+
+    <string name="onboarding_sleep_title">When you sleep</string>
+    <string name="onboarding_sleep_body">Klean stays quiet in this window. Check-ins wait until you\'re up, and a day runs from waking to sleeping.</string>
+
+    <string name="onboarding_widget_title">Home screen widget</string>
+    <string name="onboarding_widget_body">A widget shows today at a glance and adds something in one tap.</string>
+    <string name="onboarding_widget_add">Add widget</string>
+    <string name="onboarding_widget_also">You can also long-press your home screen, choose Widgets, then Klean.</string>
+    <string name="onboarding_widget_manual">Long-press your home screen, choose Widgets, then Klean.</string>
+
+    <string name="onboarding_permissions_title">Permissions</string>
+    <string name="onboarding_permissions_body">These help check-ins arrive on time. Each one is optional, and Klean works without them.</string>
+
+    <string name="onboarding_ai_title">AI help</string>
+    <string name="onboarding_ai_body">Klean can use an AI service to fill in details about what you ate. Logging always works without it.</string>
+    <string name="onboarding_ai_later">You can set this up later in Settings.</string>
+</resources>

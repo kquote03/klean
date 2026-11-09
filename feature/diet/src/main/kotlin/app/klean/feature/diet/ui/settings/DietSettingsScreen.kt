@@ -36,6 +36,7 @@ fun DietSettingsScreen(onBack: () -> Unit, vm: DietSettingsViewModel = hiltViewM
         onPrompts = { vm.setPromptsEnabled(it) },
         onLearn = { vm.setLearnMealTimes(it) },
         onCalories = { vm.setShowCalories(it) },
+        onStatusLine = { vm.setStatusNotification(it) },
         onFireNow = { vm.fireNow() },
         onShowNext = { vm.showNext() },
     )
@@ -50,6 +51,7 @@ fun DietSettingsContent(
     onLearn: (Boolean) -> Unit,
     onCalories: (Boolean) -> Unit,
     onFireNow: () -> Unit,
+    onStatusLine: (Boolean) -> Unit = {},
     onShowNext: () -> Unit,
 ) {
     Scaffold(
@@ -80,6 +82,12 @@ fun DietSettingsContent(
                 onChange = onLearn,
             )
             ToggleRow(
+                title = stringResource(R.string.diet_settings_status_line),
+                summary = stringResource(R.string.diet_settings_status_line_summary),
+                checked = state.statusNotification,
+                onChange = onStatusLine,
+            )
+            ToggleRow(
                 title = stringResource(R.string.diet_settings_calories),
                 summary = stringResource(R.string.diet_settings_calories_summary),
                 checked = state.showCalories,
@@ -107,7 +115,7 @@ fun DietSettingsContent(
 }
 
 @Composable
-private fun ToggleRow(title: String, summary: String, checked: Boolean, onChange: (Boolean) -> Unit, enabled: Boolean = true) {
+internal fun ToggleRow(title: String, summary: String, checked: Boolean, onChange: (Boolean) -> Unit, enabled: Boolean = true) {
     ListItem(
         headlineContent = { Text(title) },
         supportingContent = { Text(summary) },

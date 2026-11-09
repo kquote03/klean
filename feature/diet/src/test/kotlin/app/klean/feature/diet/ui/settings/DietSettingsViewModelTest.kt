@@ -69,6 +69,22 @@ class DietSettingsViewModelTest {
         }
     }
 
+    /** Used by the setup wizard's diet page too: turning the status line off removes it at once. */
+    @Test fun statusLineSwitchSavesAndRefreshesTheNotification() = runBlocking {
+        val v = DietSettingsViewModel(settings, prefs, prompts, fmt, object : DietDebug {
+            override val enabled = false
+            override fun exactAlarmsAllowed() = true
+        }, DietStatusRefresh { calls += "status" })
+        v.setStatusNotification(false).join()
+        assertFalse(settings.get(SyncedKeys.DietStatusNotification))
+        assertEquals(listOf("status"), calls)
+        v.uiState.test {
+            var s = awaitItem()
+            while (s.statusNotification) s = awaitItem()
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
     @Test fun togglingCheckInsSavesAndReplans() = runBlocking {
         val v = vm()
         v.setPromptsEnabled(false).join()

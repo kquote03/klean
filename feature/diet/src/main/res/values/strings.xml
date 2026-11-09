@@ -10,6 +10,10 @@
     <string name="diet_settings_next_check_in">Next check-in around %1$s</string>
     <string name="diet_settings_learn">Learn meal times</string>
     <string name="diet_settings_learn_summary">Time check-ins around when you usually eat</string>
+    <string name="diet_settings_status_line">Status line</string>
+    <string name="diet_settings_status_line_summary">A quiet notification with today so far, ready for a quick reply</string>
+    <string name="diet_onboarding_title">Diet</string>
+    <string name="diet_onboarding_body">Klean asks now and then what you ate, and you answer in a few words. All of this can change later in Settings.</string>
     <string name="diet_settings_calories">Show calories</string>
     <string name="diet_settings_calories_summary">Show estimates next to entries when there are some</string>
     <string name="diet_debug_title">Debug</string>

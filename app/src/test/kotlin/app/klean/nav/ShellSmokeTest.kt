@@ -41,7 +41,10 @@ class ShellSmokeTest {
     @get:Rule val compose = createComposeRule()
 
     private fun shell(modules: Set<KleanModule>, gate: FakeModuleGate = FakeModuleGate()): ShellViewModel =
-        ShellViewModel(ModuleRegistry(modules, gate), UniversalCaptureService(emptySet(), gate, DefaultCaptureRouter(null)), Clock.System, FakePermissionChecker())
+        ShellViewModel(
+            ModuleRegistry(modules, gate), UniversalCaptureService(emptySet(), gate, DefaultCaptureRouter(null)), Clock.System,
+            FakePermissionChecker(), FakeOnboardingState(show = false), FakeQuietHoursStore(),
+        )
 
     // The real dashboard card needs Hilt; the shell only needs the module's metadata and routes.
     private fun diet(): KleanModule = object : KleanModule by DietKleanModule(DietEnablement { }) {

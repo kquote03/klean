@@ -22,17 +22,30 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import app.klean.R
+import app.klean.feature.onboarding.OnboardingRoute
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldDefaults
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 
 @Composable
 fun KleanAppUi(vm: ShellViewModel = hiltViewModel(), deepLinks: Flow<Intent> = emptyFlow()) {
     val registry = vm.registry
     val enabled by registry.enabled.collectAsStateWithLifecycle(initialValue = emptyList())
+    val startWithSetup by vm.startWithSetup.collectAsStateWithLifecycle()
     val nav = rememberNavController()
     val backStack by nav.currentBackStackEntryAsState()
     val current = backStack?.destination
     LaunchedEffect(nav, deepLinks) { deepLinks.collect { nav.handleDeepLink(it) } }
+    // The wizard is full screen: no bar while it runs, or while the start screen is still being decided.
+    val inSetup = startWithSetup == null || current.isOn(OnboardingRoute)
+    val layoutType = if (inSetup) {
+        NavigationSuiteType.None
+    } else {
+        NavigationSuiteScaffoldDefaults.navigationSuiteType(currentWindowAdaptiveInfoV2())
+    }
 
     NavigationSuiteScaffold(
+        layoutType = layoutType,
         navigationSuiteItems = {
             item(
                 selected = current.isOn(TodayRoute),
@@ -56,7 +69,7 @@ fun KleanAppUi(vm: ShellViewModel = hiltViewModel(), deepLinks: Flow<Intent> = e
             )
         },
     ) {
-        KleanNavHost(nav = nav, shell = vm, enabled = enabled)
+        startWithSetup?.let { KleanNavHost(nav = nav, shell = vm, enabled = enabled, startWithSetup = it) }
     }
 }
 
