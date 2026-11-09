@@ -22,6 +22,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Inject
+import javax.inject.Provider
 import app.klean.core.notifications.R as NotifR
 
 /** Whether the system lets Klean launch full-screen intents (Android 14+ can refuse; always true before). */
@@ -36,13 +37,15 @@ fun interface FullScreenIntentCheck {
  */
 class UnlockSheetNotifier @Inject constructor(
     @ApplicationContext private val ctx: Context,
-    private val repo: DietRepository,
+    // A Provider, like DietStatusNotifier: the repository starts collecting settings when built, and the
+    // screen monitor builds this at app start.
+    private val repo: Provider<DietRepository>,
     private val fullScreen: FullScreenIntentCheck,
 ) : UnlockSheetPoster {
     override suspend fun post(logId: String) {
         val nm = NotificationManagerCompat.from(ctx)
         if (!canPost(nm)) return
-        val count = repo.todaySummary().count
+        val count = repo.get().todaySummary().count
         val open = PendingIntent.getActivity(
             ctx, RC_OPEN, UnlockSheetActivity.intent(ctx, logId),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,

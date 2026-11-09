@@ -36,7 +36,7 @@ class UnlockSheetNotifierTest {
 
     @Test fun postsAFullScreenSheetWhenAllowed() = runBlocking {
         repo.logEntry("tea", CaptureSource.MODULE_SCREEN)
-        UnlockSheetNotifier(ctx, repo) { true }.post("log1")
+        UnlockSheetNotifier(ctx, { repo }) { true }.post("log1")
         val n = posted()
         assertEquals(Channels.UNLOCK_SHEET, n.channelId)
         assertNotNull(n.fullScreenIntent)
@@ -49,7 +49,7 @@ class UnlockSheetNotifierTest {
 
     /** Android 14+ may refuse full-screen intents: fall back to a heads-up whose tap opens the sheet. */
     @Test fun headsUpOnlyWhenFullScreenIsNotAllowed() = runBlocking {
-        UnlockSheetNotifier(ctx, repo) { false }.post("log1")
+        UnlockSheetNotifier(ctx, { repo }) { false }.post("log1")
         val n = posted()
         assertNull(n.fullScreenIntent)
         assertNotNull(n.contentIntent)

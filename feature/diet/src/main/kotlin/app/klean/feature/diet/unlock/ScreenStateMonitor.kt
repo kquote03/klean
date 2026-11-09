@@ -10,6 +10,7 @@ import androidx.core.content.ContextCompat
 import app.klean.core.common.ApplicationScope
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
+import javax.inject.Provider
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -25,7 +26,8 @@ import kotlinx.coroutines.launch
 @Singleton
 class ScreenStateMonitor @Inject constructor(
     @ApplicationContext private val ctx: Context,
-    private val trigger: UnlockSheetTrigger,
+    // A Provider: injecting into KleanApp.onCreate must not build the database on the main thread.
+    private val trigger: Provider<UnlockSheetTrigger>,
     @ApplicationScope private val scope: CoroutineScope,
 ) {
     private var started = false
@@ -37,9 +39,9 @@ class ScreenStateMonitor @Inject constructor(
             scope.launch {
                 try {
                     when (action) {
-                        Intent.ACTION_SCREEN_OFF -> trigger.onScreenOff()
+                        Intent.ACTION_SCREEN_OFF -> trigger.get().onScreenOff()
                         // Screen on (keyguard up or not) and the unlock both count; the trigger shows one sheet.
-                        Intent.ACTION_SCREEN_ON, Intent.ACTION_USER_PRESENT -> trigger.onWake()
+                        Intent.ACTION_SCREEN_ON, Intent.ACTION_USER_PRESENT -> trigger.get().onWake()
                     }
                 } catch (e: Exception) {
                     Log.w("Klean", "unlock sheet: $action failed", e)
@@ -61,6 +63,6 @@ class ScreenStateMonitor @Inject constructor(
         // System broadcasts still arrive with NOT_EXPORTED; other apps can't send these to us.
         ContextCompat.registerReceiver(ctx, receiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
         val interactive = ctx.getSystemService(PowerManager::class.java)?.isInteractive ?: true
-        scope.launch { runCatching { trigger.onProcessStart(interactive) } }
+        scope.launch { runCatching { trigger.get().onProcessStart(interactive) } }
     }
 }

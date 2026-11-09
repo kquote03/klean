@@ -21,6 +21,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -41,24 +42,29 @@ class ScreenStateMonitorTest {
     private val trigger = UnlockSheetTrigger(
         db, PromptLogWriter(db, stamper, clock), settings, SettingsModuleGate(settings), prefs, clock, DubaiZone, poster,
     )
-    private val monitor = ScreenStateMonitor(ctx, trigger, scope)
+    private val monitor = ScreenStateMonitor(ctx, { trigger }, scope)
 
     @After fun tearDown() { scope.cancel(); db.close() }
 
     private suspend fun send(action: String) {
         ctx.sendBroadcast(Intent(action))
         ShadowLooper.idleMainLooper()
-        delay(300)
     }
+
+    /** The receiver hands work to a background scope; wait for it instead of guessing a delay. */
+    private suspend fun <T> eventually(read: suspend () -> T, until: (T) -> Boolean): T =
+        withTimeout(5_000) { var v = read(); while (!until(v)) { delay(20); v = read() }; v }
 
     @Test fun screenOffThenUnlockAfterThreeHoursPostsTheSheet() = runBlocking {
         monitor.start()
         monitor.start() // idempotent: one receiver
         send(Intent.ACTION_SCREEN_OFF)
-        assertEquals(EngineRig.t(10), prefs.lastScreenOffAt.first())
+        assertEquals(EngineRig.t(10), eventually({ prefs.lastScreenOffAt.first() }) { it != null })
         clock.nowMs += 3 * HOUR_MS
         send(Intent.ACTION_SCREEN_ON)
         send(Intent.ACTION_USER_PRESENT)
+        assertEquals(1, eventually({ poster.posted.size }) { it > 0 })
+        delay(200)
         assertEquals(1, poster.posted.size)
     }
 }
