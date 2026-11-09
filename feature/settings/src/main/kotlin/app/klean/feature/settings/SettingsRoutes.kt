@@ -4,8 +4,9 @@ import kotlinx.serialization.Serializable
 
 @Serializable object ModulesSettingsRoute
 
-// Stubs: each is replaced by a real screen in a later milestone.
 @Serializable object QuietHoursSettingsRoute
+
+// Stubs: each is replaced by a real screen in a later milestone.
 @Serializable object AppearanceSettingsRoute
 @Serializable object AiProvidersSettingsRoute
 @Serializable object BackupSettingsRoute

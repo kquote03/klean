@@ -32,6 +32,14 @@ interface KleanModule {
     val settingsRoute: Any?
     fun registerGraph(builder: NavGraphBuilder, nav: NavController)
     @Composable fun DashboardCard(onOpen: () -> Unit, modifier: Modifier) {}
+
+    /** Title of this module's page in the setup wizard, or null for no page. */
+    @get:StringRes val onboardingTitleRes: Int? get() = null
+    /** Body of this module's setup page (its main switches). Settings are written as they change. */
+    @Composable fun OnboardingContent(modifier: Modifier) {}
+    /** The module's home-screen widget receiver, offered on the widget page of the setup wizard. */
+    val widgetReceiver: Class<*>? get() = null
+
     /** Cancel alarms/notifications/widgets on disable; reschedule on enable. */
     suspend fun onEnabledChanged(enabled: Boolean) {}
 }

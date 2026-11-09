@@ -25,6 +25,7 @@ import androidx.navigation.navDeepLink
 import app.klean.core.notifications.permissions.PermissionChecker
 import app.klean.feature.settings.backup.BackupSettingsScreen
 import app.klean.feature.settings.permissions.PermissionsSettingsScreen
+import app.klean.feature.settings.quiet.QuietHoursSettingsScreen
 
 private data class GeneralRow(@StringRes val label: Int, val route: Any)
 
@@ -40,7 +41,7 @@ private val generalRows = listOf(
 /** Top-level settings list. Modules section is driven by the registry. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(modules: List<KleanModule>, onOpen: (Any) -> Unit) {
+fun SettingsScreen(modules: List<KleanModule>, onOpen: (Any) -> Unit, onRunSetup: (() -> Unit)? = null) {
     Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.settings_title)) }) }) { padding ->
         LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
             item { SectionHeader(R.string.settings_section_modules) }
@@ -57,6 +58,9 @@ fun SettingsScreen(modules: List<KleanModule>, onOpen: (Any) -> Unit) {
             item { SectionHeader(R.string.settings_section_general) }
             items(generalRows, key = { it.label }) { row ->
                 SettingsRow(stringResource(row.label), onClick = { onOpen(row.route) })
+            }
+            if (onRunSetup != null) {
+                item { SettingsRow(stringResource(R.string.settings_run_setup), onClick = onRunSetup) }
             }
         }
     }
@@ -81,7 +85,7 @@ private fun SettingsRow(label: String, onClick: (() -> Unit)?) {
 fun NavGraphBuilder.settingsGraph(nav: NavController, registry: ModuleRegistry, permissions: PermissionChecker) {
     val back: () -> Unit = { nav.popBackStack() }
     composable<ModulesSettingsRoute> { ModulesSettingsScreen(registry = registry, onBack = back) }
-    composable<QuietHoursSettingsRoute> { StubSettingsScreen(R.string.settings_quiet_hours, back) }
+    composable<QuietHoursSettingsRoute> { QuietHoursSettingsScreen(onBack = back) }
     composable<AppearanceSettingsRoute> { StubSettingsScreen(R.string.settings_appearance, back) }
     composable<AiProvidersSettingsRoute> { StubSettingsScreen(R.string.settings_ai_providers, back) }
     composable<BackupSettingsRoute> { BackupSettingsScreen(onBack = back) }
