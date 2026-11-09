@@ -105,9 +105,13 @@ class DevicePrefs @Inject constructor(
     val deliveryOffer: Flow<String> = flow(K.deliveryOffer, "NOT_OFFERED")
     suspend fun setDeliveryOffer(v: String) = put(K.deliveryOffer, v)
 
-    /** Future: marks the phone that owns prompts when several devices sync. */
-    val mainPhone: Flow<Boolean> = flow(K.mainPhone, true)
-    suspend fun setMainPhone(v: Boolean) = put(K.mainPhone, v)
+    /**
+     * This phone owns prompts and rings alarms when several devices sync (default on). Mirrored into
+     * the `device` table by `DeviceRepository`; change it through `DeviceRepository.setMainPhone`.
+     * Stored under the M10-era key `mainPhone`, so existing installs and backups keep their value.
+     */
+    val isMainPhone: Flow<Boolean> = flow(K.mainPhone, true)
+    suspend fun setIsMainPhone(v: Boolean) = put(K.mainPhone, v)
 
     /** Today's card order as module ids (device-local layout); empty = the default slot order. */
     val cardOrder: Flow<List<String>> = store.data.map { p -> p[K.cardOrder]?.split(',')?.filter { it.isNotEmpty() } ?: emptyList() }

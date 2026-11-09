@@ -17,7 +17,7 @@ data class ReminderEntity(
     val zone: String,
     @ColumnInfo(name = "is_alarm") val isAlarm: Boolean = false,
     val recurrence: String? = null,
-    /** SCHEDULED, RINGING, SNOOZED, DONE. Dismissing an alarm never completes the task. */
+    /** SCHEDULED, RINGING, SNOOZED, DONE, DISMISSED. Dismissing never completes the task; see ReminderRepository. */
     val state: String = "SCHEDULED",
     @ColumnInfo(name = "snoozed_until") val snoozedUntil: Long? = null,
     @ColumnInfo(name = "last_fired_at") val lastFiredAt: Long? = null,

@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.klean.R
+import app.klean.core.data.device.DeviceRepository
 import app.klean.core.data.prefs.DevicePrefs
 import app.klean.core.design.component.SwitchListItem
 import app.klean.core.ui.module.OnboardingStepProvider
@@ -23,13 +24,16 @@ import javax.inject.Inject
 import kotlinx.coroutines.launch
 
 /** "Is this your main phone?" Alarms (M18 reminders) ring only on the main phone. Device-local. */
-class MainPhoneStep @Inject constructor(private val prefs: DevicePrefs) : OnboardingStepProvider {
+class MainPhoneStep @Inject constructor(
+    private val prefs: DevicePrefs,
+    private val devices: DeviceRepository,
+) : OnboardingStepProvider {
     override val key = "core.mainPhone"
     override val order = ORDER
     override val titleRes = R.string.setup_main_phone_title
 
     @Composable override fun Content() {
-        val main by prefs.mainPhone.collectAsState(initial = true)
+        val main by prefs.isMainPhone.collectAsState(initial = true)
         val scope = rememberCoroutineScope()
         Text(
             stringResource(R.string.setup_main_phone_body),
@@ -38,7 +42,7 @@ class MainPhoneStep @Inject constructor(private val prefs: DevicePrefs) : Onboar
         )
         SwitchListItem(
             checked = main,
-            onCheckedChange = { v -> scope.launch { prefs.setMainPhone(v) } },
+            onCheckedChange = { v -> scope.launch { devices.setMainPhone(v) } },
             headline = { Text(stringResource(R.string.setup_main_phone_switch)) },
         )
     }

@@ -6,6 +6,7 @@ import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import app.klean.core.capture.status.KleanStatusNotifier
 import app.klean.core.common.ApplicationScope
+import app.klean.core.data.device.DeviceRepository
 import app.klean.core.notifications.ChannelRegistrar
 import app.klean.core.notifications.Rescheduler
 import app.klean.core.ui.module.ModuleRegistry
@@ -25,6 +26,7 @@ class KleanApp : Application(), Configuration.Provider {
     @Inject lateinit var screenState: ScreenStateMonitor
     @Inject lateinit var registry: ModuleRegistry
     @Inject lateinit var newModules: NewModulesStore
+    @Inject lateinit var devices: DeviceRepository
 
     /** WorkManager is initialised on demand with Hilt's factory; the default initializer is removed in the manifest. */
     override val workManagerConfiguration: Configuration
@@ -42,6 +44,8 @@ class KleanApp : Application(), Configuration.Provider {
             // Arm prompts and rollover right after install or process start, without waiting for a boot.
             // Never let a startup failure crash the process (or a Robolectric test without a SQLite driver).
             launch { runCatching { rescheduler.rescheduleAll() }.onFailure { Log.w("Klean", "startup reschedule failed", it) } }
+            // This install's `device` row (name, main phone, last seen) for sync.
+            launch { runCatching { devices.registerThisDevice() }.onFailure { Log.w("Klean", "device registration failed", it) } }
             // Re-post the Today status line after install, update, or process death, then follow its line.
             // Follow only when the database works: a Robolectric :app test has no SQLite JNI, and a live
             // Room flow there fails in Room's own scope, where no catch can reach it.
