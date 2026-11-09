@@ -4,7 +4,17 @@ import app.klean.backend.auth.deviceAuthRoutes
 import app.klean.backend.auth.publicAuthRoutes
 import app.klean.backend.sync.syncRoutes
 import app.klean.backend.blobs.blobRoutes
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
+import io.ktor.server.plugins.callid.CallId
+import io.ktor.server.plugins.callid.callIdMdc
+import io.ktor.server.plugins.calllogging.CallLogging
+import io.ktor.server.plugins.calllogging.processingTimeMillis
+import io.ktor.server.plugins.defaultheaders.DefaultHeaders
+import io.ktor.server.request.httpMethod
+import io.ktor.server.request.path
+import org.slf4j.event.Level
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.auth.Authentication
@@ -33,6 +43,24 @@ const val AUTH_DAV = "dav"
 
 fun Application.kleanModule(services: Services) {
     install(ContentNegotiation) { json(KleanJson) }
+    install(DefaultHeaders) { header("X-Content-Type-Options", "nosniff") }
+    install(CallId) {
+        retrieveFromHeader(HttpHeaders.XRequestId)
+        generate { randomBytes(8).toHex() }
+        replyToHeader(HttpHeaders.XRequestId)
+    }
+    install(CallLogging) {
+        level = Level.INFO
+        callIdMdc("callId")
+        // Never log query strings (OAuth codes) or headers (tokens): method, path, status and duration only.
+        format { call ->
+            val status = call.response.status()?.value ?: 0
+            "${call.request.httpMethod.value} ${call.request.path()} $status ${call.processingTimeMillis()}ms"
+        }
+        mdc("status") { it.response.status()?.value?.toString() }
+        mdc("path") { it.request.path() }
+        filter { it.request.path() != "/api/v1/health" }
+    }
     installErrors()
     install(Authentication) {
         bearer(AUTH_DEVICE) {
@@ -45,7 +73,12 @@ fun Application.kleanModule(services: Services) {
     }
     routing {
         route("/api/v1") {
-            get("/health") { call.respond(HealthResponse("ok")) }
+            get("/health") {
+                // Liveness plus a trivial DB round trip; no auth, no details.
+                val dbOk = runCatching { services.db.read { exec("SELECT 1") { } } }.isSuccess
+                if (dbOk) call.respond(HealthResponse("ok"))
+                else call.respond(HttpStatusCode.ServiceUnavailable, HealthResponse("unavailable"))
+            }
             publicAuthRoutes(services.auth)
             authenticate(AUTH_DEVICE) {
                 deviceAuthRoutes(services.auth)

@@ -1,0 +1,30 @@
+<!-- Structured JSON logs on stdout (one object per line), for `docker logs` / Loki / jq.
+     KLEAN_LOG_FORMAT=plain switches to a human-readable pattern for local runs. -->
+<configuration>
+    <statusListener class="ch.qos.logback.core.status.NopStatusListener"/>
+    <variable name="KLEAN_LOG_LEVEL" value="${KLEAN_LOG_LEVEL:-INFO}"/>
+    <variable name="KLEAN_LOG_FORMAT" value="${KLEAN_LOG_FORMAT:-json}"/>
+
+    <appender name="json" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <includeCallerData>false</includeCallerData>
+            <fieldNames>
+                <timestamp>ts</timestamp>
+                <version>[ignore]</version>
+                <levelValue>[ignore]</levelValue>
+            </fieldNames>
+            <customFields>{"service":"klean-backend"}</customFields>
+        </encoder>
+    </appender>
+    <appender name="plain" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder><pattern>%d{HH:mm:ss.SSS} %-5level [%X{callId}] %logger{24} - %msg%n</pattern></encoder>
+    </appender>
+
+    <logger name="Exposed" level="WARN"/>
+    <logger name="io.netty" level="WARN"/>
+    <logger name="io.ktor.server.engine" level="INFO"/>
+
+    <root level="${KLEAN_LOG_LEVEL}">
+        <appender-ref ref="${KLEAN_LOG_FORMAT:-json}" />
+    </root>
+</configuration>
