@@ -6,6 +6,8 @@ import app.klean.backend.sync.syncRoutes
 import app.klean.backend.blobs.blobRoutes
 import app.klean.backend.dav.davRoutes
 import app.klean.backend.push.pushRoutes
+import app.klean.backend.google.googlePublicRoutes
+import app.klean.backend.google.googleRoutes
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
@@ -83,11 +85,13 @@ fun Application.kleanModule(services: Services) {
                 else call.respond(HttpStatusCode.ServiceUnavailable, HealthResponse("unavailable"))
             }
             publicAuthRoutes(services.auth)
+            googlePublicRoutes(services.google)
             authenticate(AUTH_DEVICE) {
                 deviceAuthRoutes(services.auth)
                 syncRoutes(services.records)
                 blobRoutes(services.blobs)
                 pushRoutes(services.push)
+                googleRoutes(services.google)
             }
         }
     }

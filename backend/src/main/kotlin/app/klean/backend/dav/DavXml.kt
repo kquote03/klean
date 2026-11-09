@@ -38,7 +38,7 @@ fun parseXml(body: String): Element {
         isExpandEntityReferences = false
     }
     return try {
-        f.newDocumentBuilder().parse(InputSource(StringReader(body))).documentElement
+        f.newDocumentBuilder().apply { setErrorHandler(null) }.parse(InputSource(StringReader(body))).documentElement
     } catch (e: Exception) {
         throw ApiException(HttpStatusCode.BadRequest, "bad XML")
     }

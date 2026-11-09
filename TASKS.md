@@ -360,7 +360,7 @@ Schema v2 is frozen for the streams (decision 1). Each stream ticks only its own
 - [x] 24.8 — Jib image `klean-backend:dev`, `deploy/docker-compose.yml`, Caddy/Traefik examples, `docs/deploy.md`
 - [x] 24.9 — CardDAV/CalDAV (PROPFIND, REPORT sync-collection + multiget + query, GET/PUT/DELETE, ETags); vCard/iCal codecs in `:shared` with round-trip tests
 - [x] 24.10 — web push (VAPID, RFC 8291/8292) with JDK crypto (`nl.martijndwars:web-push` is barely maintained); keys generated once into `settings`
-- [ ] 24.11 — Google server OAuth, Calendar read, Tasks list/patch (never create)
+- [x] 24.11 — Google server OAuth, Calendar read, Tasks list/patch (never create; `GoogleTest.neverCreatesGoogleTasks` checks every request), tested against a MockEngine fake
 - [ ] 24.12 — Hermes relay
 - [ ] 24.13 — AI proxy
 - [ ] 24.14 — `POST /admin/backup`

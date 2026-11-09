@@ -6,6 +6,7 @@ import app.klean.backend.dav.Dav
 import app.klean.backend.db.KleanDb
 import app.klean.backend.db.RecordStore
 import app.klean.backend.push.PushService
+import app.klean.backend.google.GoogleService
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.HttpTimeout
@@ -27,6 +28,7 @@ class Services(
     val blobs = BlobStore(db, config, clock)
     val dav = Dav(records, clock)
     val push = PushService(db, config, httpClient, clock)
+    val google = GoogleService(db, config, httpClient, clock)
 
     override fun close() {
         httpClient.close()
