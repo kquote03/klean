@@ -2,6 +2,8 @@ package app.klean.feature.settings.ai
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelStore
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.klean.core.ai.AiConfig
 import app.klean.core.ai.AiConfigStore
@@ -93,12 +95,20 @@ class AiSettingsViewModelTest {
     private val service = Service(ProviderId.entries.filter { it != ProviderId.ON_DEVICE }.map { Provider(it, store, secrets) })
 
     @Before fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
-    @After fun tearDown() = Dispatchers.resetMain()
+    private val vms = ViewModelStore()
+    private fun <T : ViewModel> T.tracked(): T = also { vms.put("vm-${System.nanoTime()}", it) }
 
-    private fun detail(id: ProviderId) = AiProviderViewModel(SavedStateHandle(mapOf("provider" to id.name)), store, secrets, service)
+    @After fun tearDown() {
+        // Cancel VM collectors while Main is still the test dispatcher; otherwise a late DataStore
+        // emission resumes on the real (absent) Main and fails whichever test runs next.
+        vms.clear()
+        Dispatchers.resetMain()
+    }
+
+    private fun detail(id: ProviderId) = AiProviderViewModel(SavedStateHandle(mapOf("provider" to id.name)), store, secrets, service).tracked()
 
     @Test fun listShowsOffUntilEnabledAndOffersOnlyProvidersThatAreOn() = runTest {
-        val vm = AiProvidersViewModel(store, secrets, service)
+        val vm = AiProvidersViewModel(store, secrets, service).tracked()
         val s0 = vm.state.first { it.loaded }
         assertFalse(s0.statusOf(ProviderId.GEMINI))
         assertFalse(s0.statusOf(ProviderId.OPENAI_COMPAT))
