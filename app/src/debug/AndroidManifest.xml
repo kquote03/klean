@@ -9,5 +9,13 @@
                 <action android:name="${applicationId}.RESCHEDULE" />
             </intent-filter>
         </receiver>
+        <!-- `adb shell am broadcast -a app.klean.debug.EXPORT_DB -p app.klean.debug`: copies the database out for checks. -->
+        <receiver
+            android:name="app.klean.debug.DebugDbExportReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="${applicationId}.EXPORT_DB" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>
