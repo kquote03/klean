@@ -148,7 +148,7 @@ Everything ticked is merged on `main` (milestones M0–M7 and M9 are tagged).
 
 ## M14 — On-device model
 
-- [ ] Task 14.1 — Runtime choice spike (timebox 1 h)
+- [x] Task 14.1 — Runtime choice spike (timebox 1 h) (main) — LiteRT-LM `com.google.ai.edge.litertlm:litertlm-android:0.19.1` (stable, Google Maven, 2026-11-05) over MediaPipe tasks-genai; API checked with javap and compiled behind `InferenceEngine`/`LiteRtLmEngineFactory` (CPU backend). Native libs arm64-v8a + x86_64 only (~+20 MB compressed per universal APK). Default download Qwen3-0.6B `.litertlm` (~614 MB, ungated) because Gemma 3 1B is gated on Hugging Face. Notes in `core/ai/ON_DEVICE.md`
 - [ ] Task 14.2 — OnDeviceProvider
 
 ## M15 — Place-based prompts

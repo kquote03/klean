@@ -28,6 +28,7 @@ coords=(
   app.cash.turbine:turbine
   androidx.test.ext:junit
   androidx.test:runner
+  com.google.ai.edge.litertlm:litertlm-android
   androidx.test:core
   androidx.exifinterface:exifinterface
   androidx.documentfile:documentfile
