@@ -38,10 +38,12 @@ import app.klean.shared.module.ModuleId
 import app.klean.core.design.component.CaptureField
 import app.klean.core.design.component.EntryRow
 import app.klean.core.design.component.RepeatChips
-import app.klean.core.design.theme.KleanTheme
+import app.klean.core.data.prefs.DevicePrefs
+import app.klean.core.ui.theme.KleanThemeFromPrefs
 import app.klean.core.notifications.NotificationIds
 import app.klean.feature.diet.R
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 /**
  * "Today so far" after a long break (plan §6.3). Opened by the unlock-sheet notification's
@@ -51,12 +53,13 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class UnlockSheetActivity : ComponentActivity() {
     private val vm: UnlockSheetViewModel by viewModels()
+    @Inject lateinit var prefs: DevicePrefs
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setShowWhenLocked(false)
-        setContent { KleanTheme { UnlockSheet(vm, onDone = ::finish) } }
+        setContent { KleanThemeFromPrefs(prefs) { UnlockSheet(vm, onDone = ::finish) } }
     }
 
     override fun onResume() {

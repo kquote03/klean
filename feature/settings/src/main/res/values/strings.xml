@@ -90,4 +90,24 @@
     <string name="ai_error_not_configured">The server address doesn\'t look right.</string>
     <string name="ai_error_bad_response">The answer couldn\'t be read.</string>
     <string name="ai_error_rejected">The server rejected the request.</string>
+
+    <!-- Appearance + About (M13) -->
+    <string name="appearance_wallpaper_colours">Use wallpaper colours</string>
+    <string name="appearance_wallpaper_colours_summary">Klean takes its colours from your wallpaper, here and on the home-screen widget.</string>
+    <string name="appearance_dark_note">Klean follows your phone\'s light or dark setting.</string>
+    <string name="about_version">Version</string>
+    <string name="about_offline_note">Klean works offline and keeps your data on this phone.</string>
+    <string name="about_font_title">Font</string>
+    <string name="about_font_summary">Klean uses Cantarell, under the SIL Open Font License 1.1.</string>
+    <string name="about_font_licence_show">Show licence</string>
+    <string name="about_font_licence_hide">Hide licence</string>
+    <string name="about_libraries_title">Open-source libraries</string>
+    <!-- name|licence; the main libraries Klean ships with. -->
+    <string-array name="about_libraries">
+        <item>Kotlin and kotlinx (coroutines, serialization, datetime)|Apache License 2.0</item>
+        <item>AndroidX: Compose, Material 3, Room, WorkManager, Glance, DataStore, Navigation|Apache License 2.0</item>
+        <item>SQLite (bundled)|Public domain</item>
+        <item>Dagger and Hilt|Apache License 2.0</item>
+        <item>Ktor client|Apache License 2.0</item>
+    </string-array>
 </resources>

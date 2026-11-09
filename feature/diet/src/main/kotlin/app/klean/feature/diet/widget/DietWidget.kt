@@ -12,7 +12,10 @@ import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
+import android.os.Build
 import androidx.glance.GlanceTheme
+import androidx.glance.color.DynamicThemeColorProviders
+import androidx.glance.unit.ColorProvider
 import androidx.glance.ImageProvider
 import androidx.glance.LocalContext
 import androidx.glance.LocalSize
@@ -69,7 +72,7 @@ interface DietWidgetEntryPoint {
     fun highlight(): PromptHighlight
 }
 
-/** Klean's pastel scheme for the widget (dynamic colour on the home screen is left to M13). */
+/** Klean's pastel scheme for the widget; [DynamicThemeColorProviders] when "Use wallpaper colours" is on. */
 val KleanGlanceColors = ColorProviders(light = KleanColors.lightScheme, dark = KleanColors.darkScheme)
 
 /**
@@ -95,9 +98,16 @@ class DietWidget : GlanceAppWidget() {
             timeLabel = fmt::time,
         )
         val initial = states.first()
+        val dynamicColor = ep.prefs().dynamicColor
+        val initialDynamic = dynamicColor.first() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
         provideContent {
             val state by remember { states }.collectAsState(initial)
-            GlanceTheme(colors = KleanGlanceColors) { DietWidgetContent(state) }
+            // "Use wallpaper colours" (Appearance): the system's Material You scheme instead of Klean's.
+            val dynamic by remember { dynamicColor }.collectAsState(initialDynamic)
+            val wallpaper = dynamic && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+            GlanceTheme(colors = if (wallpaper) DynamicThemeColorProviders else KleanGlanceColors) {
+                DietWidgetContent(state, if (wallpaper) GlanceTheme.colors.surface else WidgetSurface)
+            }
         }
     }
 
@@ -125,10 +135,10 @@ private fun openAppAction(context: Context): Action =
     )
 
 @Composable
-private fun DietWidgetContent(state: DietWidgetState) {
+private fun DietWidgetContent(state: DietWidgetState, surface: ColorProvider) {
     val size = LocalSize.current
     Column(
-        modifier = GlanceModifier.fillMaxSize().background(WidgetSurface).cornerRadius(20.dp).padding(8.dp),
+        modifier = GlanceModifier.fillMaxSize().background(surface).cornerRadius(20.dp).padding(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         when {

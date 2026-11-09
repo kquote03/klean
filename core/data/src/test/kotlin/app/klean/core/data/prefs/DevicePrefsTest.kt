@@ -51,6 +51,16 @@ class DevicePrefsTest {
         scope.cancel()
     }
 
+    /** "Use wallpaper colours" is opt-in: Klean's own pastel scheme until the user turns it on. */
+    @Test fun wallpaperColoursAreOffByDefault() = runBlocking {
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        val prefs = open(scope)
+        assertFalse(prefs.dynamicColor.first())
+        prefs.setDynamicColor(true)
+        assertTrue(prefs.dynamicColor.first())
+        scope.cancel()
+    }
+
     @Test fun exportImportCarriesTypedPrefsButNotPerInstallOnes() = runBlocking {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
         val prefs = open(scope)

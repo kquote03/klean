@@ -144,7 +144,7 @@ Everything ticked is merged on `main` (milestones M0–M7 and M9 are tagged).
 - [x] Task 13.1 — Disable audit (main) — instrumented `ModuleDisableTest` passes on Waydroid: no DIET_* notifications, check-in + day-rollover alarms gone (FLAG_NO_CREATE), registry without diet, enrichment cancelled and not re-queued, unlock sheet and delivery prompt inactive, widget/tile disabled states. Gaps fixed: AlarmScheduler.cancel now also cancels the PendingIntent; the toggle re-arms/cancels DayRollover and cancels queued `ai-enrich` work; EnrichmentEnqueuer/Sweep respect the module gate
 - [ ] Task 13.2 — Accessibility pass
 - [ ] Task 13.3 — Copy audit
-- [ ] Task 13.4 — Appearance + About
+- [x] Task 13.4 — Appearance + About (main) — "Use wallpaper colours" (DevicePrefs.dynamicColor, now off by default, hidden below API 31) applied in every activity via `KleanThemeFromPrefs` and in the Glance widget (`DynamicThemeColorProviders`, widgets repainted through `WidgetRefresher`); About shows the version (0.1.0-121-e85bdc0 on Waydroid), the offline note, the Cantarell OFL text from `core/design` assets and a short open-source list. Verified on Waydroid (teal Material You scheme when on); the widget repaint is untested on Waydroid (no widget host placement)
 
 ## M14 — On-device model
 

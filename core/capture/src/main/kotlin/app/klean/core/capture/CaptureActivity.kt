@@ -7,10 +7,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import app.klean.core.design.theme.KleanTheme
+import app.klean.core.data.prefs.DevicePrefs
+import app.klean.core.ui.theme.KleanThemeFromPrefs
 import app.klean.shared.diet.CaptureSource
 import app.klean.shared.module.ModuleId
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 /**
  * Translucent capture sheet over whatever is on screen (QS tile, widget, notification "Capture…").
@@ -19,11 +21,12 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class CaptureActivity : ComponentActivity() {
     private val vm: CaptureViewModel by viewModels()
+    @Inject lateinit var prefs: DevicePrefs
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContent { KleanTheme { CaptureSheet(vm = vm, onDismiss = ::finish) } }
+        setContent { KleanThemeFromPrefs(prefs) { CaptureSheet(vm = vm, onDismiss = ::finish) } }
     }
 
     companion object {

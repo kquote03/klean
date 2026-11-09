@@ -60,7 +60,8 @@ class DevicePrefs @Inject constructor(
     val onboardingDone: Flow<Boolean> = flow(K.onboardingDone, false)
     suspend fun setOnboardingDone(v: Boolean) = put(K.onboardingDone, v)
 
-    val dynamicColor: Flow<Boolean> = flow(K.dynamicColor, true)
+    /** "Use wallpaper colours" (Material You). Off: Klean's own pastel scheme. */
+    val dynamicColor: Flow<Boolean> = flow(K.dynamicColor, false)
     suspend fun setDynamicColor(v: Boolean) = put(K.dynamicColor, v)
 
     val lastScreenOffAt: Flow<Long?> = nullable(K.lastScreenOffAt)

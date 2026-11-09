@@ -26,6 +26,8 @@ import app.klean.core.ui.module.KleanModule
 import app.klean.core.ui.module.ModuleRegistry
 import androidx.navigation.navDeepLink
 import app.klean.core.notifications.permissions.PermissionChecker
+import app.klean.feature.settings.about.AboutSettingsScreen
+import app.klean.feature.settings.appearance.AppearanceSettingsScreen
 import app.klean.feature.settings.backup.BackupSettingsScreen
 import app.klean.feature.settings.permissions.PermissionsSettingsScreen
 import app.klean.feature.settings.quiet.QuietHoursSettingsScreen
@@ -89,7 +91,7 @@ fun NavGraphBuilder.settingsGraph(nav: NavController, registry: ModuleRegistry, 
     val back: () -> Unit = { nav.popBackStack() }
     composable<ModulesSettingsRoute> { ModulesSettingsScreen(registry = registry, onBack = back) }
     composable<QuietHoursSettingsRoute> { QuietHoursSettingsScreen(onBack = back) }
-    composable<AppearanceSettingsRoute> { StubSettingsScreen(R.string.settings_appearance, back) }
+    composable<AppearanceSettingsRoute> { AppearanceSettingsScreen(onBack = back) }
     composable<AiProvidersSettingsRoute> {
         AiProvidersScreen(onBack = back, onOpen = { nav.navigate(AiProviderSettingsRoute(it.name)) })
     }
@@ -98,5 +100,5 @@ fun NavGraphBuilder.settingsGraph(nav: NavController, registry: ModuleRegistry, 
     composable<PermissionsSettingsRoute>(deepLinks = listOf(navDeepLink { uriPattern = "klean://settings/permissions" })) {
         PermissionsSettingsScreen(checker = permissions, onBack = back)
     }
-    composable<AboutSettingsRoute> { StubSettingsScreen(R.string.settings_about, back) }
+    composable<AboutSettingsRoute> { AboutSettingsScreen(onBack = back) }
 }
