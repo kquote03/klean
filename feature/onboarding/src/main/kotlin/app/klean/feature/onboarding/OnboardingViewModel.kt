@@ -54,8 +54,10 @@ class OnboardingViewModel(
     private val registry: ModuleRegistry,
     private val quietHours: QuietHoursStore,
     private val onboarding: OnboardingState,
+    /** App-level widgets (the holistic Today widget), offered before the modules' own. */
+    private val appWidgets: List<Class<*>> = emptyList(),
 ) : ViewModel() {
-    private val _state = MutableStateFlow(OnboardingUiState(steps = stepsFor(registry.all, registry.all)))
+    private val _state = MutableStateFlow(OnboardingUiState(steps = stepsFor(registry.all, registry.all, appWidgets.isNotEmpty())))
     val state: StateFlow<OnboardingUiState> = _state.asStateFlow()
     private var sleepEdited = false
 
@@ -64,7 +66,7 @@ class OnboardingViewModel(
             registry.enabled.collect { on ->
                 val onIds = on.map { it.id }.toSet()
                 _state.update { s ->
-                    val steps = stepsFor(registry.all, on)
+                    val steps = stepsFor(registry.all, on, appWidgets.isNotEmpty())
                     val current = if (s.current in steps) s.current else steps[(s.position - 1).coerceIn(0, steps.lastIndex)]
                     s.copy(
                         steps = steps,
@@ -83,9 +85,9 @@ class OnboardingViewModel(
     /** Module for a [OnboardingStep.ModuleSetup] page. */
     fun module(id: ModuleId): KleanModule? = registry.all.firstOrNull { it.id == id }
 
-    /** Enabled modules with a widget, for the widget page. */
+    /** The widget page's offers: app widgets first, then each enabled module's own. */
     fun widgetReceivers(): List<Class<*>> =
-        _state.value.modules.filter { it.enabled }.mapNotNull { module(it.id)?.widgetReceiver }
+        appWidgets + _state.value.modules.filter { it.enabled }.mapNotNull { module(it.id)?.widgetReceiver }
 
     fun setModuleEnabled(id: ModuleId, enabled: Boolean) {
         viewModelScope.launch { registry.setEnabled(id, enabled) }
@@ -140,12 +142,12 @@ class OnboardingViewModel(
     }
 
     companion object {
-        fun stepsFor(all: List<KleanModule>, enabled: List<KleanModule>): List<OnboardingStep> = buildList {
+        fun stepsFor(all: List<KleanModule>, enabled: List<KleanModule>, appWidgets: Boolean = false): List<OnboardingStep> = buildList {
             add(OnboardingStep.Welcome)
             if (all.isNotEmpty()) add(OnboardingStep.Modules)
             add(OnboardingStep.SleepWindow)
             enabled.filter { it.onboardingTitleRes != null }.forEach { add(OnboardingStep.ModuleSetup(it.id)) }
-            if (enabled.any { it.widgetReceiver != null }) add(OnboardingStep.Widget)
+            if (appWidgets || enabled.any { it.widgetReceiver != null }) add(OnboardingStep.Widget)
             add(OnboardingStep.Permissions)
             add(OnboardingStep.Ai)
         }

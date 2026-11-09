@@ -15,6 +15,14 @@
     <string name="new_modules_body">These are switched on. You can turn any of them off here, or later in Settings.</string>
     <string name="new_modules_switch">Use %1$s</string>
     <string name="new_modules_done">Done</string>
+    <string name="today_widget_label">Klean Today</string>
+    <string name="today_widget_description">What\'s next today, and one tap to add anything</string>
+    <string name="today_widget_add">Add anything</string>
+    <string name="today_widget_empty">Nothing coming up</string>
+    <plurals name="today_widget_count">
+        <item quantity="one">%d coming up</item>
+        <item quantity="other">%d coming up</item>
+    </plurals>
     <string name="today_empty">Nothing here yet. Turn on a module in Settings.</string>
     <string name="today_capture_saved">Saved</string>
     <string name="today_greeting_morning">Good morning</string>

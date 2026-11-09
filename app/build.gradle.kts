@@ -49,6 +49,8 @@ dependencies {
     implementation(libs.navigation.compose)
     implementation(libs.hilt.navigation.compose)
     implementation(libs.compose.material.icons)
+    implementation(libs.glance.appwidget)
+    implementation(libs.glance.material3)
     implementation(libs.lifecycle.runtime.compose)
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.serialization.json)

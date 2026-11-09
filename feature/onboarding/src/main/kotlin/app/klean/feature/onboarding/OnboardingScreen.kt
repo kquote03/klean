@@ -54,7 +54,8 @@ fun OnboardingScreen(
     onFinished: () -> Unit,
     /** Opens Settings > AI providers; back returns to this page. Null hides the button. */
     onOpenAiSettings: (() -> Unit)? = null,
-    vm: OnboardingViewModel = viewModel { OnboardingViewModel(registry, quietHours, onboarding) },
+    appWidgets: List<Class<*>> = emptyList(),
+    vm: OnboardingViewModel = viewModel { OnboardingViewModel(registry, quietHours, onboarding, appWidgets) },
 ) {
     val s by vm.state.collectAsStateWithLifecycle()
     LaunchedEffect(s.finished) { if (s.finished) onFinished() }
@@ -169,10 +170,19 @@ private fun WidgetBody(receivers: List<Class<*>>) {
     val canPin = receivers.isNotEmpty() && runCatching { manager.isRequestPinAppWidgetSupported }.getOrDefault(false)
     Body(R.string.onboarding_widget_body)
     if (canPin) {
-        FilledTonalButton(
-            onClick = { runCatching { manager.requestPinAppWidget(ComponentName(ctx, receivers.first()), null, null) } },
-            modifier = Modifier.padding(horizontal = 8.dp).heightIn(min = 48.dp),
-        ) { Text(stringResource(R.string.onboarding_widget_add)) }
+        receivers.forEach { receiver ->
+            val component = ComponentName(ctx, receiver)
+            // The widget's own name, as the launcher's picker shows it (manifest label).
+            val name = remember(component) {
+                runCatching { ctx.packageManager.getReceiverInfo(component, 0).loadLabel(ctx.packageManager).toString() }.getOrNull()
+            }
+            FilledTonalButton(
+                onClick = { runCatching { manager.requestPinAppWidget(component, null, null) } },
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp).heightIn(min = 48.dp),
+            ) {
+                Text(name?.let { stringResource(R.string.onboarding_widget_add_named, it) } ?: stringResource(R.string.onboarding_widget_add))
+            }
+        }
         Spacer(Modifier.height(8.dp))
         Body(R.string.onboarding_widget_also)
     } else {

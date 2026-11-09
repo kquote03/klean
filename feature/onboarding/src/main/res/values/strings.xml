@@ -18,6 +18,7 @@
     <string name="onboarding_widget_title">Home screen widget</string>
     <string name="onboarding_widget_body">A widget shows today at a glance and adds something in one tap.</string>
     <string name="onboarding_widget_add">Add widget</string>
+    <string name="onboarding_widget_add_named">Add %1$s</string>
     <string name="onboarding_widget_also">You can also long-press your home screen, choose Widgets, then Klean.</string>
     <string name="onboarding_widget_manual">Long-press your home screen, choose Widgets, then Klean.</string>
 

@@ -13,6 +13,7 @@ import app.klean.feature.settings.SettingsScreen
 import app.klean.feature.settings.settingsGraph
 import app.klean.today.ArrangeTodayScreen
 import app.klean.today.TodayScreen
+import app.klean.widget.TodayWidgetReceiver
 
 /**
  * Every module's routes are registered whether it is on or off, so the graph never changes at runtime.
@@ -40,6 +41,7 @@ fun KleanNavHost(nav: NavHostController, shell: ShellViewModel, enabled: List<Kl
                     }
                 },
                 onOpenAiSettings = { nav.navigate(AiProvidersSettingsRoute) },
+                appWidgets = listOf(TodayWidgetReceiver::class.java),
             )
         }
         composable<TodayRoute>(deepLinks = listOf(navDeepLink { uriPattern = "klean://today" })) {

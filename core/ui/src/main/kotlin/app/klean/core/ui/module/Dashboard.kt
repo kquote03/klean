@@ -128,6 +128,28 @@ class StatusLine @Inject constructor(
         gate.disabledIds.map { off -> providers.any { it.moduleId !in off } }.distinctUntilChanged()
 }
 
+/** One "next up" row on the holistic Today widget, e.g. "14:00 · Dentist". [route] is a deep link. */
+data class TodayItem(val key: String, val timeLabel: String?, val text: String, val sortKey: Long, val route: String)
+
+/** A module's upcoming items for the Today widget. Bind with @IntoSet. Diet has its own widget and adds none. */
+interface TodayItemsProvider {
+    val moduleId: ModuleId
+    fun items(): Flow<List<TodayItem>>
+}
+
+/** Every enabled module's [TodayItem]s, soonest first. */
+@OptIn(ExperimentalCoroutinesApi::class)
+@Singleton
+class TodayItems @Inject constructor(
+    private val providers: Set<@JvmSuppressWildcards TodayItemsProvider>,
+    private val gate: ModuleGate,
+) {
+    fun items(): Flow<List<TodayItem>> = gate.disabledIds.distinctUntilChanged().flatMapLatest { off ->
+        val on = providers.filter { it.moduleId !in off }.sortedBy { it.moduleId.value }
+        if (on.isEmpty()) flowOf(emptyList()) else combine(on.map { it.items() }) { l -> l.flatMap { it }.sortedBy { it.sortKey } }
+    }
+}
+
 /** A holistic surface that shows the status line or Today items (the notification, the Today widget). */
 interface StatusSurface {
     suspend fun refresh()
@@ -162,4 +184,5 @@ abstract class DashboardMultibindings {
     @Multibinds abstract fun activity(): Set<DayActivityProvider>
     @Multibinds abstract fun statusLine(): Set<StatusLineProvider>
     @Multibinds abstract fun statusSurfaces(): Set<StatusSurface>
+    @Multibinds abstract fun todayItems(): Set<TodayItemsProvider>
 }
