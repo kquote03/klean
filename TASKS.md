@@ -582,3 +582,10 @@ Known gaps:
 - The web has no task subtask editor or list management, no event editor beyond the one-line add, no contact editor beyond add.
 - Server-side push schedules (reminders, birthdays, bedtime, approvals mirrored by the server) are not built: the web subscribes, the backend's `PushService.send` hook still has no scheduler.
 - "Last night" uses calendar days, not Android's logical day.
+
+## UI polish after the M25 visual review (branch `next`)
+
+- [x] P.1 — Calendar: one "View: …" picker button (dropdown of all views) replaces the scrolling chip row that ran off 540 px; `CalendarScreenTest.viewPickerFitsANarrowPhone` (w360dp) — next
+- [x] P.2 — Calendar week blocks: one ellipsized title line (`softWrap = false`), no time line (`compact`); Waydroid `~/.hermes/cache/scratch/next/shots/0b-week.png` ("Quar…", "Den…", "Phys…") — next
+- [x] P.3 — Tasks tabs: fixed `PrimaryTabRow` with tight tab padding and auto-sized one-line labels instead of `PrimaryScrollableTabRow` (five tabs at their natural width need ~420 dp, so `edgePadding = 0` alone still cut "Done" at 384 dp); unselected tabs in `onSurfaceVariant`; `TasksScreenTest.tabsFitANarrowPhone` (w360dp, every tab inside the screen); Waydroid `…/shots/0c-tasks-done.png` — next
+
