@@ -412,9 +412,9 @@ Known gaps (shipped simpler, per plan risk 8):
 ## M18 — Tasks & reminders (branch `m18-tasks`; plan `.hermes/plans/2026-11-09_165408-klean-holistic-full-product.md` §M18–M20, module plan §S1/§S2)
 - [x] 18.1 — `RecurrenceRule` in `:shared` (S1.1 + every N days/weeks, monthly n-th weekday, last day, COUNT/UNTIL, `occurrences` for Calendar)
 - [x] 18.2 — Tasks repository: default lists (Personal, Work), subtasks, recurrence on completion, review actions, 30-day auto-archive
-- [ ] 18.3 — Tasks screens: tabs Today / Upcoming / Lists / Reminders / Done, edit screen (subtasks, repeat incl. custom RRULE, reminders), in-app mic
-- [ ] 18.4 — "Still want these?" review: daily alarm outside quiet hours, notification, review screen, debug `TASK_REVIEW`
-- [ ] 18.5 — Tasks capture (`add_task`), Today card (slot TASKS), tile, week activity, status line, Today items, archive worker
+- [x] 18.3 — Tasks screens: tabs Today / Upcoming / Lists / Reminders / Done, edit screen (subtasks, repeat incl. custom RRULE, reminders), in-app mic
+- [x] 18.4 — "Still want these?" review: daily alarm outside quiet hours, notification, review screen, debug `TASK_REVIEW`
+- [x] 18.5 — Tasks capture (`add_task`), Today card (slot TASKS), tile, week activity, status line, Today items, archive worker
 - [x] 18.6 — Reminder scheduler (`ReminderChangeListener` + `Reschedulable`), quiet hours for pings, format rotation (`prompt_log` trigger REMINDER)
 - [ ] 18.7 — Ping notification (Done / Snooze 10 min / 1 h / Tomorrow / Pick a time), full-screen `AlarmActivity` (main phone only, 10-min auto-stop, DND bypass)
 - [ ] 18.8 — Reminders tab + edit screen, capture (`add_reminder`), status line / Today items, settings for both modules
