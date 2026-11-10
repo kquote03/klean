@@ -1,0 +1,32 @@
+{
+  "name": "klean-web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Klean web client (M26): Vite + TypeScript + M3E web components, served by the backend at /",
+  "scripts": {
+    "tokens": "node scripts/tokens.mjs",
+    "assets": "node scripts/assets.mjs",
+    "prebuild": "node scripts/tokens.mjs && node scripts/assets.mjs",
+    "build": "tsc --noEmit && vite build && node scripts/check-copy.mjs dist",
+    "dev": "node scripts/tokens.mjs && node scripts/assets.mjs && vite",
+    "test": "node scripts/tokens.mjs && vitest run && node scripts/check-copy.mjs src",
+    "check-copy": "node scripts/check-copy.mjs src",
+    "typecheck": "tsc --noEmit",
+    "e2e": "playwright test"
+  },
+  "dependencies": {
+    "@m3e/web": "2.12.0",
+    "lit": "3.3.3",
+    "qrcode-generator": "2.0.4",
+    "tslib": "2.8.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1",
+    "fake-indexeddb": "6.2.8",
+    "typescript": "5.9.3",
+    "vite": "8.3.7",
+    "vitest": "5.1.0"
+  },
+  "packageManager": "pnpm@12.9.0"
+}
