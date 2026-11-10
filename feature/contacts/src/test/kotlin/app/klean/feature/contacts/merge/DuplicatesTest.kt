@@ -105,6 +105,9 @@ class MergeOfferTest {
         val kept = repo.get(a)!!
         assertEquals(Birthday(1, 2, 1990), kept.birthday)
         assertEquals(listOf(a to 9L), joined)
+        // DAVx5 still has its Lina: the pair is not offered again, and the offer ends.
+        assertTrue(offer.pairs().isEmpty())
+        assertTrue(settings.get(ContactsKeys.MergeOfferDone))
     }
 
     @Test fun keepingApartAndNotNow() = runBlocking {

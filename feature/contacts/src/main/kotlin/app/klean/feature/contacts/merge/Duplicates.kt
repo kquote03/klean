@@ -98,6 +98,8 @@ class MergeOffer @Inject constructor(
                 mirror.keepTogether(keep, pair.b.rawId)
             }
         }
+        // The other account still holds its record: never offer this pair again.
+        settings.update(ContactsKeys.KeptApart) { (it + pair.key).distinct() }
         finishIfEmpty()
     }
 
