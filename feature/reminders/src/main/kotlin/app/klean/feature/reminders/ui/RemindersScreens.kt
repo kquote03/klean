@@ -63,6 +63,16 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.klean.core.design.component.CaptureField
+import app.klean.core.design.component.CLUTTER_EXEMPT
+import app.klean.core.design.component.EmptyState
+import app.klean.core.design.component.ListRow
+import app.klean.core.design.component.SectionHeader
+import app.klean.core.design.component.listGroup
+import app.klean.core.design.theme.Space
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.testTag
 import app.klean.core.design.component.NeutralEmpty
 import app.klean.core.design.component.SwitchListItem
 import app.klean.feature.reminders.R
@@ -75,33 +85,35 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 
 /**
- * The Reminders tab inside Tasks (plan H5), also shown on its own when Tasks is off. Earlier (went off,
- * not handled), Today, Tomorrow, Later. A quick field at the top; tap a row to edit.
+ * The Reminders view inside Tasks (plan H5), also shown on its own when Tasks is off. Earlier (went off, not
+ * handled), Today, Tomorrow, Later, as list groups. Adding is the Add menu's "Reminder"; tap a row to edit it, long
+ * press for done, snooze or delete. A reminder that already went off keeps a one-tap Done.
  */
 @Composable
-fun RemindersTab(onEdit: (String?) -> Unit, modifier: Modifier = Modifier, vm: RemindersViewModel = hiltViewModel()) {
+fun RemindersTab(
+    onEdit: (String?) -> Unit,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(horizontal = Space.screenEdge),
+    vm: RemindersViewModel = hiltViewModel(),
+) {
     val groups by vm.groups.collectAsStateWithLifecycle()
-    val draft by vm.draft.collectAsStateWithLifecycle()
     val ctx = LocalContext.current
     val fmt = remember { ReminderFormatter(ctx.applicationContext, SystemZone, kotlin.time.Clock.System) }
-    LazyColumn(modifier.fillMaxSize(), contentPadding = app.klean.core.design.component.FabClearance) {
-        item {
-            CaptureField(
-                value = draft,
-                onValueChange = { vm.draft.value = it },
-                onSubmit = vm::submit,
-                // Voice runs in the capture sheet (mic permission, Undo), aimed at Reminders.
-                onMic = { ctx.startActivity(app.klean.core.capture.CaptureActivity.intent(ctx, app.klean.shared.diet.CaptureSource.MODULE_SCREEN, app.klean.shared.module.ModuleId.REMINDERS, startVoice = true)) },
-                onPhoto = null,
-                placeholder = stringResource(R.string.reminders_add_placeholder),
-                modifier = Modifier.padding(16.dp),
-            )
+    LazyColumn(modifier.fillMaxSize().testTag(CLUTTER_EXEMPT), contentPadding = contentPadding) {
+        if (groups.isEmpty) item { EmptyState(stringResource(R.string.reminders_empty), icon = Icons.Rounded.NotificationsNone) }
+        var first = true
+        listOf(
+            Triple(R.string.reminders_group_earlier, groups.earlier, true),
+            Triple(R.string.reminders_group_today, groups.today, false),
+            Triple(R.string.reminders_group_tomorrow, groups.tomorrow, false),
+            Triple(R.string.reminders_group_later, groups.later, false),
+        ).forEach { (title, rows, fired) ->
+            if (rows.isEmpty()) return@forEach
+            val isFirst = first
+            item(key = "h$title") { SectionHeader(stringResource(title), first = isFirst) }
+            listGroup("g$title", rows, { it.id }) { r -> ReminderListRow(r, fmt, fired, onEdit, vm) }
+            first = false
         }
-        if (groups.isEmpty) item { NeutralEmpty(stringResource(R.string.reminders_empty)) }
-        section(R.string.reminders_group_earlier, groups.earlier, fmt, onEdit, vm, fired = true)
-        section(R.string.reminders_group_today, groups.today, fmt, onEdit, vm)
-        section(R.string.reminders_group_tomorrow, groups.tomorrow, fmt, onEdit, vm)
-        section(R.string.reminders_group_later, groups.later, fmt, onEdit, vm)
     }
 }
 
@@ -109,76 +121,50 @@ private object SystemZone : app.klean.core.common.ZoneProvider {
     override fun current() = TimeZone.currentSystemDefault()
 }
 
-private fun LazyListScope.section(
-    title: Int,
-    rows: List<ReminderRow>,
-    fmt: ReminderFormatter,
-    onEdit: (String?) -> Unit,
-    vm: RemindersViewModel,
-    fired: Boolean = false,
-) {
-    if (rows.isEmpty()) return
-    item(key = "h$title") {
-        Text(
-            stringResource(title),
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 4.dp),
-        )
-    }
-    items(rows, key = { it.id }) { r -> ReminderListRow(r, fmt, fired, onEdit, vm) }
-}
-
 @Composable
 private fun ReminderListRow(r: ReminderRow, fmt: ReminderFormatter, fired: Boolean, onEdit: (String?) -> Unit, vm: RemindersViewModel) {
     var menu by remember { mutableStateOf(false) }
-    ListItem(
-        modifier = Modifier.clickable { onEdit(r.id) },
-        leadingContent = {
-            Icon(
-                if (r.isAlarm) Icons.Rounded.Alarm else Icons.Rounded.NotificationsNone,
-                contentDescription = stringResource(if (r.isAlarm) R.string.reminders_kind_alarm else R.string.reminders_kind_ping),
-            )
-        },
-        headlineContent = { Text(r.title) },
-        supportingContent = {
-            Row {
-                Text(
-                    if (r.snoozed) stringResource(R.string.reminders_snoozed_until, fmt.dayTime(r.at)) else fmt.dayTime(r.at),
-                    style = MaterialTheme.typography.bodySmall,
+    Box {
+        ListRow(
+            title = r.title,
+            supporting = if (r.snoozed) stringResource(R.string.reminders_snoozed_until, fmt.dayTime(r.at)) else fmt.dayTime(r.at),
+            leading = {
+                Icon(
+                    if (r.isAlarm) Icons.Rounded.Alarm else Icons.Rounded.NotificationsNone,
+                    contentDescription = stringResource(if (r.isAlarm) R.string.reminders_kind_alarm else R.string.reminders_kind_ping),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                if (r.recurring) {
-                    Icon(
-                        Icons.Rounded.Repeat, contentDescription = stringResource(R.string.reminders_repeats),
-                        modifier = Modifier.padding(start = 6.dp).size(16.dp),
-                    )
-                }
-            }
-        },
-        trailingContent = {
-            Row {
-                if (fired) {
-                    IconButton(onClick = { vm.done(r.id) }, modifier = Modifier.size(48.dp)) {
-                        Icon(Icons.Rounded.Check, contentDescription = stringResource(R.string.reminders_action_done))
+            },
+            trailing = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (r.recurring) {
+                        Icon(
+                            Icons.Rounded.Repeat, contentDescription = stringResource(R.string.reminders_repeats),
+                            modifier = Modifier.size(Space.md), tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
-                }
-                IconButton(onClick = { menu = true }, modifier = Modifier.size(48.dp)) {
-                    Icon(Icons.Rounded.MoreVert, contentDescription = stringResource(R.string.reminders_more_actions))
-                }
-                DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
                     if (fired) {
-                        DropdownMenuItem(text = { Text(stringResource(R.string.reminders_action_dismiss)) }, onClick = { menu = false; vm.dismiss(r.id) })
-                    } else {
-                        DropdownMenuItem(text = { Text(stringResource(R.string.reminders_action_done)) }, onClick = { menu = false; vm.done(r.id) })
+                        IconButton(onClick = { vm.done(r.id) }, modifier = Modifier.size(Space.touchTarget)) {
+                            Icon(Icons.Rounded.Check, contentDescription = stringResource(R.string.reminders_action_done))
+                        }
                     }
-                    DropdownMenuItem(text = { Text(stringResource(R.string.reminders_snooze_10_long)) }, onClick = { menu = false; vm.snooze(r.id, Snooze.TEN_MINUTES) })
-                    DropdownMenuItem(text = { Text(stringResource(R.string.reminders_snooze_hour_long)) }, onClick = { menu = false; vm.snooze(r.id, Snooze.ONE_HOUR) })
-                    DropdownMenuItem(text = { Text(stringResource(R.string.reminders_action_tomorrow)) }, onClick = { menu = false; vm.snooze(r.id, Snooze.TOMORROW) })
-                    DropdownMenuItem(text = { Text(stringResource(R.string.reminders_delete)) }, onClick = { menu = false; vm.delete(r.id) })
                 }
+            },
+            onClick = { onEdit(r.id) },
+            onLongClick = { menu = true },
+        )
+        DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+            if (fired) {
+                DropdownMenuItem(text = { Text(stringResource(R.string.reminders_action_dismiss)) }, onClick = { menu = false; vm.dismiss(r.id) })
+            } else {
+                DropdownMenuItem(text = { Text(stringResource(R.string.reminders_action_done)) }, onClick = { menu = false; vm.done(r.id) })
             }
-        },
-    )
+            DropdownMenuItem(text = { Text(stringResource(R.string.reminders_snooze_10_long)) }, onClick = { menu = false; vm.snooze(r.id, Snooze.TEN_MINUTES) })
+            DropdownMenuItem(text = { Text(stringResource(R.string.reminders_snooze_hour_long)) }, onClick = { menu = false; vm.snooze(r.id, Snooze.ONE_HOUR) })
+            DropdownMenuItem(text = { Text(stringResource(R.string.reminders_action_tomorrow)) }, onClick = { menu = false; vm.snooze(r.id, Snooze.TOMORROW) })
+            DropdownMenuItem(text = { Text(stringResource(R.string.reminders_delete)) }, onClick = { menu = false; vm.delete(r.id) })
+        }
+    }
 }
 
 /** Reminders on their own (reached when Tasks is off, or from Reminders settings). */

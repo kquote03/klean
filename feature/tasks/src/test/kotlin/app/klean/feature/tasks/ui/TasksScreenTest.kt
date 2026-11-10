@@ -2,19 +2,17 @@ package app.klean.feature.tasks.ui
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.getUnclippedBoundsInRoot
-import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.isSelected
-import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performTouchInput
 import androidx.lifecycle.ViewModelStore
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.klean.core.capture.voice.VoiceRecognizer
+import app.klean.core.design.theme.KleanTheme
+import app.klean.core.testing.PHONE
+import app.klean.core.testing.assertClutterBudget
 import app.klean.feature.tasks.Dubai
 import app.klean.feature.tasks.DubaiZone
 import app.klean.feature.tasks.FakeClock
@@ -29,14 +27,13 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.LocalDate
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 
 @RunWith(AndroidJUnit4::class)
-@Config(qualifiers = "w411dp-h891dp")
+@Config(qualifiers = PHONE)
 class TasksScreenTest {
     @get:Rule val rule = createComposeRule()
     private val nov9 = LocalDate(2026, 11, 9)
@@ -51,16 +48,18 @@ class TasksScreenTest {
     @After fun clear() = store.clear()
 
     private fun show(vm: TasksViewModel, tab: String? = null) = rule.setContent {
-        TasksScreen(initialTab = tab, onOpenTask = {}, onNewTask = {}, onEditReminder = {}, vm = vm)
+        KleanTheme { TasksScreen(initialTab = tab, onOpenTask = {}, onNewTask = {}, onEditReminder = {}, vm = vm) }
     }
 
-    @Test fun reviewSitsAboveTodayWithCalmWording() {
+    /** The review chips moved to a long press: the row stays calm, every choice is still one gesture away. */
+    @Test fun stillWantTheseComesLastAndKeepsItsChoicesOnALongPress() {
         val old = runBlocking { repo.add(TaskDraft("renew card", dueDate = LocalDate(2026, 11, 6))) }
         runBlocking { repo.add(TaskDraft("call bank", dueDate = nov9)) }
         show(vm())
         rule.onNodeWithText("Still want these?").assertIsDisplayed()
-        rule.onNodeWithText("1 task from earlier days").assertIsDisplayed()
         rule.onNodeWithText("call bank").assertIsDisplayed()
+        rule.onNodeWithText("Keep for today").assertDoesNotExist()
+        rule.onNodeWithText("renew card").performTouchInput { longClick() }
         rule.onNodeWithText("Keep for today").performClick()
         rule.waitForIdle()
         assertEquals("2026-11-09", runBlocking { repo.get(old)!!.dueDate })
@@ -75,31 +74,31 @@ class TasksScreenTest {
         assertEquals("DONE", runBlocking { repo.get(id)!!.status })
     }
 
-    @Test fun remindersTabHidesWhenRemindersIsOff() {
+    @Test fun remindersLeaveTheMenuWhenRemindersIsOff() {
         show(vm(FakeGate(setOf(ModuleId.REMINDERS))))
-        rule.onNodeWithText("Upcoming").assertIsDisplayed()
+        rule.onNodeWithContentDescription("More options").performClick()
+        rule.onNodeWithText("Lists").assertIsDisplayed()
         rule.onNodeWithText("Reminders").assertDoesNotExist()
     }
 
-    @Test fun deepLinkTabOpensLists() {
+    @Test fun deepLinkTabOpensListsAndAllTasksComesBack() {
         runBlocking { repo.add(TaskDraft("slides", listId = "w")) }
         show(vm(), tab = "lists")
         rule.onNodeWithText("Personal").assertIsDisplayed()
         rule.onNodeWithText("Work").performClick()
         rule.onNodeWithText("slides").assertIsDisplayed()
+        rule.onNodeWithText("All tasks").performClick()
+        rule.onNodeWithText("Personal").assertDoesNotExist()
     }
 
-    @Test @Config(qualifiers = "w360dp-h740dp") fun tabsFitANarrowPhone() {
-        show(vm(), tab = "done")
-        rule.waitForIdle()
-        val root = rule.onRoot().getUnclippedBoundsInRoot()
-        listOf("Today", "Upcoming", "Lists", "Reminders", "Done").forEach { label ->
-            val tab = rule.onNode(hasText(label) and SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Tab))
-            tab.assertExists()
-            val b = tab.getUnclippedBoundsInRoot()
-            assertTrue("$label ends at ${b.right}, screen ${root.right}", b.left >= root.left && b.right <= root.right)
+    @Test fun mainViewIsWithinTheClutterBudget() {
+        runBlocking {
+            repo.add(TaskDraft("renew card", dueDate = LocalDate(2026, 11, 6)))
+            repeat(6) { repo.add(TaskDraft("task $it", dueDate = nov9)) }
+            repo.add(TaskDraft("dentist", dueDate = LocalDate(2026, 11, 12)))
         }
-        val selected = rule.onNode(isSelected()).getUnclippedBoundsInRoot()
-        assertTrue(selected.right <= root.right)
+        show(vm())
+        rule.waitForIdle()
+        rule.assertClutterBudget()
     }
 }

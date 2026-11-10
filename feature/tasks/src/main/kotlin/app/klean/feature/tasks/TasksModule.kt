@@ -109,6 +109,7 @@ class TasksKleanModule @Inject constructor(
     override val graphRoute: Any = TasksGraph
     override val settingsRoute: Any = TasksSettingsRoute
     override val capturePlaceholderRes: Int = R.string.tasks_add
+    override val drawsGroupChrome: Boolean = true
 
     override fun registerGraph(builder: NavGraphBuilder, nav: NavController) = with(builder) {
         navigation<TasksGraph>(startDestination = TasksRoute()) {

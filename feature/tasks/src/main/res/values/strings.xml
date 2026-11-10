@@ -105,4 +105,8 @@
     <string name="tasks_settings_review_hint">One quiet note when tasks from earlier days are still open</string>
     <string name="tasks_settings_review_time">Time</string>
     <string name="tasks_settings_default_list">New tasks go to</string>
+    <string name="tasks_view_all">All tasks</string>
+    <string name="tasks_view_finished">Finished</string>
+    <string name="tasks_section_coming_up">Coming up</string>
+    <string name="tasks_all_clear">Nothing planned. Add a task with the Add button.</string>
 </resources>
