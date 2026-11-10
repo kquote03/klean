@@ -161,12 +161,12 @@ export class App {
     const r = this.route();
     return html`
       <div class="shell">
-        <m3e-nav-rail class="rail" aria-label="Klean">
+        <m3e-nav-rail class="rail" mode="compact" aria-label="Klean">
           <div class="rail-brand">${icon("today", { size: 32, label: t.appName })}</div>
           ${this.navItems("rail")}
         </m3e-nav-rail>
         <main class="content" id="main">${r.render(this)}</main>
-        <m3e-nav-bar class="bar" aria-label="Klean">${this.navItems("bar")}</m3e-nav-bar>
+        <m3e-nav-bar class="bar" mode="compact" aria-label="Klean">${this.navItems("bar")}</m3e-nav-bar>
       </div>
       ${this.toastView()}`;
   }

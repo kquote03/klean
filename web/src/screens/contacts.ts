@@ -36,7 +36,7 @@ function contacts(app: App) {
     void app.act(() => m.addContact({ name: v.name, phone: v.phone || undefined, email: v.email || undefined, birthday: mo && da ? { month: mo, day: da, year: y || null } : null }));
   };
   return html`<div class="stack">
-    <m3e-form-field variant="outlined">
+    <m3e-form-field variant="outlined" hide-subscript="always">
       <label slot="label" for="contact-search">${t.contacts.search}</label>
       <input id="contact-search" type="search" .value=${app.ui.contactsQuery ?? ""} @input=${(e: Event) => { app.ui.contactsQuery = (e.target as HTMLInputElement).value; app.refresh(); }} />
     </m3e-form-field>

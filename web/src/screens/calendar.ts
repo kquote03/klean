@@ -119,7 +119,7 @@ function month(app: App, anchor: LocalDate) {
       const es = map.get(keyOf(d)) ?? [];
       return html`<div class="cell ${d.month !== anchor.month ? "other" : ""} ${sameDate(d, today) ? "is-today" : ""}" aria-label=${fmtDay(d)}>
         <span class="num">${d.day}</span>
-        ${es.slice(0, 2).map(evChip)}${es.length > 2 ? html`<span class="muted small">${t.calendar.more(es.length - 2)}</span>` : nothing}
+        ${es.slice(0, 2).map(evChip)}${es.length > 2 ? html`<span class="muted small more">${t.calendar.more(es.length - 2)}</span>` : nothing}
         <span class="dotline">${es.slice(0, 4).map(() => html`<span class="pip"></span>`)}</span>
       </div>`;
     })}

@@ -18,7 +18,7 @@ export function dietScreen(app: App): TemplateResult {
   return html`${app.head(t.nav.diet)}
     <div class="stack">
       <form class="capture inline" @submit=${log} data-testid="diet-form">
-        <m3e-form-field variant="outlined">
+        <m3e-form-field variant="outlined" hide-subscript="always">
           <label slot="label" for="diet-input">${t.diet.log}</label>
           <input id="diet-input" name="text" autocomplete="off" placeholder=${t.diet.placeholder} />
         </m3e-form-field>

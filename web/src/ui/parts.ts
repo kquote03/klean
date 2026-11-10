@@ -13,10 +13,11 @@ export function card(o: { title: string; icon?: string; tone?: "primary" | "seco
   </section>`;
 }
 
-/** An M3E outlined field around a native input; `name` is what FormData sees. */
+/** An M3E outlined field around a native input; `name` is what FormData sees. The subscript row is reserved
+ * only for fields with a hint, so inline forms line up with their button. */
 export function field(o: { label: string; name: string; type?: string; value?: string; placeholder?: string; required?: boolean; autocomplete?: string; testid?: string; hint?: string; min?: string; step?: string }) {
   const id = uid(o.name);
-  return html`<m3e-form-field variant="outlined">
+  return html`<m3e-form-field variant="outlined" hide-subscript=${o.hint ? "auto" : "always"}>
     <label slot="label" for=${id}>${o.label}</label>
     <input id=${id} name=${o.name} type=${o.type ?? "text"} .value=${o.value ?? ""} placeholder=${o.placeholder ?? nothing}
       ?required=${o.required ?? false} autocomplete=${o.autocomplete ?? "off"} data-testid=${o.testid ?? nothing} min=${o.min ?? nothing} step=${o.step ?? nothing} />
@@ -26,7 +27,7 @@ export function field(o: { label: string; name: string; type?: string; value?: s
 
 export function textarea(o: { label: string; name: string; value?: string; rows?: number; testid?: string }) {
   const id = uid(o.name);
-  return html`<m3e-form-field variant="outlined">
+  return html`<m3e-form-field variant="outlined" hide-subscript="always">
     <label slot="label" for=${id}>${o.label}</label>
     <textarea id=${id} name=${o.name} rows=${o.rows ?? 4} .value=${o.value ?? ""} data-testid=${o.testid ?? nothing}></textarea>
   </m3e-form-field>`;

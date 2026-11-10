@@ -53,14 +53,13 @@ export function settingsScreen(app: App): TemplateResult {
     }
   });
   return html`${app.head(t.nav.settings)}
-  <div class="today-cards" style="grid-template-columns:repeat(auto-fill,minmax(min(100%,400px),1fr))">
+  <div class="masonry">
     ${card({ title: t.settings.modules, icon: "tune", testid: "settings-modules" }, html`<p class="muted">${t.settings.modulesLead}</p>
       <ul class="list">${MODULES.map((k) => html`<li class="item">
         <span class="text"><label for="mod-${k}">${t.module[k]}</label><br /><span class="meta">${t.moduleLead[k]}</span></span>
         <m3e-switch id="mod-${k}" data-module=${k} ?checked=${m.isOn(k)} @change=${(e: Event) => app.act(() => m.setModuleOn(k, (e.target as HTMLInputElement).checked))}></m3e-switch>
       </li>`)}</ul>`)}
 
-    <div class="stack">
       ${card({ title: t.settings.devices, icon: "devices", tone: "primary", testid: "settings-devices" }, html`
         <ul class="list">${(ui.devices ?? []).map((d) => html`<li class="item">
           <span class="text">${d.name}<br /><span class="meta">${d.current ? t.settings.thisDevice : d.platform.charAt(0) + d.platform.slice(1).toLowerCase()}</span></span>
@@ -93,6 +92,5 @@ export function settingsScreen(app: App): TemplateResult {
         <div class="actions"><m3e-button variant="tonal" ?disabled=${ui.backupBusy ?? false} @click=${backup} data-testid="backup">${icon("download", { slot: "icon" })}${ui.backupBusy ? t.settings.backupWorking : t.settings.backupDownload}</m3e-button></div>`)}
 
       <div class="actions"><m3e-button variant="text" @click=${() => app.act(() => app.signOut())} data-testid="sign-out">${t.settings.signOut}</m3e-button></div>
-    </div>
   </div>`;
 }

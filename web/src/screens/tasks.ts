@@ -39,7 +39,7 @@ function todayTab(app: App) {
   return html`<div class="stack">
     ${still.length ? card({ title: t.tasks.stillWant, icon: "tasks", tone: "tertiary", testid: "still-want" }, html`
       <p class="muted">${t.tasks.stillWantLead}</p>
-      <ul class="list">${still.map((x) => html`<li class="item"><span class="text">${str(x.title)} <span class="meta">${fmtShortDay(parseIsoDate(str(x.due_date)!))}</span></span>
+      <ul class="list">${still.map((x) => html`<li class="item wrap"><span class="text">${str(x.title)} <span class="meta">${fmtShortDay(parseIsoDate(str(x.due_date)!))}</span></span>
         <m3e-button variant="tonal" @click=${() => app.act(() => m.updateTask(str(x.id)!, { due_date: isoDate(m.today()), status: "OPEN" }))}>${t.tasks.keep}</m3e-button>
         <m3e-button variant="text" @click=${() => app.act(() => m.updateTask(str(x.id)!, { due_date: null, due_minutes: null, status: "SOMEDAY" }))}>${t.tasks.letGo}</m3e-button></li>`)}</ul>`) : nothing}
     <section class="card" aria-label=${t.tasks.tabs.today}>
@@ -145,7 +145,7 @@ function remindersTab(app: App) {
     </form>
     <section class="card">${rs.length ? html`<ul class="list">${rs.map((r) => {
       const at = num(r.snoozed_until) ?? num(r.fire_at)!;
-      return html`<li class="item"><span class="time">${fmtTime(at)}</span>
+      return html`<li class="item wrap"><span class="time">${fmtTime(at)}</span>
         <span class="text">${str(r.title)}<br /><span class="meta">${fmtShortDay(localNow(at).date)}${r.is_alarm ? ` · ${t.tasks.alarm}` : ""}</span></span>
         <m3e-button variant="tonal" @click=${() => app.act(() => m.setReminderState(str(r.id)!, "DONE"))}>${t.tasks.done}</m3e-button>
         <m3e-button variant="text" @click=${() => app.act(() => m.setReminderState(str(r.id)!, "DISMISSED"))}>${t.tasks.dismiss}</m3e-button></li>`;

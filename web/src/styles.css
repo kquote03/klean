@@ -43,11 +43,37 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* ---- shell ---- */
-.shell { display: grid; grid-template-columns: var(--rail) minmax(0, 1fr); min-height: 100vh; }
+.shell {
+  display: grid; grid-template-columns: var(--rail) minmax(0, 1fr); min-height: 100vh;
+  /* The rail's colour runs the full page height, also below a long page. */
+  background: linear-gradient(to right, var(--md-sys-color-surface-container) var(--rail), var(--md-sys-color-surface) var(--rail));
+}
 .rail {
   position: sticky; top: 0; height: 100vh; overflow-y: auto;
   background: var(--md-sys-color-surface-container);
   padding-block: var(--s2);
+}
+/* M3E navigation, on the Klean tokens; labels at 14 px (UI labels; body text stays 16 px). */
+m3e-nav-item {
+  --m3e-nav-item-label-text-font-size: 14px;
+  --m3e-nav-item-label-text-line-height: 20px;
+  --m3e-nav-item-inactive-label-text-color: var(--md-sys-color-on-surface-variant);
+  --m3e-nav-item-inactive-icon-color: var(--md-sys-color-on-surface-variant);
+  --m3e-nav-item-active-label-text-color: var(--md-sys-color-on-surface);
+  --m3e-nav-item-active-icon-color: var(--md-sys-color-on-secondary-container);
+  --m3e-nav-item-active-container-color: var(--md-sys-color-secondary-container);
+}
+m3e-nav-bar { --m3e-nav-bar-vertical-item-width: 0px; --m3e-nav-bar-container-color: var(--md-sys-color-surface-container); }
+m3e-nav-bar m3e-nav-item { flex: 1 1 0; min-width: 0; }
+m3e-form-field {
+  --m3e-form-field-label-font-size: 14px;
+  --m3e-form-field-label-line-height: 20px;
+  --m3e-form-field-subscript-font-size: 14px;
+  --m3e-form-field-subscript-line-height: 20px;
+  --m3e-form-field-subscript-color: var(--md-sys-color-on-surface-variant);
+  --m3e-form-field-outline-color: var(--md-sys-color-outline);
+  --m3e-form-field-focused-outline-color: var(--md-sys-color-primary);
+  --m3e-form-field-focused-color: var(--md-sys-color-primary);
 }
 .rail-brand { display: flex; justify-content: center; padding-block: var(--s1) var(--s2); color: var(--md-sys-color-primary); }
 .bar { display: none; }
@@ -59,7 +85,7 @@ main.content { min-width: 0; padding: var(--s3) var(--s4) var(--s6); }
 .status[data-state="offline"] .dot, .status[data-state="error"] .dot { background: var(--md-sys-color-tertiary); }
 
 @media (max-width: 839px) {
-  .shell { grid-template-columns: minmax(0, 1fr); }
+  .shell { grid-template-columns: minmax(0, 1fr); background: var(--md-sys-color-surface); }
   .rail { display: none; }
   .bar {
     display: block; position: fixed; inset: auto 0 0 0; z-index: 10;
@@ -108,10 +134,13 @@ main.content { min-width: 0; padding: var(--s3) var(--s4) var(--s6); }
 .item .meta { color: var(--md-sys-color-on-surface-variant); }
 .item .time { flex: none; min-width: 64px; color: var(--md-sys-color-on-surface-variant); font-variant-numeric: tabular-nums; }
 .item.done .text { color: var(--md-sys-color-on-surface-variant); text-decoration: line-through; }
+/* Rows with several actions: the text keeps a readable width and the actions wrap below it on a phone. */
+.item.wrap { flex-wrap: wrap; row-gap: 0; }
+.item.wrap .text { flex: 1 1 200px; }
 
 /* ---- forms ---- */
 form.inline { display: flex; gap: var(--s1); align-items: center; flex-wrap: wrap; }
-form.inline m3e-form-field { flex: 1 1 240px; min-width: 0; }
+form.inline m3e-form-field { flex: 1 1 160px; min-width: 0; }
 m3e-form-field { width: 100%; }
 m3e-form-field input, m3e-form-field textarea, m3e-form-field select { width: 100%; }
 .fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--s2); }
@@ -129,13 +158,17 @@ m3e-form-field input, m3e-form-field textarea, m3e-form-field select { width: 10
 
 /* ---- today ---- */
 .today { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s3); }
-.today-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: var(--s2); align-items: start; }
-.today-side { display: flex; flex-direction: column; gap: var(--s2); }
+/* Cards flow down balanced columns (masonry), so a short card never leaves a hole beside a tall one; the
+   reading order stays APPROVALS → DIET, column by column. */
+.today-cards, .masonry { columns: 2 320px; column-gap: var(--s2); }
+.today-cards > *, .masonry > * { break-inside: avoid; margin-bottom: var(--s2); }
+.masonry { columns: 3 360px; }
+.today-side { display: none; }
 @media (min-width: 1200px) {
   .today { grid-template-columns: minmax(0, 1fr) 360px; align-items: start; }
-  .today-side { position: sticky; top: var(--s3); }
+  .today-side { display: flex; flex-direction: column; gap: var(--s2); position: sticky; top: var(--s3); }
 }
-@media (max-width: 839px) { .today-cards { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 839px) { .today-cards, .masonry { columns: 1; } }
 .capture { background: var(--md-sys-color-surface-container); border-radius: var(--radius-l); padding: var(--s2); }
 .timeline .item .time { color: var(--md-sys-color-primary); }
 
@@ -144,8 +177,9 @@ m3e-form-field input, m3e-form-field textarea, m3e-form-field select { width: 10
 .cal-toolbar .grow { flex: 1 1 auto; min-width: 0; }
 .week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--s1); }
 .week .day { background: var(--md-sys-color-surface-container-low); border-radius: var(--radius-m); padding: var(--s1); min-height: 160px; min-width: 0; display: flex; flex-direction: column; gap: var(--s1); }
-.day .day-head { display: flex; align-items: baseline; gap: var(--s1); color: var(--md-sys-color-on-surface-variant); }
-.day.is-today .day-head .num { background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); border-radius: 50%; width: 32px; height: 32px; display: grid; place-items: center; }
+.day .day-head { display: flex; align-items: center; gap: var(--s1); height: 32px; color: var(--md-sys-color-on-surface-variant); }
+.day .day-head .num { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; }
+.day.is-today .day-head .num { background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); }
 .ev { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); border-radius: var(--radius-s); padding: 4px var(--s1); overflow-wrap: anywhere; hyphens: auto; }
 .ev.all-day { background: var(--md-sys-color-tertiary-container); color: var(--md-sys-color-on-tertiary-container); }
 .ev .t { display: block; color: inherit; }
@@ -161,7 +195,7 @@ m3e-form-field input, m3e-form-field textarea, m3e-form-field select { width: 10
   .week { grid-template-columns: minmax(0, 1fr); }
   .week .day { min-height: 0; }
   .month .cell { min-height: 56px; }
-  .month .ev { display: none; }
+  .month .ev, .month .more { display: none; }
 }
 @media (min-width: 840px) { .month .dotline { display: none; } }
 

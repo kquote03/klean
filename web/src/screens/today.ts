@@ -58,7 +58,7 @@ export function captureBox(app: App) {
     void app.act(async () => announce(app, await capture(app.model, text), text));
   };
   return html`<form class="capture inline" @submit=${submit} data-testid="capture-form">
-    <m3e-form-field variant="outlined">
+    <m3e-form-field variant="outlined" hide-subscript="always">
       <label slot="label" for="capture-input">${t.capture.label}</label>
       <input id="capture-input" name="text" autocomplete="off" placeholder=${t.capture.placeholder} data-testid="capture-input" />
     </m3e-form-field>
@@ -86,7 +86,12 @@ const SLOT_VIEW: Record<Slot, (app: App) => TemplateResult | null> = {
     return card({ title: t.today.slots.APPROVALS, icon: "approvals", tone: "primary", emphasis: true, testid: "card-approvals",
       action: html`<m3e-button variant="filled" @click=${() => app.go("/approvals")}>${t.approvals.review}</m3e-button>` }, html`
       <p>${t.approvals.waiting(pending.length)}</p>
-      <ul class="list">${pending.slice(0, 2).map((a) => html`<li class="item"><span class="text">${firstLine(str(a.draft) ?? "")}</span></li>`)}</ul>`);
+      <ul class="list">${pending.slice(0, 2).map((a) => {
+        const d = app.model.delegationFor(a);
+        const task = d ? app.model.store.get("task", str(d.task_id) ?? "") : undefined;
+        const action = (str(a.action) ?? "").replace(/_/g, " ");
+        return html`<li class="item"><span class="text">${action.charAt(0).toUpperCase() + action.slice(1)}${task ? html`<br /><span class="meta">${str(task.title)}</span>` : nothing}</span></li>`;
+      })}</ul>`);
   },
   TASKS(app) {
     const m = app.model;
@@ -138,7 +143,6 @@ const SLOT_VIEW: Record<Slot, (app: App) => TemplateResult | null> = {
   },
 };
 
-const firstLine = (s: string) => (s.split("\n")[0] ?? "").slice(0, 120);
 
 interface DayItem { at: number; time: string; title: string; kind: string }
 
