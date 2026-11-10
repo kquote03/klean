@@ -1,11 +1,14 @@
 # Every push and PR runs the gate. Every push to main also refreshes the rolling
 # "nightly" pre-release, so the newest APK is always at:
 #   https://github.com/<owner>/<repo>/releases/download/nightly/klean-debug.apk
+# The server image (backend + web) is tested on every run and pushed to GHCR on pushes to main and on
+# milestone tags (m*, p*): ghcr.io/<owner>/klean-backend (see docker.yml).
 name: ci
 
 on:
   push:
     branches: [main]
+    tags: ["m*", "p*"]
   pull_request:
   workflow_dispatch:
 
@@ -17,6 +20,14 @@ jobs:
   build:
     uses: ./.github/workflows/build.yml
     secrets: inherit
+
+  docker:
+    uses: ./.github/workflows/docker.yml
+    with:
+      push: ${{ github.event_name == 'push' }}
+    permissions:
+      contents: read
+      packages: write
 
   rolling-release:
     needs: build
