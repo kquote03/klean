@@ -89,7 +89,7 @@ fun TaskEditScreen(
                     }
                 },
                 actions = {
-                    if (!s.isNew) {
+                    if (!s.isNew && !s.google) {
                         IconButton(onClick = vm::delete, modifier = Modifier.size(48.dp)) {
                             Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.tasks_delete))
                         }
@@ -125,7 +125,7 @@ fun TaskEditScreen(
                 extensions.forEach { it.Content(taskId, s.title, Modifier.padding(top = 8.dp)) }
             }
             // List.
-            if (s.parentId == null) {
+            if (s.parentId == null && !s.google) {
                 Row(Modifier.padding(top = 8.dp)) {
                     OutlinedButton(onClick = { listMenu = true }, modifier = Modifier.heightIn(min = 48.dp)) {
                         Text(stringResource(R.string.tasks_field_list, lists.firstOrNull { it.id == s.listId }?.name ?: lists.firstOrNull()?.name.orEmpty()))

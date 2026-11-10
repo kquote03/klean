@@ -84,7 +84,7 @@ class TasksViewModel @Inject constructor(
     )
 
     init {
-        viewModelScope.launch { repo.ensureDefaultLists() }
+        viewModelScope.launch { repo.ensureDefaultLists(); repo.refreshRemote() }
     }
 
     val uiState: StateFlow<TasksUiState> = combine(

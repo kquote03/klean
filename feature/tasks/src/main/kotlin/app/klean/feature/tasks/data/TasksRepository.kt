@@ -7,6 +7,8 @@ import app.klean.core.data.db.entity.TaskListEntity
 import app.klean.core.data.db.transact
 import app.klean.core.data.settings.SettingsRepository
 import app.klean.core.data.sync.SyncStamper
+import app.klean.core.google.GoogleTaskEdits
+import app.klean.core.google.TaskOrigin
 import app.klean.shared.id.UuidV7
 import app.klean.shared.id.nameUuid
 import app.klean.shared.time.RecurrenceRule
@@ -93,6 +95,9 @@ interface TasksRepository {
 
     fun today(): LocalDate
 
+    /** The Tasks screen opened: ask overlays (Google Tasks) to refresh. */
+    suspend fun refreshRemote() {}
+
     companion object {
         const val ARCHIVE_AFTER_DAYS = 30
     }
@@ -106,6 +111,8 @@ class DefaultTasksRepository @Inject constructor(
     private val zone: ZoneProvider,
     private val settings: SettingsRepository,
     private val listeners: Set<@JvmSuppressWildcards TaskChangeListener>,
+    /** Google Tasks overlay (M21): told about every edit of a task whose origin is GOOGLE. */
+    private val google: Set<@JvmSuppressWildcards GoogleTaskEdits> = emptySet(),
 ) : TasksRepository {
     private val tasks get() = db.taskDao()
     private val lists get() = db.taskListDao()
@@ -163,7 +170,9 @@ class DefaultTasksRepository @Inject constructor(
 
     private suspend fun insert(d: TaskDraft): String {
         val id = UuidV7.generate(now())
-        val listId = d.listId ?: d.parentId?.let { tasks.get(it)?.listId } ?: settings.get(TasksKeys.DefaultListId)
+        val wanted = d.listId ?: d.parentId?.let { tasks.get(it)?.listId } ?: settings.get(TasksKeys.DefaultListId)
+        // Klean never creates a task in Google: a new task (or step) aimed at a Google list goes to the default list.
+        val listId = if (lists.get(wanted)?.source == TaskOrigin.GOOGLE) settings.get(TasksKeys.DefaultListId) else wanted
         tasks.upsert(
             TaskEntity(
                 id = id,
@@ -185,9 +194,16 @@ class DefaultTasksRepository @Inject constructor(
     override suspend fun update(task: TaskEntity) {
         db.transact {
             val prev = tasks.get(task.id) ?: return@transact
-            tasks.upsert(task.copy(title = task.title.trim(), sync = stamper.stamp(prev.sync)))
+            // A Google task stays in its Google list with its remote ids (moving it would mean creating one in Google).
+            val kept = if (prev.origin == TaskOrigin.GOOGLE) {
+                task.copy(listId = prev.listId, origin = prev.origin, remoteId = prev.remoteId, remoteListId = prev.remoteListId, remoteEtag = prev.remoteEtag)
+            } else {
+                task
+            }
+            tasks.upsert(kept.copy(title = task.title.trim(), sync = stamper.stamp(prev.sync)))
         }
         notifyChanged()
+        toGoogle(task.id)
     }
 
     override suspend fun complete(id: String): Completion {
@@ -197,6 +213,7 @@ class DefaultTasksRepository @Inject constructor(
             Completion(id, nextOccurrence(t))
         }
         notifyChanged()
+        toGoogle(id)
         return c
     }
 
@@ -223,11 +240,13 @@ class DefaultTasksRepository @Inject constructor(
             reopenRow(c.id)
         }
         notifyChanged()
+        toGoogle(c.id)
     }
 
     override suspend fun reopen(id: String) {
         db.transact { reopenRow(id) }
         notifyChanged()
+        toGoogle(id)
     }
 
     private suspend fun reopenRow(id: String) {
@@ -237,7 +256,8 @@ class DefaultTasksRepository @Inject constructor(
 
     override suspend fun delete(id: String) {
         db.transact {
-            val t = tasks.get(id) ?: return@transact
+            // Klean never deletes a Google task; it is removed in Google Tasks itself.
+            val t = tasks.get(id)?.takeUnless { it.origin == TaskOrigin.GOOGLE } ?: return@transact
             subtasks(id).forEach { tombstone(it) }
             tombstone(t)
         }
@@ -263,6 +283,7 @@ class DefaultTasksRepository @Inject constructor(
             tasks.upsert(change(t).copy(sync = stamper.stamp(t.sync)))
         }
         notifyChanged()
+        toGoogle(id)
     }
 
     override suspend fun archiveOldCompleted(): Int {
@@ -278,6 +299,15 @@ class DefaultTasksRepository @Inject constructor(
 
     private suspend fun notifyChanged() = listeners.forEach { it.onTasksChanged() }
 
+    /** Queues the task's new state for Google when it lives there. */
+    private suspend fun toGoogle(id: String) {
+        if (google.isEmpty()) return
+        val t = tasks.get(id)?.takeIf { it.origin == TaskOrigin.GOOGLE && !it.sync.deleted } ?: return
+        google.forEach { it.edited(t) }
+    }
+
+    override suspend fun refreshRemote() = google.forEach { it.refreshSoon() }
+
     companion object {
         private const val DAY_MS = 86_400_000L
         /** Name-based, so two devices that both seed agree on the rows (and sync merges them). */
@@ -291,4 +321,5 @@ class DefaultTasksRepository @Inject constructor(
 abstract class TasksDataModule {
     @Binds abstract fun repo(impl: DefaultTasksRepository): TasksRepository
     @Multibinds abstract fun listeners(): Set<TaskChangeListener>
+    @Multibinds abstract fun googleEdits(): Set<GoogleTaskEdits>
 }

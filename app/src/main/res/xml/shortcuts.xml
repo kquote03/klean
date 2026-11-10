@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- GENERATED twin: src/main (app.klean) and src/debug (app.klean.debug) differ only in targetPackage;
+     ShortcutsXmlTest checks they stay in step. See docs/assistant.md. Every entry opens the capture sheet
+     (CaptureActivity), prefilled at most; nothing is saved until the person taps Save. -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <capability android:name="actions.intent.CREATE_THING">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetClass="app.klean.core.capture.CaptureActivity"
+            android:targetPackage="app.klean">
+            <parameter
+                android:name="thing.name"
+                android:key="text" />
+        </intent>
+    </capability>
+    <capability android:name="actions.intent.UPDATE_ITEM_LIST">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetClass="app.klean.core.capture.CaptureActivity"
+            android:targetPackage="app.klean">
+            <parameter
+                android:name="itemList.itemListElement.name"
+                android:key="text" />
+            <extra
+                android:key="module"
+                android:value="tasks" />
+        </intent>
+    </capability>
+    <capability android:name="actions.intent.RECORD_FOOD_OBSERVATION">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetClass="app.klean.core.capture.CaptureActivity"
+            android:targetPackage="app.klean">
+            <parameter
+                android:name="foodObservation.aboutFood.name"
+                android:key="text" />
+            <extra
+                android:key="module"
+                android:value="diet" />
+        </intent>
+    </capability>
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_tile"
+        android:shortcutId="capture"
+        android:shortcutLongLabel="@string/shortcut_capture_long"
+        android:shortcutShortLabel="@string/shortcut_capture_short">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="klean://capture"
+            android:targetClass="app.klean.core.capture.CaptureActivity"
+            android:targetPackage="app.klean" />
+    </shortcut>
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_tile"
+        android:shortcutId="log_food"
+        android:shortcutLongLabel="@string/shortcut_food_long"
+        android:shortcutShortLabel="@string/shortcut_food_short">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="klean://capture?module=diet"
+            android:targetClass="app.klean.core.capture.CaptureActivity"
+            android:targetPackage="app.klean" />
+    </shortcut>
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_tile"
+        android:shortcutId="new_task"
+        android:shortcutLongLabel="@string/shortcut_task_long"
+        android:shortcutShortLabel="@string/shortcut_task_short">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="klean://capture?module=tasks"
+            android:targetClass="app.klean.core.capture.CaptureActivity"
+            android:targetPackage="app.klean" />
+    </shortcut>
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_tile"
+        android:shortcutId="remind_me"
+        android:shortcutLongLabel="@string/shortcut_remind_long"
+        android:shortcutShortLabel="@string/shortcut_remind_short">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="klean://capture?module=reminders"
+            android:targetClass="app.klean.core.capture.CaptureActivity"
+            android:targetPackage="app.klean" />
+    </shortcut>
+</shortcuts>

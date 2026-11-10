@@ -1,5 +1,7 @@
 package app.klean.feature.tasks.ui
 
+import app.klean.core.google.ui.GoogleChip
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -293,7 +295,7 @@ private fun ListChips(v: TaskViewsModel, vm: TasksViewModel) {
             }
             item { AssistChip(onClick = { adding = true }, label = { Text(stringResource(R.string.tasks_new_list)) }) }
         }
-        if (current != null) {
+        if (current != null && current.source != "GOOGLE") {
             Box {
                 IconButton(onClick = { menu = true }, modifier = Modifier.size(48.dp)) {
                     Icon(Icons.Rounded.MoreVert, contentDescription = stringResource(R.string.tasks_list_options))
@@ -367,9 +369,10 @@ internal fun TaskRow(
                 r.listName,
                 if (r.subtasksTotal > 0) "${r.subtasksDone}/${r.subtasksTotal}" else null,
             )
-            if (meta.isNotEmpty() || r.recurring) {
+            if (meta.isNotEmpty() || r.recurring || r.google) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(meta.joinToString(" · "), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    if (r.google) GoogleChip(Modifier.padding(start = 4.dp))
                     if (r.recurring) {
                         Icon(
                             Icons.Rounded.Repeat, contentDescription = stringResource(R.string.tasks_repeats),

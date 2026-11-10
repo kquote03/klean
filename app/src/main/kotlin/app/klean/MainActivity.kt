@@ -5,6 +5,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import app.klean.core.capture.CaptureActivity
+import app.klean.core.capture.CaptureLinks
 import app.klean.core.data.prefs.DevicePrefs
 import app.klean.core.ui.theme.KleanThemeFromPrefs
 import app.klean.nav.KleanAppUi
@@ -22,6 +24,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (savedInstanceState == null) forwardCapture(intent)
         enableEdgeToEdge()
         setContent { KleanThemeFromPrefs(prefs) { KleanAppUi(deepLinks = newIntents) } }
     }
@@ -29,6 +32,14 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        if (forwardCapture(intent)) return
         newIntents.tryEmit(intent)
+    }
+
+    /** `klean://capture?…` opened as a plain link (browser, adb, web): hand it to the capture sheet. */
+    private fun forwardCapture(intent: Intent): Boolean {
+        if (!CaptureLinks.isCaptureLink(intent.dataString)) return false
+        startActivity(Intent(this, CaptureActivity::class.java).setData(intent.data))
+        return true
     }
 }

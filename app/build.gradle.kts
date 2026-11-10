@@ -79,7 +79,7 @@ dependencies {
 tasks.withType<Test>().configureEach {
     inputs.files(
         fileTree(rootDir) {
-            include("**/src/main/res/**/*.xml", "**/src/main/AndroidManifest.xml")
+            include("**/src/main/res/**/*.xml", "**/src/main/AndroidManifest.xml", "app/src/debug/res/xml/*.xml")
             exclude("**/build/**", ".gradle/**", "web/**") // web/: the web client (pnpm output, node_modules)
         },
     ).withPathSensitivity(PathSensitivity.RELATIVE).withPropertyName("userFacingResources")

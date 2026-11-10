@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="google_tasks_title">Google Tasks</string>
+    <string name="google_connect_headline">Show your Google Tasks</string>
+    <string name="google_connect_body">Your Google lists appear after Klean\'s own lists. You can tick tasks off and change their title, notes and date. Klean never adds tasks to Google.</string>
+    <string name="google_connect">Connect</string>
+    <string name="google_connected">Connected</string>
+    <string name="google_connected_body">Pick which Google lists to show.</string>
+    <string name="google_sync_now">Sync now</string>
+    <string name="google_disconnect">Disconnect Google Tasks</string>
+    <string name="google_disconnected">Google lists left Klean. Nothing changed in Google.</string>
+    <string name="google_unavailable">Google sign-in needs Google Play services, which this phone doesn\'t have. Everything else works as usual.</string>
+    <string name="google_unavailable_now">Google sign-in isn\'t available right now. You can try again later.</string>
+    <string name="google_declined">Not connected. You can connect any time.</string>
+    <string name="google_reconnect">Google wants you to connect again.</string>
+    <string name="google_sync_later">Couldn\'t reach Google. Your changes are kept and will be sent later.</string>
+    <string name="google_chip">G</string>
+    <string name="google_chip_desc">From Google Tasks</string>
+</resources>

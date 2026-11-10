@@ -82,6 +82,7 @@ class CaptureViewModel @Inject constructor(
 
     private val _state = MutableStateFlow(
         CaptureUiState(
+            text = savedState.get<String>(CaptureActivity.EXTRA_TEXT).orEmpty(),
             startVoice = savedState.get<Boolean>(CaptureActivity.EXTRA_START_VOICE) == true,
             placeholderRes = target?.let { t -> registry.all.firstOrNull { it.id == t }?.capturePlaceholderRes }
                 ?: R.string.capture_placeholder,

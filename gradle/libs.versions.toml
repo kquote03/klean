@@ -36,6 +36,7 @@ logback = "1.6.6"
 logstashEncoder = "9.0"
 zxingEmbedded = "4.3.0"
 healthConnect = "1.1.0"
+playServicesAuth = "22.0.0"
 
 [libraries]
 android-gradlePlugin = { module = "com.android.tools.build:gradle", version.ref = "agp" }
@@ -87,6 +88,8 @@ ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
 # Pairing QR scanner without Play services (M25)
 zxing-android-embedded = { module = "com.journeyapps:zxing-android-embedded", version.ref = "zxingEmbedded" }
 health-connect = { module = "androidx.health.connect:connect-client", version.ref = "healthConnect" }
+# Google Tasks sign-in (M21): AuthorizationClient only; the phone works without Play services.
+play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuth" }
 exifinterface = { module = "androidx.exifinterface:exifinterface", version.ref = "exif" }
 documentfile = { module = "androidx.documentfile:documentfile", version.ref = "documentfile" }
 junit = { module = "junit:junit", version.ref = "junit" }

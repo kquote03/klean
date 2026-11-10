@@ -5,6 +5,8 @@ plugins {
 dependencies {
     implementation(project(":core:notifications"))
     implementation(project(":core:capture"))
+    // Google Tasks overlay (M21): the edit hook, the "G" chip and the Settings section.
+    api(project(":core:google"))
     // The Reminders tab, the repeat picker and the reminder editor live in the Reminders module.
     implementation(project(":feature:reminders"))
     implementation(libs.core.ktx)
