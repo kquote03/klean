@@ -15,4 +15,8 @@ interface TaskListDao {
 
     @Query("SELECT * FROM task_list WHERE deleted = 0 ORDER BY position, name")
     fun observeAll(): Flow<List<TaskListEntity>>
+
+    // --- M18 (Tasks lane) ---
+    @Query("SELECT MAX(position) FROM task_list WHERE deleted = 0")
+    suspend fun maxPosition(): Int?
 }
