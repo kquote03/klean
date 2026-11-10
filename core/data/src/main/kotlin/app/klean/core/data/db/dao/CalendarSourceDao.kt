@@ -16,6 +16,10 @@ interface CalendarSourceDao {
     @Query("SELECT * FROM calendar_source WHERE deleted = 0 ORDER BY kind, name")
     fun observeAll(): Flow<List<CalendarSourceEntity>>
 
+    // M19 calendar: one-shot read for the status line.
+    @Query("SELECT * FROM calendar_source WHERE deleted = 0 ORDER BY kind, name")
+    suspend fun all(): List<CalendarSourceEntity>
+
     @Query("SELECT * FROM calendar_source WHERE deleted = 0 AND selected = 1 ORDER BY kind, name")
     fun observeSelected(): Flow<List<CalendarSourceEntity>>
 
