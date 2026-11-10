@@ -6,4 +6,9 @@
     <string name="design_card_open">Open</string>
     <string name="design_repeat_again">Log %1$s again</string>
     <string name="design_capture_stop_listening">Stop listening</string>
+    <string name="design_more_options">More options</string>
+    <string name="design_add">Add</string>
+    <string name="design_add_close">Close the Add menu</string>
+    <string name="design_type_or_speak">Type or speak…</string>
+    <string name="design_selected">Selected</string>
 </resources>

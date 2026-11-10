@@ -38,6 +38,12 @@ interface KleanModule {
      * its own gate and settings entry but gets no bottom-bar or More item.
      */
     val inNavigation: Boolean get() = true
+
+    /**
+     * True when the start screen is built on `KleanScreen`, which draws its navigation group's title and module
+     * tabs itself. Until a screen is redesigned, the app shell draws them above it.
+     */
+    val drawsGroupChrome: Boolean get() = false
     fun registerGraph(builder: NavGraphBuilder, nav: NavController)
     @Composable fun DashboardCard(onOpen: () -> Unit, modifier: Modifier) {}
 

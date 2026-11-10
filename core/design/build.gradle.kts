@@ -4,6 +4,9 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 dependencies {
+    // KleanScreen: BackHandler for the Add menu; the lifecycle owner that names a screen for its group chrome.
+    implementation(libs.activity.compose)
+    implementation(libs.lifecycle.runtime.compose)
     testImplementation(libs.junit)
     testImplementation(project(":core:testing"))
     testImplementation(libs.serialization.json)

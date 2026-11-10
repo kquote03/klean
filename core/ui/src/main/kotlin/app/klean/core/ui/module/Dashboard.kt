@@ -79,6 +79,18 @@ class DashboardContributions @Inject constructor(
         if (on.isEmpty()) flowOf(emptyList()) else combine(on.map { it.summaries() }) { lists -> lists.flatMap { it } }
     }
 
+    /** The same tiles keyed by module, for Today's group cards (a module with several providers keeps them in order). */
+    fun summariesByModule(): Flow<Map<ModuleId, List<SummaryItem>>> = gate.disabledIds.distinctUntilChanged().flatMapLatest { off ->
+        val on = summaryProviders.filter { it.moduleId !in off }.sortedBy { it.moduleId.value }
+        if (on.isEmpty()) {
+            flowOf(emptyMap())
+        } else {
+            combine(on.map { p -> p.summaries().map { p.moduleId to it } }) { pairs ->
+                pairs.groupBy({ it.first }, { it.second }).mapValues { (_, l) -> l.flatten() }
+            }
+        }
+    }
+
     fun hasActivityProviders(): Flow<Boolean> =
         gate.disabledIds.map { off -> activityProviders.any { it.moduleId !in off } }.distinctUntilChanged()
 
@@ -147,6 +159,18 @@ class TodayItems @Inject constructor(
     fun items(): Flow<List<TodayItem>> = gate.disabledIds.distinctUntilChanged().flatMapLatest { off ->
         val on = providers.filter { it.moduleId !in off }.sortedBy { it.moduleId.value }
         if (on.isEmpty()) flowOf(emptyList()) else combine(on.map { it.items() }) { l -> l.flatMap { it }.sortedBy { it.sortKey } }
+    }
+
+    /** The same items keyed by module, soonest first within each, for Today's group cards. */
+    fun itemsByModule(): Flow<Map<ModuleId, List<TodayItem>>> = gate.disabledIds.distinctUntilChanged().flatMapLatest { off ->
+        val on = providers.filter { it.moduleId !in off }.sortedBy { it.moduleId.value }
+        if (on.isEmpty()) {
+            flowOf(emptyMap())
+        } else {
+            combine(on.map { p -> p.items().map { p.moduleId to it } }) { pairs ->
+                pairs.groupBy({ it.first }, { it.second }).mapValues { (_, l) -> l.flatten().sortedBy { it.sortKey } }
+            }
+        }
     }
 }
 
