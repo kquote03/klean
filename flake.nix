@@ -20,7 +20,8 @@
       sdkRoot = "${sdk}/libexec/android-sdk";
     in {
       devShells.${system}.default = pkgs.mkShell {
-        packages = [ sdk pkgs.jdk21 pkgs.git pkgs.curl pkgs.sqlite ];
+        # nodejs_22 + pnpm: the web client (web/, M26).
+        packages = [ sdk pkgs.jdk21 pkgs.git pkgs.curl pkgs.sqlite pkgs.nodejs_22 pkgs.pnpm ];
         ANDROID_HOME = sdkRoot;
         ANDROID_SDK_ROOT = sdkRoot;
         JAVA_HOME = pkgs.jdk21.home;
