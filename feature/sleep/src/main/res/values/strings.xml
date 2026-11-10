@@ -1,2 +1,66 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources></resources>
+<resources>
+    <string name="sleep_label">Sleep</string>
+    <string name="sleep_card_title">Sleep</string>
+    <string name="sleep_back">Back</string>
+    <string name="sleep_settings">Sleep settings</string>
+    <string name="sleep_settings_title">Sleep</string>
+    <string name="sleep_capture_placeholder">e.g. slept at 11 woke at 7</string>
+
+    <!-- One tap -->
+    <string name="sleep_go_to_bed">Going to bed</string>
+    <string name="sleep_im_up">I\'m up</string>
+    <string name="sleep_since">Sleeping since %1$s</string>
+    <string name="sleep_good_night">Good night</string>
+    <string name="sleep_good_morning">Morning noted</string>
+
+    <!-- Durations -->
+    <string name="sleep_duration_hm">%1$d h %2$d m</string>
+    <string name="sleep_duration_h">%1$d h</string>
+    <string name="sleep_duration_m">%1$d m</string>
+    <string name="sleep_range">%1$s – %2$s</string>
+
+    <!-- Screens -->
+    <string name="sleep_nights">Recent nights</string>
+    <string name="sleep_nights_empty">Nights you log show up here.</string>
+    <string name="sleep_no_night">Nothing logged</string>
+    <string name="sleep_add_night">Add a night</string>
+    <string name="sleep_edit_title">Night</string>
+    <string name="sleep_edit_new">Add a night</string>
+    <string name="sleep_bed_time">Went to bed</string>
+    <string name="sleep_wake_time">Woke up</string>
+    <string name="sleep_still_asleep">Still asleep</string>
+    <string name="sleep_save">Save</string>
+    <string name="sleep_delete">Delete</string>
+    <string name="sleep_removed">Night removed</string>
+    <string name="sleep_undo">Undo</string>
+    <string name="sleep_ok">OK</string>
+    <string name="sleep_cancel">Cancel</string>
+    <string name="sleep_day_today">Today</string>
+    <string name="sleep_day_yesterday">Yesterday</string>
+
+    <!-- Today -->
+    <string name="sleep_tile_last">Last night · %1$s</string>
+    <string name="sleep_tile_none">No night logged</string>
+    <string name="sleep_last_night">Last night: %1$s</string>
+    <string name="sleep_card_empty">Tap when you go to bed and when you\'re up.</string>
+    <string name="sleep_status_slept">Slept %1$s</string>
+    <string name="sleep_item_bedtime">Going to bed</string>
+    <string name="sleep_item_asleep">I\'m up</string>
+
+    <!-- Settings -->
+    <string name="sleep_settings_schedule">Sleep schedule</string>
+    <string name="sleep_settings_schedule_hint">Klean stays quiet between these times, with Sleep on or off.</string>
+    <string name="sleep_settings_bedtime">Bedtime reminder</string>
+    <string name="sleep_settings_bedtime_hint">One gentle note before bedtime</string>
+    <string name="sleep_settings_lead">How long before</string>
+    <string name="sleep_minutes_before">%1$d min before</string>
+    <string name="sleep_settings_session">Show while asleep</string>
+    <string name="sleep_settings_session_hint">A quiet notification with \"I\'m up\" while a night is open</string>
+
+    <!-- Notifications -->
+    <string name="sleep_bedtime_title">Winding down soon?</string>
+    <string name="sleep_bedtime_body">Bedtime is at %1$s.</string>
+    <string name="sleep_channel_bedtime">Bedtime reminder</string>
+    <string name="sleep_channel_session">While asleep</string>
+</resources>

@@ -5,6 +5,8 @@ plugins {
 dependencies {
     implementation(project(":core:notifications"))
     implementation(project(":core:capture"))
+    // The sleep schedule editor is the quiet-hours picker (M20: the schedule is the source of quiet hours).
+    implementation(project(":feature:settings"))
     implementation(libs.core.ktx)
     testImplementation(libs.androidx.junit)
     testImplementation(libs.datastore.preferences)

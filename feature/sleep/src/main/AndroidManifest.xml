@@ -1,1 +1,13 @@
-<manifest />
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <!-- Bedtime reminder alarm (M20). -->
+        <receiver
+            android:name=".notify.BedtimeReceiver"
+            android:exported="false" />
+        <!-- "Going to bed" / "I'm up" from the notifications. -->
+        <receiver
+            android:name=".notify.SleepActionReceiver"
+            android:exported="false" />
+    </application>
+</manifest>

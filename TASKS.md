@@ -472,6 +472,6 @@ Verified on Waydroid (Android 13, 540×1212) on 2026-11-10 (M19 Calendar), scree
 - [x] 20.3 — Sleep logic (`SleepMath`, `SleepText`) + `SleepRepository` (go to bed / wake up / toggle / log / edit)
 - [x] 20.4 — Workout module: screens (home, template editor, session, exercises + history), capture `log_workout`, Today card, tile, activity, status line, Today items, settings
 - [x] 20.5 — Gentle workout suggestion: format rotation (`prompt_log` trigger WORKOUT), quiet hours, every N days, off by default
-- [ ] 20.6 — Sleep module: screens (nights list, edit, settings with the schedule editor), capture `log_sleep`, Today card with one tap, tile, activity, status line, Today items (widget toggle)
-- [ ] 20.7 — Bedtime reminder (30 min before, once) and the "Sleeping since" notification with "I'm up"
+- [x] 20.6 — Sleep module: screens (nights list, edit, settings with the schedule editor), capture `log_sleep`, Today card with one tap, tile, activity, status line, Today items (widget toggle)
+- [x] 20.7 — Bedtime reminder (30 min before, once) and the "Sleeping since" notification with "I'm up"
 - [ ] 20.8 — `WorkoutDisableTest` / `SleepDisableTest` (androidTest), gate, Waydroid walkthrough
