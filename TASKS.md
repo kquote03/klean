@@ -583,6 +583,15 @@ Known gaps:
 - Server-side push schedules (reminders, birthdays, bedtime, approvals mirrored by the server) are not built: the web subscribes, the backend's `PushService.send` hook still has no scheduler.
 - "Last night" uses calendar days, not Android's logical day.
 
+## Server image (`klean-server`, Dockerfile, GHCR; plan `.hermes/plans/2026-11-10_193000-ghcr-image-and-next-milestones.md`, revised by the user: Dockerfiles, image name `klean-server`)
+
+- [x] Repo-root `Dockerfile` (multi-stage): web stage (Node 22 + pnpm via corepack → `web/dist`), server stage (JDK 21, `./gradlew :backend:installDist -Pklean.serverOnly=true -Pklean.web=prebuilt`, no Android SDK), runtime stage (JRE 21, uid 10001, `/data` volume, port 8080, OCI labels). Base images pinned by digest; build stages run on `$BUILDPLATFORM`, the runtime stage has no RUN, so amd64 + arm64 need no emulation. Jib removed
+- [x] `settings.gradle.kts`: `-Pklean.serverOnly=true` includes only `:shared` and `:backend`. `backend/build.gradle.kts`: `klean.web` = auto | require | prebuilt | false; reproducible archives (no timestamps, fixed order)
+- [x] `scripts/image-smoke.sh` (health, web app at `/`, SPA fallback, API 404, non-root, `/data` writable) and `scripts/image-repro.sh` (two `--no-cache` buildx builds with `SOURCE_DATE_EPOCH` + `rewrite-timestamp=true`, same digest)
+- [x] CI `.github/workflows/docker.yml` (replaces build.yml's `backend` job): backend tests → amd64 build + smoke + reproducibility → on pushes to main and `m*`/`p*` tags, push `ghcr.io/kquote03/klean-server` (linux/amd64 + linux/arm64; tags `latest`, `main`, `sha-<short>`, `0.1.0-<count>-<short>`, milestone tag)
+- [x] `deploy/docker-compose.yml` defaults to `ghcr.io/kquote03/klean-server:latest` with a `build:` fallback (`up -d --build`); `docs/deploy.md` rewritten (run, tags, build from source, reproducibility); `web/e2e/run.sh` uses `docker build -t klean-server:e2e .`
+- [ ] The user sets the GHCR package to public once (package settings → Change visibility); no API for it
+
 ## UI polish after the M25 visual review (branch `next`)
 
 - [x] P.1 — Calendar: one "View: …" picker button (dropdown of all views) replaces the scrolling chip row that ran off 540 px; `CalendarScreenTest.viewPickerFitsANarrowPhone` (w360dp) — next
@@ -610,15 +619,6 @@ Known gaps:
 - [x] 23.6 — Waydroid (2026-11-10, `~/.hermes/cache/scratch/next/shots/23-*`, stub log `…/next/hermes-stub.log`) against `scripts/device/hermes-stub.py` on the host (`http://192.168.240.1:8642`, key `stub-key`): Settings › Delegation → Test → "Hermes answered. You're set."; task "Invite the team to the offsite" → Delegate → "Ask Hermes…" → thread "Has a question for you" + notification "A question about …"; **replied inline from the notification shade** ("The 20th" → stub got `{"klean":"answer","text":"The 20th"}`); notification "Ready for your OK … 6 recipients", Delegation shows "Waiting for your OK"; approval screen lists the draft and all 6 recipients with the "more than 5 people" line; Edit → removed person6 → "Approve with edits" → stub got `decision EDITED` with 5 recipients and the draft; "Finished" notification; thread shows the result "Sent the invitation to 5 people: …" and "Mark the task done". Crash buffer empty
 - [x] 23.8 — gate BUILD SUCCESSFUL: 1078 tests, 0 failures, 1 skipped
 - [ ] 23.7 — Not built: resuming a delegation's event stream after the app process dies (Hermes keeps the session; Klean would need to re-attach with `Last-Event-ID`); the web has no delegation start (it edits approvals, M26). A real Hermes needs the user's URL and key
-
-## Server image (`klean-server`, Dockerfile, GHCR; plan `.hermes/plans/2026-11-10_193000-ghcr-image-and-next-milestones.md`, revised by the user: Dockerfiles, image name `klean-server`)
-
-- [x] Repo-root `Dockerfile` (multi-stage): web stage (Node 22 + pnpm via corepack → `web/dist`), server stage (JDK 21, `./gradlew :backend:installDist -Pklean.serverOnly=true -Pklean.web=prebuilt`, no Android SDK), runtime stage (JRE 21, uid 10001, `/data` volume, port 8080, OCI labels). Base images pinned by digest; build stages run on `$BUILDPLATFORM`, the runtime stage has no RUN, so amd64 + arm64 need no emulation. Jib removed
-- [x] `settings.gradle.kts`: `-Pklean.serverOnly=true` includes only `:shared` and `:backend`. `backend/build.gradle.kts`: `klean.web` = auto | require | prebuilt | false; reproducible archives (no timestamps, fixed order)
-- [x] `scripts/image-smoke.sh` (health, web app at `/`, SPA fallback, API 404, non-root, `/data` writable) and `scripts/image-repro.sh` (two `--no-cache` buildx builds with `SOURCE_DATE_EPOCH` + `rewrite-timestamp=true`, same digest)
-- [x] CI `.github/workflows/docker.yml` (replaces build.yml's `backend` job): backend tests → amd64 build + smoke + reproducibility → on pushes to main and `m*`/`p*` tags, push `ghcr.io/kquote03/klean-server` (linux/amd64 + linux/arm64; tags `latest`, `main`, `sha-<short>`, `0.1.0-<count>-<short>`, milestone tag)
-- [x] `deploy/docker-compose.yml` defaults to `ghcr.io/kquote03/klean-server:latest` with a `build:` fallback (`up -d --build`); `docs/deploy.md` rewritten (run, tags, build from source, reproducibility); `web/e2e/run.sh` uses `docker build -t klean-server:e2e .`
-- [ ] The user sets the GHCR package to public once (package settings → Change visibility); no API for it
 
 ## M21 — Google Tasks overlay + Assistant (`core/google`, branch `next`; plan §M21, docs `docs/google-oauth.md`, `docs/assistant.md`)
 
