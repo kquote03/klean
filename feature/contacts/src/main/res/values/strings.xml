@@ -1,2 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources></resources>
+<resources>
+    <!-- Birthday reminders (BirthdayReminderSync) -->
+    <string name="birthdays_reminder_today">It\'s %1$s\'s birthday today</string>
+    <string name="birthdays_reminder_today_age">%1$s turns %2$d today</string>
+    <plurals name="birthdays_reminder_in_days">
+        <item quantity="one">%1$s\'s birthday is tomorrow</item>
+        <item quantity="other">%1$s\'s birthday is in %2$d days</item>
+    </plurals>
+    <plurals name="birthdays_reminder_in_days_age">
+        <item quantity="one">%1$s turns %3$d tomorrow</item>
+        <item quantity="other">%1$s turns %3$d in %2$d days</item>
+    </plurals>
+</resources>
