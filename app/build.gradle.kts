@@ -83,6 +83,13 @@ tasks.withType<Test>().configureEach {
             exclude("**/build/**", ".gradle/**")
         },
     ).withPathSensitivity(PathSensitivity.RELATIVE).withPropertyName("userFacingResources")
+    // NoRawColorsTest reads every module's Kotlin sources.
+    inputs.files(
+        fileTree(rootDir) {
+            include("**/src/main/**/*.kt")
+            exclude("**/build/**", ".gradle/**", "web/**")
+        },
+    ).withPathSensitivity(PathSensitivity.RELATIVE).withPropertyName("mainKotlinSources")
 }
 
 fun gitOutput(vararg args: String): String? = providers.exec {
