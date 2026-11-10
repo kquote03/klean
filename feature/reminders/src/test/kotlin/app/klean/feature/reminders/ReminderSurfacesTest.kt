@@ -15,6 +15,7 @@ import app.klean.shared.time.HOUR_MS
 import app.klean.shared.time.MINUTE_MS
 import app.klean.shared.time.atMinute
 import kotlinx.coroutines.runBlocking
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.datetime.LocalDate
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -53,20 +54,20 @@ class ReminderSurfacesTest {
     @Test fun nextReminderOnTheStatusLineTileAndWidget() = runBlocking {
         repo.add("Call Ahmed", noon + 5 * HOUR_MS, "Asia/Dubai", isAlarm = false)
         repo.add("Tomorrow thing", noon + 30 * HOUR_MS, "Asia/Dubai", isAlarm = false)
-        surfaces.fragments().test {
+        surfaces.fragments().test(timeout = 10.seconds) {
             var l = awaitItem()
             while (l.isEmpty()) l = awaitItem()
             assertEquals(ReminderSurfaces.KEY_NEXT, l.single().key)
             assertTrue(l.single().text.startsWith("Call Ahmed "))
             cancelAndIgnoreRemainingEvents()
         }
-        surfaces.items().test {
+        surfaces.items().test(timeout = 10.seconds) {
             var l = awaitItem()
             while (l.isEmpty()) l = awaitItem()
             assertEquals(listOf("Call Ahmed"), l.map { it.text })
             cancelAndIgnoreRemainingEvents()
         }
-        surfaces.summaries().test {
+        surfaces.summaries().test(timeout = 10.seconds) {
             var l = awaitItem()
             while (l.isEmpty()) l = awaitItem()
             assertEquals("Next reminder", l.single().label)
@@ -78,7 +79,7 @@ class ReminderSurfacesTest {
     @Test fun aFiredReminderComesFirst() = runBlocking {
         val id = repo.add("Pills", noon, "Asia/Dubai", isAlarm = false)
         repo.update(db.reminderDao().get(id)!!.copy(state = RINGING, lastFiredAt = noon))
-        surfaces.fragments().test {
+        surfaces.fragments().test(timeout = 10.seconds) {
             var l = awaitItem()
             while (l.isEmpty()) l = awaitItem()
             assertEquals(ReminderSurfaces.KEY_FIRED, l.first().key)
