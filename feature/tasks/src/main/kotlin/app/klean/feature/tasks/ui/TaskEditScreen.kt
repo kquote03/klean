@@ -114,6 +114,16 @@ fun TaskEditScreen(
                 value = s.notes, onValueChange = vm::setNotes, label = { Text(stringResource(R.string.tasks_field_notes)) },
                 minLines = 2, modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
             )
+            // Other modules' additions (Delegation's "Delegate", M23), only for a saved task.
+            val taskId = s.id
+            if (!s.isNew && taskId != null) {
+                val extensions = remember {
+                    runCatching {
+                        dagger.hilt.android.EntryPointAccessors.fromApplication(ctx.applicationContext, app.klean.core.ui.module.TaskExtensionsEntryPoint::class.java).taskExtensions()
+                    }.getOrDefault(emptySet())
+                }
+                extensions.forEach { it.Content(taskId, s.title, Modifier.padding(top = 8.dp)) }
+            }
             // List.
             if (s.parentId == null) {
                 Row(Modifier.padding(top = 8.dp)) {

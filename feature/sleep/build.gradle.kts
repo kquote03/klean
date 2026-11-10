@@ -5,6 +5,7 @@ plugins {
 dependencies {
     implementation(project(":core:notifications"))
     implementation(project(":core:capture"))
+    implementation(project(":core:health"))
     // The sleep schedule editor is the quiet-hours picker (M20: the schedule is the source of quiet hours).
     implementation(project(":feature:settings"))
     implementation(libs.core.ktx)

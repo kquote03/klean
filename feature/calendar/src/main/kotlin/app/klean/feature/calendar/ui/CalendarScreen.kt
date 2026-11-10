@@ -5,7 +5,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,13 +29,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Today
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.FilterChip
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -176,19 +177,7 @@ fun CalendarScreenContent(
                 IconButton(onClick = onPrevious, modifier = Modifier.size(48.dp)) {
                     Icon(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, contentDescription = stringResource(R.string.calendar_previous))
                 }
-                Row(
-                    Modifier.weight(1f).horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    CalendarView.entries.forEach { v ->
-                        FilterChip(
-                            selected = state.view == v,
-                            onClick = { onView(v) },
-                            label = { Text(stringResource(v.labelRes())) },
-                            modifier = Modifier.heightIn(min = 48.dp),
-                        )
-                    }
-                }
+                ViewPicker(state.view, onView, Modifier.weight(1f))
                 IconButton(onClick = onNext, modifier = Modifier.size(48.dp)) {
                     Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = stringResource(R.string.calendar_next))
                 }
@@ -198,6 +187,29 @@ fun CalendarScreenContent(
                 CalendarView.AGENDA -> AgendaList(state, fmt, onItem)
                 CalendarView.MONTH -> MonthGrid(state, fmt, onOpenDay)
                 else -> TimeGrid(state, fmt, onItem, onOpenDay)
+            }
+        }
+    }
+}
+
+/** One button showing the current view; its menu lists all views (fits any phone width, unlike a chip row). */
+@Composable
+private fun ViewPicker(current: CalendarView, onView: (CalendarView) -> Unit, modifier: Modifier = Modifier) {
+    var open by remember { mutableStateOf(false) }
+    val label = stringResource(current.labelRes())
+    val desc = stringResource(R.string.calendar_view_pick, label)
+    Box(modifier, contentAlignment = Alignment.Center) {
+        TextButton(onClick = { open = true }, modifier = Modifier.heightIn(min = 48.dp).semantics { contentDescription = desc }) {
+            Text(label, maxLines = 1)
+            Icon(Icons.Rounded.ArrowDropDown, contentDescription = null)
+        }
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            CalendarView.entries.forEach { v ->
+                DropdownMenuItem(
+                    text = { Text(stringResource(v.labelRes())) },
+                    onClick = { open = false; onView(v) },
+                    modifier = Modifier.heightIn(min = 48.dp),
+                )
             }
         }
     }
@@ -300,6 +312,7 @@ private fun TimeGrid(state: CalendarUiState, fmt: CalendarFormat, onItem: (Agend
     val zone = remember { TimeZone.currentSystemDefault() }
     val density = LocalDensity.current
     val scroll = rememberScrollState(initial = with(density) { (HOUR_HEIGHT * 8).roundToPx() })
+    val compact = state.view == CalendarView.WEEK
     Column(Modifier.fillMaxSize()) {
         Row(Modifier.fillMaxWidth()) {
             Spacer(Modifier.width(GUTTER))
@@ -329,7 +342,7 @@ private fun TimeGrid(state: CalendarUiState, fmt: CalendarFormat, onItem: (Agend
                 )
                 allDay.forEach { list ->
                     Column(Modifier.weight(1f).padding(horizontal = 1.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        list.forEach { item -> Block(item, null, Modifier.fillMaxWidth().heightIn(min = 48.dp), onItem) }
+                        list.forEach { item -> Block(item, null, Modifier.fillMaxWidth().heightIn(min = 48.dp), onItem, compact) }
                     }
                 }
             }
@@ -363,6 +376,7 @@ private fun TimeGrid(state: CalendarUiState, fmt: CalendarFormat, onItem: (Agend
                             item, fmt.time(item.start),
                             Modifier.offset(x = laneWidth * lane, y = top).width(laneWidth).height(height).padding(1.dp),
                             onItem,
+                            compact,
                         )
                     }
                 }
@@ -387,15 +401,19 @@ private fun lanes(items: List<AgendaItem>, dayStart: Long): Map<String, Int> {
 }
 
 @Composable
-private fun Block(item: AgendaItem, time: String?, modifier: Modifier, onItem: (AgendaItem) -> Unit) {
+private fun Block(item: AgendaItem, time: String?, modifier: Modifier, onItem: (AgendaItem) -> Unit, compact: Boolean = false) {
     val (bg, fg) = kindColor(item.kind)
     Surface(
         color = bg, contentColor = fg, shape = RoundedCornerShape(8.dp),
         modifier = modifier.clickable { onItem(item) },
     ) {
         Column(Modifier.padding(horizontal = 4.dp, vertical = 2.dp)) {
-            Text(item.title, style = MaterialTheme.typography.labelMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            if (time != null) Text(time, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+            // Week columns are narrow: one ellipsized line, never a word broken across lines, and no time line.
+            Text(
+                item.title, style = MaterialTheme.typography.labelMedium,
+                maxLines = if (compact) 1 else 2, softWrap = !compact, overflow = TextOverflow.Ellipsis,
+            )
+            if (time != null && !compact) Text(time, style = MaterialTheme.typography.labelSmall, maxLines = 1)
         }
     }
 }

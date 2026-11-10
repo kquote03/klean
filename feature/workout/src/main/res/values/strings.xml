@@ -97,4 +97,13 @@
     <string name="workout_channel_suggest_heads_up">Workout suggestions (pop up)</string>
     <string name="workout_channel_suggest_vibrate">Workout suggestions (vibrate only)</string>
     <string name="workout_channel_suggest_quiet">Workout suggestions (silent)</string>
+    <!-- GPS runs (M22) -->
+    <string name="workout_run_start">Start a run</string>
+    <string name="workout_run_finish">Finish run</string>
+    <string name="workout_run_notification_title">Run in progress</string>
+    <string name="workout_channel_run">Runs in progress</string>
+    <string name="workout_run_km">%1$s km</string>
+    <string name="workout_run_pace">%1$s /km</string>
+    <string name="workout_run_waiting">Waiting for GPS…</string>
+    <string name="workout_run_needs_location">Runs need location access while they\'re on. Klean doesn\'t use it otherwise.</string>
 </resources>

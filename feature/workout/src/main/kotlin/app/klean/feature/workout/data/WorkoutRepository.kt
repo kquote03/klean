@@ -73,6 +73,12 @@ interface WorkoutRepository {
     /** Freeform log: a finished session at [at] with what [text] says ("did 30 pushups"). Never fails. */
     suspend fun logText(text: String, at: Long, source: String = WorkoutSource.MANUAL): String
 
+    /**
+     * A finished GPS run (M22): a session with [distanceM] and its route blob ([routeBlob] = file name under
+     * `routes/`), plus one cardio set "Run" with the distance and time, so it reads like any other run.
+     */
+    suspend fun logRun(startedAt: Long, endedAt: Long, distanceM: Int, routeBlob: String?): String
+
     fun observeExercises(): Flow<List<ExerciseDefinitionEntity>>
     /** Every set of [exerciseId], newest first. */
     fun observeHistory(exerciseId: String): Flow<List<ExerciseHistoryRow>>
@@ -250,6 +256,24 @@ class DefaultWorkoutRepository @Inject constructor(
         return id
     }
 
+    override suspend fun logRun(startedAt: Long, endedAt: Long, distanceM: Int, routeBlob: String?): String {
+        val item = WorkoutItem(RUN, WorkoutKind.CARDIO, distanceM = distanceM, durationS = ((endedAt - startedAt) / 1000).toInt())
+        val def = exerciseFor(item)
+        val id = db.transact {
+            val id = UuidV7.generate(now())
+            sessions.upsert(
+                WorkoutSessionEntity(
+                    id = id, startedAt = startedAt, endedAt = endedAt.coerceAtLeast(startedAt), source = GPS,
+                    routeBlob = routeBlob, distanceM = distanceM, sync = stamper.stamp(),
+                ),
+            )
+            insertSet(id, item, def.id)
+            id
+        }
+        notifyChanged()
+        return id
+    }
+
     override fun observeExercises(): Flow<List<ExerciseDefinitionEntity>> = exercises.observeAll()
 
     override suspend fun exercise(id: String): ExerciseDefinitionEntity? = exercises.get(id)
@@ -281,6 +305,10 @@ class DefaultWorkoutRepository @Inject constructor(
     companion object {
         /** A typo like "300x10" shouldn't create hundreds of rows. */
         const val MAX_SETS = 20
+        /** The exercise name a GPS run is logged under. */
+        const val RUN = "Run"
+        /** `workout_session.source` of a GPS run. */
+        const val GPS = "GPS"
     }
 }
 

@@ -67,7 +67,13 @@ class WorkoutHomeViewModel @Inject constructor(
     ticker: WorkoutTicker,
     private val clock: Clock,
     private val zone: ZoneProvider,
+    health: app.klean.feature.workout.HealthConnectBridge = object : app.klean.feature.workout.HealthConnectBridge {},
 ) : ViewModel() {
+    init {
+        // Other apps' workouts from Health Connect (M22): best-effort on every visit.
+        viewModelScope.launch { runCatching { health.importRecent(app.klean.feature.workout.health.HealthConnectWorkoutBridge.DAYS) } }
+    }
+
     val state: StateFlow<WorkoutHomeState> = combine(repo.observeSessions(), repo.observeTemplates(), ticker.ticks()) { sessions, templates, now ->
         WorkoutHomeState(
             loaded = true,
@@ -156,6 +162,7 @@ class SessionViewModel @Inject constructor(
     private val repo: WorkoutRepository,
     ticker: WorkoutTicker,
     private val zone: ZoneProvider,
+    private val health: app.klean.feature.workout.HealthConnectBridge = object : app.klean.feature.workout.HealthConnectBridge {},
 ) : ViewModel() {
     private val id: String = checkNotNull(handle.get<String>("sessionId"))
 
@@ -180,6 +187,7 @@ class SessionViewModel @Inject constructor(
     fun finish(onDone: () -> Unit) = viewModelScope.launch {
         repo.finish(id)
         onDone()
+        runCatching { health.writeSession(id) }
     }
 
     fun delete(onDone: (String) -> Unit) = viewModelScope.launch {

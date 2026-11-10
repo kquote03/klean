@@ -52,6 +52,7 @@ import app.klean.shared.ai.ProviderId
     AiTask.ENTRY_PARSE -> R.string.ai_task_entry_parse
     AiTask.CALORIE_ESTIMATE -> R.string.ai_task_calories
     AiTask.CAPTURE_ROUTING -> R.string.ai_task_capture_routing
+    AiTask.DELEGATION -> R.string.ai_task_delegation
 }
 
 @Composable

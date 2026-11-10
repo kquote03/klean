@@ -37,7 +37,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.PrimaryScrollableTabRow
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
@@ -65,6 +65,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.klean.core.capture.voice.VoiceStatus
@@ -125,14 +127,26 @@ fun TasksScreen(
     ) { pad ->
         Column(Modifier.padding(pad).fillMaxSize()) {
             val selected = tabs.indexOf(tab).coerceAtLeast(0)
-            PrimaryScrollableTabRow(selectedTabIndex = selected, edgePadding = 8.dp) {
+            // Fixed, equal-width tabs with tight padding: all five fit a 360 dp phone instead of scrolling the last one
+            // off the edge; a label that still doesn't fit shrinks rather than wrapping or clipping.
+            PrimaryTabRow(selectedTabIndex = selected) {
                 tabs.forEach { t ->
                     Tab(
                         selected = t == tabs[selected],
                         onClick = { vm.selectTab(t) },
-                        text = { Text(stringResource(t.label)) },
                         modifier = Modifier.heightIn(min = 48.dp),
-                    )
+                        selectedContentColor = MaterialTheme.colorScheme.primary,
+                        unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    ) {
+                        Text(
+                            stringResource(t.label),
+                            maxLines = 1,
+                            softWrap = false,
+                            style = MaterialTheme.typography.titleSmall,
+                            autoSize = TextAutoSize.StepBased(minFontSize = 9.sp, maxFontSize = MaterialTheme.typography.titleSmall.fontSize),
+                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 14.dp),
+                        )
+                    }
                 }
             }
             when (tabs[selected]) {
