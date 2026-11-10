@@ -50,6 +50,8 @@ The watch **never talks to the backend**. The phone sends it a snapshot, and the
 Everything here sits behind `WearDataLayer`. `WearDataLayerModule` picks `PlayWearDataLayer` when
 `GoogleApiAvailability` says Play services work, and `NoWearDataLayer` otherwise (Waydroid, de-Googled phones).
 With the no-op, the publisher never starts, nothing reads the database for the watch, and the alarm ping returns at once.
+Play services can also be present without the Wearable API (no Wear OS app on the phone; Waydroid's GApps image
+does this): the first `API_UNAVAILABLE` turns `PlayWearDataLayer` off for the rest of the process, with the same effect.
 
 | Piece | What it does |
 |---|---|
@@ -101,7 +103,7 @@ With the no-op, the publisher never starts, nothing reads the database for the w
   - colours match the tokens.
 - Phone (`app/src/test/kotlin/app/klean/watch/`, fakes for the Data Layer, capture handlers and workouts):
   - `PhoneWearInboxTest` (7): capture with source WATCH, module and voice flag; no module → phone routing; chip → diet; start/log a set, unknown template or closed session ignored; Workout off; garbage, wrong path and the alarm message ignored; a failing handler never throws;
-  - `WatchStatePublisherTest` (6): one put after the debounce; a burst is one put; an unchanged snapshot isn't re-put; a module toggle republishes; a broken Data Layer or source never stops it; no Play services → nothing read;
+  - `WatchStatePublisherTest` (7): one put after the debounce; a burst is one put; an unchanged snapshot isn't re-put; a module toggle republishes; a broken Data Layer or source never stops it; no Play services → nothing read; a layer that loses the Wearable API stops reads;
   - `WatchSnapshotsTest` (5): next up (timed soonest, snooze time, untimed fallback, none), workouts and the open session;
   - `WearAlarmPingTest` (3), `WearDeclarationsTest` (2: the `klean_phone` capability, the manifest filter reaches `WearSyncService` only under `/klean`).
 - `ReminderEngineTest` (+2: the alarm ping on ring and on handling; fallback pings, pings and other phones don't), `ReminderWearActionsTest` (2), `KleanStatusNotifierTest` (+1: the watch reply action with 5 chips).
