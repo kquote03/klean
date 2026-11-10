@@ -101,7 +101,13 @@ class SleepViewModel @Inject constructor(
     ticker: SleepTicker,
     private val clock: Clock,
     private val zone: ZoneProvider,
+    importer: app.klean.feature.sleep.SleepImportSource = object : app.klean.feature.sleep.SleepImportSource {},
 ) : ViewModel() {
+    init {
+        // Health Connect nights (M22): best-effort, on every visit; a no-op without Health Connect or access.
+        viewModelScope.launch { runCatching { importer.importRecent(app.klean.feature.sleep.data.HealthConnectSleepImport.DAYS) } }
+    }
+
     val state: StateFlow<SleepState> = combine(repo.observeSessions(), schedule.quietHours, ticker.ticks()) { sessions, q, now ->
         val today = app.klean.shared.time.DayWindows.logicalDate(now, q, zone.current())
         SleepState(

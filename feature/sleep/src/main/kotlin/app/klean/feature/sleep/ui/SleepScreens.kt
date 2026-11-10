@@ -285,6 +285,7 @@ fun SleepSettingsScreen(onBack: () -> Unit, vm: SleepSettingsViewModel = hiltVie
                 headline = { Text(stringResource(R.string.sleep_settings_session)) },
                 supporting = { Text(stringResource(R.string.sleep_settings_session_hint)) },
             )
+            app.klean.core.health.HealthConnectRow(needed = setOf(app.klean.core.health.HealthAccess.READ_SLEEP))
         }
     }
 }

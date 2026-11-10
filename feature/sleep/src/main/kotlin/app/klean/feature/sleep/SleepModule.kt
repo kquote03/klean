@@ -295,12 +295,10 @@ fun SleepDashboardCard(onOpen: () -> Unit, modifier: Modifier = Modifier, vm: Sl
     }
 }
 
-/** Health Connect sleep sessions are deferred to M22; this is where they will come in. */
+/** Health Connect sleep sessions come in through this (M22: [app.klean.feature.sleep.data.HealthConnectSleepImport]). */
 interface SleepImportSource {
     suspend fun importRecent(days: Int): Int = 0
 }
-
-class NoSleepImportSource @Inject constructor() : SleepImportSource
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -312,5 +310,5 @@ abstract class SleepModuleBindings {
     @Binds @IntoSet abstract fun summary(s: SleepSurfaces): DashboardSummaryProvider
     @Binds @IntoSet abstract fun activity(s: SleepSurfaces): DayActivityProvider
     @Binds @IntoSet abstract fun listener(s: SleepSurfaces): SleepChangeListener
-    @Binds abstract fun importSource(s: NoSleepImportSource): SleepImportSource
+    @Binds abstract fun importSource(s: app.klean.feature.sleep.data.HealthConnectSleepImport): SleepImportSource
 }
