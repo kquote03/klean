@@ -21,6 +21,14 @@ fun interface Reschedulable {
     suspend fun reschedule()
 }
 
+/**
+ * Told when a reminder's alarm starts ([ringing] = true) or stops ringing on this phone, the main phone.
+ * The phone app uses it to buzz a paired watch (M27). Must return quickly and never throw. Bind with `@IntoSet`.
+ */
+fun interface AlarmRingListener {
+    fun onAlarm(reminderId: String, title: String, ringing: Boolean)
+}
+
 /** Runs every [Reschedulable] in turn. One failure is logged and never stops the others. */
 class Rescheduler @Inject constructor(
     private val all: Set<@JvmSuppressWildcards Reschedulable>,
@@ -76,4 +84,5 @@ class AlarmScheduler @Inject constructor(@ApplicationContext private val ctx: Co
 @InstallIn(SingletonComponent::class)
 abstract class ReschedulableModule {
     @Multibinds abstract fun reschedulables(): Set<Reschedulable>
+    @Multibinds abstract fun alarmRingListeners(): Set<AlarmRingListener>
 }
