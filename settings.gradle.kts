@@ -12,6 +12,6 @@ include(
     ":core:common", ":core:design", ":core:data", ":core:ui",
     ":core:notifications", ":core:ai", ":core:capture", ":core:sync", ":core:health",
     ":feature:diet", ":feature:onboarding", ":feature:settings",
-    ":feature:tasks", ":feature:reminders", ":feature:calendar", ":feature:contacts", ":feature:workout", ":feature:sleep",
+    ":feature:tasks", ":feature:reminders", ":feature:calendar", ":feature:contacts", ":feature:workout", ":feature:sleep", ":feature:delegation",
 )
 include(":backend")

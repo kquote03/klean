@@ -95,6 +95,7 @@
     <string name="ai_task_entry_parse">Understanding entries</string>
     <string name="ai_task_calories">Calorie estimates</string>
     <string name="ai_task_capture_routing">Sorting quick capture</string>
+    <string name="ai_task_delegation">Drafting delegated tasks</string>
     <string name="ai_task_capture_routing_note">Only a model that runs on this phone sorts quick capture, so saving never waits for the network.</string>
     <string name="ai_use_for_empty">Switch a provider on to choose it here.</string>
     <string name="ai_none">None</string>
