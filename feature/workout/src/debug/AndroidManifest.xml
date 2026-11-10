@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Debug builds only: `adb shell am broadcast -a app.klean.debug.WORKOUT_SUGGEST -p app.klean.debug` posts a
+     workout suggestion now (the rotated format), whatever the setting says. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <application>
+        <receiver
+            android:name="app.klean.feature.workout.suggest.WorkoutSuggestionReceiver"
+            android:exported="true"
+            tools:replace="android:exported">
+            <intent-filter>
+                <action android:name="${applicationId}.WORKOUT_SUGGEST" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>

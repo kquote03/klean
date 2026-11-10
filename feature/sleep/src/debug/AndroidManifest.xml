@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Debug builds only: `adb shell am broadcast -a app.klean.debug.BEDTIME -p app.klean.debug` posts the bedtime
+     reminder now. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <application>
+        <receiver
+            android:name="app.klean.feature.sleep.notify.BedtimeReceiver"
+            android:exported="true"
+            tools:replace="android:exported">
+            <intent-filter>
+                <action android:name="${applicationId}.BEDTIME" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>

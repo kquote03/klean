@@ -1,2 +1,100 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources></resources>
+<resources>
+    <string name="workout_label">Workout</string>
+    <string name="workout_card_title">Workout</string>
+    <string name="workout_back">Back</string>
+    <string name="workout_settings">Workout settings</string>
+    <string name="workout_settings_title">Workout</string>
+    <string name="workout_capture_placeholder">What did you do? e.g. 30 pushups</string>
+    <string name="workout_log_placeholder">Log a workout, e.g. 3x15 pushups</string>
+
+    <!-- Home -->
+    <string name="workout_start_empty">Start a workout</string>
+    <string name="workout_start">Start</string>
+    <string name="workout_start_named">Start %1$s</string>
+    <string name="workout_continue">Continue</string>
+    <string name="workout_in_progress">In progress since %1$s</string>
+    <string name="workout_templates">Saved workouts</string>
+    <string name="workout_templates_empty">Save a workout you do often, then start it with one tap.</string>
+    <string name="workout_new_template">New saved workout</string>
+    <string name="workout_recent">Recent</string>
+    <string name="workout_recent_empty">Workouts you log show up here.</string>
+    <string name="workout_exercises">Exercises</string>
+    <string name="workout_exercises_empty">Exercises appear here as you log them.</string>
+    <string name="workout_logged">Workout logged</string>
+    <string name="workout_removed">Workout removed</string>
+    <string name="workout_undo">Undo</string>
+
+    <!-- Template editor -->
+    <string name="workout_template_title_new">New saved workout</string>
+    <string name="workout_template_title_edit">Edit saved workout</string>
+    <string name="workout_template_name">Name</string>
+    <string name="workout_template_items">Exercises</string>
+    <string name="workout_template_hint">e.g. 3x15 pushups, 1 min plank, 5 km run</string>
+    <string name="workout_template_preview">Reads as</string>
+    <string name="workout_template_nothing">Nothing yet</string>
+    <string name="workout_save">Save</string>
+    <string name="workout_delete">Delete</string>
+
+    <!-- Session -->
+    <string name="workout_session_title">Workout</string>
+    <string name="workout_add_set">One more set of %1$s</string>
+    <string name="workout_add_set_short">+1 set</string>
+    <string name="workout_add_exercise">Add an exercise, e.g. 20 squats</string>
+    <string name="workout_finish">Finish</string>
+    <string name="workout_elapsed">%1$s so far</string>
+    <string name="workout_finished_at">%1$s · %2$s</string>
+    <string name="workout_session_empty">Add what you do as you go.</string>
+    <string name="workout_notes">Note</string>
+    <string name="workout_edit_set">Edit set</string>
+    <string name="workout_reps">Reps</string>
+    <string name="workout_weight">Weight (kg)</string>
+    <string name="workout_seconds">Seconds</string>
+    <string name="workout_metres">Metres</string>
+    <string name="workout_remove_set">Remove set</string>
+    <string name="workout_cancel">Cancel</string>
+    <string name="workout_delete_session">Delete this workout</string>
+
+    <!-- Summaries -->
+    <plurals name="workout_items">
+        <item quantity="one">%d item</item>
+        <item quantity="other">%d items</item>
+    </plurals>
+    <plurals name="workout_sets">
+        <item quantity="one">%d set</item>
+        <item quantity="other">%d sets</item>
+    </plurals>
+    <string name="workout_minutes">%1$d min</string>
+    <string name="workout_hours_minutes">%1$d h %2$d min</string>
+    <string name="workout_summary_join">%1$s · %2$s</string>
+    <string name="workout_note_only">Logged</string>
+    <string name="workout_day_today">Today</string>
+    <string name="workout_day_yesterday">Yesterday</string>
+
+    <!-- Today -->
+    <string name="workout_tile_last">Last workout · %1$s</string>
+    <string name="workout_tile_none">Nothing logged yet</string>
+    <string name="workout_status_running">Workout in progress</string>
+    <string name="workout_status_today">Moved today</string>
+    <string name="workout_today_item">Workout in progress</string>
+
+    <!-- Exercise history -->
+    <string name="workout_history_title">%1$s</string>
+
+    <!-- Suggestions -->
+    <string name="workout_settings_suggest">Suggest a workout after a few quiet days</string>
+    <string name="workout_settings_suggest_hint">One gentle note in the early evening, outside your sleep hours</string>
+    <string name="workout_settings_suggest_days">After</string>
+    <plurals name="workout_days">
+        <item quantity="one">%d day</item>
+        <item quantity="other">%d days</item>
+    </plurals>
+    <string name="workout_suggest_1">Fancy a short workout?</string>
+    <string name="workout_suggest_2">A few minutes of moving, maybe?</string>
+    <string name="workout_suggest_3">Up for a little movement today?</string>
+    <string name="workout_suggest_body">Tap to start when it suits you.</string>
+    <string name="workout_channel_suggest">Workout suggestions</string>
+    <string name="workout_channel_suggest_heads_up">Workout suggestions (pop up)</string>
+    <string name="workout_channel_suggest_vibrate">Workout suggestions (vibrate only)</string>
+    <string name="workout_channel_suggest_quiet">Workout suggestions (silent)</string>
+</resources>

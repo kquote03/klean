@@ -465,3 +465,30 @@ Verified on Waydroid (Android 13, 540×1212) on 2026-11-10 (M19 Calendar), scree
 - [x] Fresh install with stale mirror rows from an earlier install → startup resync removes the orphans; new event mirrored
 - [x] Settings › Modules › Calendar off: gone from the bar and Today (no Agenda card, no tile), the provider "Klean" calendar is deleted, status line falls back to "Nothing planned. Add anything here." (`27`–`29`); on again: calendar re-created with the event, Agenda card back. Crash buffer empty
 - [~] ICS import through the system picker: the picker hung Waydroid's `system` process (ANR, session restarted); import is covered by `CalendarRepositoryTest` (update by UID, all-day) and `CalendarSettingsViewModelTest`. Check on the Pixel
+
+## M20 — Workout & sleep (branch `m20-body`; plan `.hermes/plans/2026-11-09_165408-klean-holistic-full-product.md` §M18–M20, module plan §S5/§S6)
+- [x] 20.1 — Sleep schedule is the source of quiet hours (`core/data/sleep/SleepScheduleRepository`, one-time migration of `core.quietHours`, key kept as a mirror; `QuietHoursService` API unchanged; quiet-hours editor writes the schedule)
+- [x] 20.2 — Workout model + `TemplateText` parser/formatter, `WorkoutRepository` (templates, sessions, sets, freeform log, auto-created exercises, history)
+- [x] 20.3 — Sleep logic (`SleepMath`, `SleepText`) + `SleepRepository` (go to bed / wake up / toggle / log / edit)
+- [x] 20.4 — Workout module: screens (home, template editor, session, exercises + history), capture `log_workout`, Today card, tile, activity, status line, Today items, settings
+- [x] 20.5 — Gentle workout suggestion: format rotation (`prompt_log` trigger WORKOUT), quiet hours, every N days, off by default
+- [x] 20.6 — Sleep module: screens (nights list, edit, settings with the schedule editor), capture `log_sleep`, Today card with one tap, tile, activity, status line, Today items (widget toggle)
+- [x] 20.7 — Bedtime reminder (30 min before, once) and the "Sleeping since" notification with "I'm up"
+- [x] 20.8 — `WorkoutDisableTest` / `SleepDisableTest` (androidTest), gate, Waydroid walkthrough
+
+Verified (2026-11-10, branch `m20-body`): gate BUILD SUCCESSFUL (937 tests, 0 failures, 1 skipped);
+`connectedDebugAndroidTest` `WorkoutDisableTest` + `SleepDisableTest` 2/2 on Waydroid. Waydroid walkthrough
+(screenshots in `~/.hermes/cache/scratch/m20-body/`, no crashes in `logcat -b crash`):
+- Today shows Sleep and Workout tiles and cards. "Going to bed" on the Sleep card → "Sleeping since 10:59 AM" on the
+  card, on the status line, and as a quiet `sleep_session` notification; its "I'm up" action closed the night.
+- Universal capture: "slept at 11 woke at 7" → a night of 8 h (23:00–07:00) on the Sleep screen; "did 30 pushups"
+  → "Last workout · Today".
+- Saved workout "3x15 pushups, 1 min plank, 5 km run" (live preview), Start → session with +1 set per item;
+  "3x10 squats" + one more set → four sets; the status line showed "Workout in progress"; Finish → Recent
+  ("squats · 1 item"); Exercises → squats history "Today 12:26 PM · 10 · 10 · 10 · 10".
+- `am broadcast -a app.klean.debug.BEDTIME` → "Winding down soon? / Bedtime is at 12:00 AM." with "Going to bed";
+  `app.klean.debug.WORKOUT_SUGGEST` → "Fancy a short workout?" on `workout_suggest` with "Start a workout".
+- Sleep settings show the schedule (12:00 AM–8:00 AM = quiet hours), bedtime reminder 30 min before, while-asleep switch.
+
+Still needs a real phone: the bedtime alarm at its real time and after a reboot, the Today widget's sleep item
+(widget placement), the suggestion at 18:00 after N quiet days, quiet-hours migration on the existing install.

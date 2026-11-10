@@ -13,6 +13,10 @@ interface SleepScheduleDao {
     @Query("SELECT * FROM sleep_schedule WHERE id = :id")
     suspend fun get(id: String): SleepScheduleEntity?
 
+    // M20 (sleep lane): the row behind quiet hours, live.
+    @Query("SELECT * FROM sleep_schedule WHERE id = :id")
+    fun observe(id: String): Flow<SleepScheduleEntity?>
+
     @Query("SELECT * FROM sleep_schedule WHERE deleted = 0 ORDER BY bed_minutes")
     fun observeAll(): Flow<List<SleepScheduleEntity>>
 

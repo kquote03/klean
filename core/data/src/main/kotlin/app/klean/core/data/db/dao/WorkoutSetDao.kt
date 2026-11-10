@@ -21,4 +21,8 @@ interface WorkoutSetDao {
 
     @Query("SELECT * FROM workout_set WHERE deleted = 0 AND session_id = :id ORDER BY position")
     fun observeForSession(id: String): Flow<List<WorkoutSetEntity>>
+
+    // M20 (workout lane): tombstones included, so a deleted session can be restored with its sets.
+    @Query("SELECT * FROM workout_set WHERE session_id = :id ORDER BY position")
+    suspend fun allForSession(id: String): List<WorkoutSetEntity>
 }
