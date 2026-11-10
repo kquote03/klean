@@ -312,6 +312,7 @@ private fun TimeGrid(state: CalendarUiState, fmt: CalendarFormat, onItem: (Agend
     val zone = remember { TimeZone.currentSystemDefault() }
     val density = LocalDensity.current
     val scroll = rememberScrollState(initial = with(density) { (HOUR_HEIGHT * 8).roundToPx() })
+    val compact = state.view == CalendarView.WEEK
     Column(Modifier.fillMaxSize()) {
         Row(Modifier.fillMaxWidth()) {
             Spacer(Modifier.width(GUTTER))
@@ -341,7 +342,7 @@ private fun TimeGrid(state: CalendarUiState, fmt: CalendarFormat, onItem: (Agend
                 )
                 allDay.forEach { list ->
                     Column(Modifier.weight(1f).padding(horizontal = 1.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        list.forEach { item -> Block(item, null, Modifier.fillMaxWidth().heightIn(min = 48.dp), onItem) }
+                        list.forEach { item -> Block(item, null, Modifier.fillMaxWidth().heightIn(min = 48.dp), onItem, compact) }
                     }
                 }
             }
@@ -375,6 +376,7 @@ private fun TimeGrid(state: CalendarUiState, fmt: CalendarFormat, onItem: (Agend
                             item, fmt.time(item.start),
                             Modifier.offset(x = laneWidth * lane, y = top).width(laneWidth).height(height).padding(1.dp),
                             onItem,
+                            compact,
                         )
                     }
                 }
@@ -399,15 +401,19 @@ private fun lanes(items: List<AgendaItem>, dayStart: Long): Map<String, Int> {
 }
 
 @Composable
-private fun Block(item: AgendaItem, time: String?, modifier: Modifier, onItem: (AgendaItem) -> Unit) {
+private fun Block(item: AgendaItem, time: String?, modifier: Modifier, onItem: (AgendaItem) -> Unit, compact: Boolean = false) {
     val (bg, fg) = kindColor(item.kind)
     Surface(
         color = bg, contentColor = fg, shape = RoundedCornerShape(8.dp),
         modifier = modifier.clickable { onItem(item) },
     ) {
         Column(Modifier.padding(horizontal = 4.dp, vertical = 2.dp)) {
-            Text(item.title, style = MaterialTheme.typography.labelMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            if (time != null) Text(time, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+            // Week columns are narrow: one ellipsized line, never a word broken across lines, and no time line.
+            Text(
+                item.title, style = MaterialTheme.typography.labelMedium,
+                maxLines = if (compact) 1 else 2, softWrap = !compact, overflow = TextOverflow.Ellipsis,
+            )
+            if (time != null && !compact) Text(time, style = MaterialTheme.typography.labelSmall, maxLines = 1)
         }
     }
 }
