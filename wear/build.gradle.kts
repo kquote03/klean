@@ -19,6 +19,12 @@ android {
         debug { applicationIdSuffix = ".debug" }
         release { isMinifyEnabled = false }
     }
+    signingConfigs {
+        // Same key as the phone (CI passes it): the Data Layer pairs the two apps by package AND signature.
+        getByName("debug") {
+            providers.environmentVariable("KLEAN_DEBUG_KEYSTORE").orNull?.let { storeFile = file(it) }
+        }
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

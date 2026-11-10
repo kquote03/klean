@@ -74,6 +74,27 @@ jobs:
           path: klean-debug-*.apk
           retention-days: 30
 
+      # Wear OS app (M27). Already built by assembleDebug above; named here so it's explicit. Signed with the
+      # same key as the phone, which the Data Layer needs to pair the two apps.
+      - name: Wear app
+        run: ./gradlew :wear:assembleDebug --console=plain
+
+      - name: Check the wear APK is signed with the shared debug key
+        if: env.KLEAN_DEBUG_KEYSTORE != ''
+        run: |
+          digest=$("$ANDROID_HOME"/build-tools/36.0.0/apksigner verify --print-certs wear/build/outputs/apk/debug/wear-debug.apk | sed -n 's/.*certificate SHA-256 digest: //p')
+          echo "signed with $digest"
+          test "$digest" = "105be2212f0a3aff9b1015bd29797c9b70bfd386f58bac3de9ae75429633ed52"
+
+      - name: Rename wear APK
+        run: cp wear/build/outputs/apk/debug/wear-debug.apk "klean-wear-debug-${{ steps.version.outputs.name }}.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wear-apk
+          path: klean-wear-debug-*.apk
+          retention-days: 30
+
   # The web client (M26): unit tests (capture rules against the shared fixture, LWW, queue, tokens and
   # contrast, copy), type check and production build, and the copy guard. Separate from the gate and backend.
   web:

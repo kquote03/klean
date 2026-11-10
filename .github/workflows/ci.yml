@@ -1,6 +1,7 @@
 # Every push and PR runs the gate. Every push to main also refreshes the rolling
 # "nightly" pre-release, so the newest APK is always at:
 #   https://github.com/<owner>/<repo>/releases/download/nightly/klean-debug.apk
+# and the Wear OS app (M27) next to it at .../nightly/wear-debug.apk.
 # The server image (backend + web) is tested on every run and pushed to GHCR on pushes to main and on
 # milestone tags (m*, p*): ghcr.io/<owner>/klean-server (see docker.yml).
 name: ci
@@ -42,6 +43,9 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: apk
+      - uses: actions/download-artifact@v4
+        with:
+          name: wear-apk
       - name: Replace the "nightly" pre-release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -49,10 +53,11 @@ jobs:
           VERSION: ${{ needs.build.outputs.version_name }}
         run: |
           cp klean-debug-*.apk klean-debug.apk
+          cp klean-wear-debug-*.apk wear-debug.apk
           gh release delete nightly --cleanup-tag --yes || true
-          gh release create nightly klean-debug.apk klean-debug-*.apk \
+          gh release create nightly klean-debug.apk klean-debug-*.apk wear-debug.apk klean-wear-debug-*.apk \
             --prerelease --target "$GITHUB_SHA" \
             --title "Latest main ($VERSION)" \
             --notes "Debug build of ${GITHUB_SHA::7}: $(gh api repos/$GH_REPO/commits/$GITHUB_SHA --jq '.commit.message | split("\n")[0]')
 
-          Installs as app.klean.debug, over any earlier nightly or local debug build. This release is replaced on every push to main."
+          Installs as app.klean.debug, over any earlier nightly or local debug build. wear-debug.apk is the Wear OS app (same id and key, so it pairs with the phone app). This release is replaced on every push to main."
