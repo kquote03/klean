@@ -517,3 +517,53 @@ Verified on Waydroid (Android 13, 540×1212) on 2026-11-10 (M19 Contacts), scree
 - [x] New contact "Lina 0501112222" through the editor + a DAVx5 address-book raw contact "Lina +971501112222, birthday 1992-11-03" inserted with `content insert` → merge card "These look like the same people / Lina, also in me@example.dav" (`13`); Merge → card gone, Lina has the DAVx5 birthday, both raw contacts share one `contact_id` (`14`, `15`); Contacts settings list the DAVx5 account (`16`)
 - [x] Settings › Modules: Contacts + Birthdays off → Contacts leaves the bar, the Klean account's raw contacts are deleted (DAVx5's stay), the birthday notification goes and the status line falls back; on again → all three raw contacts back, bar item back (`17`, `18`). Crash buffer empty
 - [~] VCF import/export through the system file picker: not run (the picker hung Waydroid's system process in M19 Calendar); covered by `ContactRepositoryTest` (3-card fixture, update by UID, v3/v4 round trip) and `ContactsViewModelsTest`. Check on the Pixel
+
+
+## M26 — Web client (`web/`, branch `m26-web`; plan `.hermes/plans/2026-11-09_165408-klean-holistic-full-product.md` §M26)
+
+- [x] 26.1 — Stack: Vite 8 + TypeScript 5.9 + `@m3e/web` 2.12.0 (M3E web components; lit-html for rendering, no React); Node 22 + pnpm 12 from the flake; `nix develop .#web` adds Playwright browsers from `nixpkgs#playwright-driver.browsers` (`@playwright/test` pinned to 1.64.1 = the driver)
+- [x] 26.2 — Theme: `web/scripts/tokens.mjs` turns `core/design/tokens/klean-color-tokens.json` into `--md-sys-color-*` (light; dark through `prefers-color-scheme`); `scripts/assets.mjs` bundles Cantarell from `core/design/src/main/res/font/` and converts the day-ring launcher vector into `public/icon.svg` + `icon-maskable.svg`
+- [x] 26.3 — Data layer, generic over sync records (`json` = the Room row, snake_case): IndexedDB cache + pending-writes queue (`src/data/idb.ts`, `store.ts`), LWW port (`sync-types.ts`, same table as `:shared`), push-then-pull engine (`sync.ts`), the web's own device token from `POST /auth/login` (`session.ts`); writes stamp like `SyncStamper` (`created_at` kept, `updated_at` always moves forward); name-based ids (`nameUuid`, MD5 v3) match Android's seeded rows (task lists, settings, sleep schedule)
+- [x] 26.4 — Screens, laptop-first with a navigation rail and a two-pane Today (cards + "Your day"); phone width gets a bottom bar (Today, Tasks, Calendar, Contacts, More): login / first setup, pairing QR (drawn client-side with `qrcode-generator`), Today (APPROVALS → DIET, device-local Arrange Today in `localStorage`), Tasks (Today with "Still want these?", Upcoming, Lists, Reminders, Done; repeats roll forward with a `RecurrenceRule` port), Calendar (agenda, week, month; repeats expanded with MissingDay SKIP), Contacts and Birthdays, Workout ("+1 set"), Sleep (one-tap bed/wake, schedule = quiet hours), Diet (today's list + log field), Approvals (editable draft and recipients; Approve → APPROVED or EDITED, Not now → REJECTED, `decided_at`), Settings (modules via synced `core.modules.disabled`, quiet hours via the sleep schedule + `core.quietHours`, devices, notifications, Google, backup download from `POST /admin/backup`, sign out)
+- [x] 26.5 — Universal capture: `src/capture/rules.ts` + `natural-time.ts` port `RuleCaptureClassifier` and `NaturalTime`; the shared fixture `shared/src/commonTest/resources/capture-cases.json` (35 capture + 40 time cases) is read by `CaptureCasesFixtureTest` (`:shared` jvmTest) and by `rules.test.ts`; no rule → diet with Move to… and Undo
+- [x] 26.6 — Web push: `public/sw.js` shows `{title, body, tag?, url?}` and opens `url` on click (alarm tags stay until handled); Settings subscribes through `/push/vapid-public-key` + `/push/subscribe`, with a test send
+- [x] 26.7 — PWA: `manifest.webmanifest`, day-ring SVG icons, network-first shell cache in the service worker
+- [x] 26.8 — Copy: all strings in `src/copy.ts`; `scripts/check-copy.mjs` (src: copy.ts literals, html`` text, index.html, manifest; dist: built HTML/manifest + medical labels in the bundle), plus `copy.test.ts`
+- [x] 26.9 — Backend serves `web/dist` at `/` with an SPA fallback outside `/api`, `/dav`, `/.well-known` (`backend/.../web/WebRoutes.kt`, `WebRoutesTest` 8); `:backend:pnpmBuild` (Exec) feeds `processResources`, skipped without pnpm or `web/` or with `-Pklean.web=false`; documented in `docs/backend-api.md`
+- [x] 26.10 — CI: `web` job in `.github/workflows/build.yml` (pnpm install, test, build, check-copy); gate and backend jobs unchanged
+- [x] 26.11 — Tests: Vitest 182 (capture rules + NaturalTime on the shared fixture, LWW, queue/store/sync with fake-indexeddb, device token storage, RecurrenceRule, capture execution, tokens + WCAG AA for every text/background pair in both themes, copy guard); Playwright e2e 2 against `docker compose` (`web/e2e/run.sh`: own project `klean-m26e2e` on port 18080, `down -v` at the end); Playwright visual 12 (`toHaveScreenshot` for Today, Tasks, Calendar × light/dark × laptop/phone)
+- [x] 26.12 — Visual review: every screen in light and dark at 1440×900 and 390×844 with seeded data (`e2e/review.spec.ts`, 78 screenshots + a measurements report: sideways scroll, clipping, text sizes, font), looked at one by one, issues fixed (see below)
+
+Verified (2026-11-10): `pnpm test && pnpm build` pass (182 tests, copy check src + dist); `:shared:jvmTest` `CaptureCasesFixtureTest` 2/2;
+`:backend:jibDockerBuild -Djib.to.image=klean-backend:m26` (runs `pnpmBuild`), then `pnpm e2e`: sign in with the admin password → pairing
+QR rendered with a `klean://pair?url=…&code=…` payload → a phone claims the code with curl → a task created on the web reaches the
+phone's pull → a task pushed with curl as the phone appears on the web → a seeded `approval_request` is edited and approved, and the
+phone pulls `decision=EDITED` with the new draft and a `decided_at`; `/calendar` serves the app, `/api/v1/nope` stays a 404. 2/2 passed.
+
+Visual review fixes (before: `~/.hermes/cache/scratch/m26/visual/before/`, after: `…/after/`):
+- navigation labels were 12 px and faint, the active item barely visible → labels 14 px on `on-surface-variant`, active item on `secondary-container`, rail colour full height
+- the phone bottom bar overflowed (only 3 of 5 items visible, "More" clipped) → items share the width
+- Today and Settings left large holes beside short cards → balanced masonry columns, Settings in three columns at 1440
+- inline fields sat higher than their Add button (reserved hint row) → hint row only for fields with a hint
+- "Still want these?" rows squeezed the task title into one letter per line on a phone → actions wrap under the title
+- the week view's today circle pushed its row out of line → fixed 32 px day heads
+- month view showed "2 more" on a phone where events are dots → hidden there
+- date fields' labels overlapped the browser's dd/mm/yyyy → labels float for date and time fields
+- contact birthdays were ragged → one right-aligned column; history dates in a fixed column
+- single-column screens spanned 1300 px → 960 px reading width; Today's "Your day" pane only beside the cards (≥ 1200 px)
+- the phone header wrapped "Arrange Today" onto its own row → icon-only there
+- the Approvals card showed the draft's first line ("Hi Khalid,") → the action and the task it belongs to
+
+Still needs the user's browser or phone:
+- [ ] Web push end to end: allow notifications in a real browser on `https` (or `localhost`), Settings › Send a test, and a notification click opening Klean
+- [ ] Install as a PWA (desktop Chrome/Edge, Android Chrome); the maskable icon on the Android launcher
+- [ ] Pair the Pixel by scanning the QR (needs M25's scanner) and see edits flow both ways
+- [ ] Google › Connect with the user's own OAuth client
+- [ ] The backup zip downloaded from Settings opens and restores
+- [ ] Screen reader pass (labels are set on icon buttons, switches, tabs and the QR)
+
+Known gaps:
+- No AI on the web: capture uses the rules and falls back to diet (AI routing stays on the phone).
+- The web has no task subtask editor or list management, no event editor beyond the one-line add, no contact editor beyond add.
+- Server-side push schedules (reminders, birthdays, bedtime, approvals mirrored by the server) are not built: the web subscribes, the backend's `PushService.send` hook still has no scheduler.
+- "Last night" uses calendar days, not Android's logical day.
