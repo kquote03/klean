@@ -44,7 +44,7 @@ jobs:
           echo "KLEAN_DEBUG_KEYSTORE=$RUNNER_TEMP/debug.keystore" >> "$GITHUB_ENV"
 
       - name: Gate
-        run: ./gradlew assembleDebug :app:assembleDebugAndroidTest :shared:jvmTest testDebugUnitTest --console=plain
+        run: ./gradlew assembleDebug :app:assembleDebugAndroidTest :shared:jvmTest testDebugUnitTest verifyRoborazziDebug --console=plain
 
       - name: Check the APK is signed with the shared debug key
         if: env.KLEAN_DEBUG_KEYSTORE != ''
