@@ -12,6 +12,7 @@
     <string name="sync_paired_with">Paired with</string>
     <string name="sync_last">Last sync</string>
     <string name="sync_last_never">Not yet</string>
+    <string name="sync_last_just_now">Just now</string>
     <string name="sync_now">Sync now</string>
     <string name="sync_unpair">Unpair</string>
     <string name="sync_cancel">Cancel</string>

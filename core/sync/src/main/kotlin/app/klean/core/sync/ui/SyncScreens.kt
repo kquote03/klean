@@ -138,9 +138,12 @@ private fun Unpaired(state: SyncUiState, vm: SyncViewModel) {
 @Composable
 private fun Paired(state: SyncUiState, vm: SyncViewModel, showDevices: Boolean) {
     val s = state.status
-    val last = s.lastSyncAt?.let {
-        DateUtils.getRelativeTimeSpanString(it, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS).toString()
-    } ?: stringResource(R.string.sync_last_never)
+    val now = System.currentTimeMillis()
+    val last = when {
+        s.lastSyncAt == null -> stringResource(R.string.sync_last_never)
+        now - s.lastSyncAt < DateUtils.MINUTE_IN_MILLIS -> stringResource(R.string.sync_last_just_now)
+        else -> DateUtils.getRelativeTimeSpanString(s.lastSyncAt, now, DateUtils.MINUTE_IN_MILLIS).toString()
+    }
     val itemColors = ListItemDefaults.colors()
     ListItem(
         headlineContent = { Text(stringResource(R.string.sync_paired_with)) },
