@@ -20,4 +20,6 @@ include(
     ":feature:tasks", ":feature:reminders", ":feature:calendar", ":feature:contacts", ":feature:workout", ":feature:sleep", ":feature:delegation",
 )
 include(":backend")
+// Wear OS app (M27).
+include(":wear")
 }

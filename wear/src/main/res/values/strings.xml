@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Klean</string>
+    <string name="tile_quick_log">Log food</string>
+    <string name="tile_speak">Speak</string>
+    <string name="tile_add">Add</string>
+    <string name="tile_capture">Capture</string>
+    <string name="tile_next_up">Next up</string>
+    <string name="tile_nothing_next">Nothing coming up</string>
+    <string name="tile_nothing_yet">Nothing yet today</string>
+    <string name="tile_workout">Start a workout</string>
+    <string name="tile_no_workouts">Save a workout on your phone to start it here</string>
+    <string name="tile_log_set">Log a set</string>
+    <string name="tile_diet_off">Diet is off on your phone</string>
+    <plurals name="tile_today_food">
+        <item quantity="one">Today · %d entry</item>
+        <item quantity="other">Today · %d entries</item>
+    </plurals>
+    <plurals name="tile_sets">
+        <item quantity="one">%d set so far</item>
+        <item quantity="other">%d sets so far</item>
+    </plurals>
+    <string name="tile_quick_log_label">Klean · Log food</string>
+    <string name="tile_today_food_label">Klean · Today\'s food</string>
+    <string name="tile_next_up_label">Klean · Next up</string>
+    <string name="tile_workout_label">Klean · Workout</string>
+    <string name="complication_label">Klean food log</string>
+    <string name="complication_title">Food</string>
+    <string name="complication_capture">Klean</string>
+    <string name="complication_capture_desc">Capture with Klean</string>
+    <plurals name="complication_food_desc">
+        <item quantity="one">%d food entry today. Tap to log.</item>
+        <item quantity="other">%d food entries today. Tap to log.</item>
+    </plurals>
+    <string name="capture_label">What should Klean note?</string>
+    <string name="capture_label_food">What did you eat?</string>
+    <string name="capture_label_set">The set, e.g. 10 squats</string>
+    <string name="sent_to_phone">Sent to your phone</string>
+    <string name="phone_not_reachable">Couldn\'t reach your phone. Try again when it\'s nearby.</string>
+</resources>

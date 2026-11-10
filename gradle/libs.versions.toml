@@ -37,6 +37,12 @@ logstashEncoder = "9.0"
 zxingEmbedded = "4.3.0"
 healthConnect = "1.1.0"
 playServicesAuth = "22.0.0"
+wearTiles = "1.6.2"
+wearProtolayout = "1.4.2"
+wearComplications = "1.3.0"
+wearInput = "1.2.0"
+playServicesWearable = "20.0.1"
+concurrentFutures = "1.3.0"
 
 [libraries]
 android-gradlePlugin = { module = "com.android.tools.build:gradle", version.ref = "agp" }
@@ -90,6 +96,14 @@ zxing-android-embedded = { module = "com.journeyapps:zxing-android-embedded", ve
 health-connect = { module = "androidx.health.connect:connect-client", version.ref = "healthConnect" }
 # Google Tasks sign-in (M21): AuthorizationClient only; the phone works without Play services.
 play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuth" }
+# Wear OS app (M27)
+wear-tiles = { module = "androidx.wear.tiles:tiles", version.ref = "wearTiles" }
+wear-tiles-testing = { module = "androidx.wear.tiles:tiles-testing", version.ref = "wearTiles" }
+wear-protolayout = { module = "androidx.wear.protolayout:protolayout", version.ref = "wearProtolayout" }
+wear-complications-data-source-ktx = { module = "androidx.wear.watchface:watchface-complications-data-source-ktx", version.ref = "wearComplications" }
+wear-input = { module = "androidx.wear:wear-input", version.ref = "wearInput" }
+play-services-wearable = { module = "com.google.android.gms:play-services-wearable", version.ref = "playServicesWearable" }
+concurrent-futures = { module = "androidx.concurrent:concurrent-futures-ktx", version.ref = "concurrentFutures" }
 exifinterface = { module = "androidx.exifinterface:exifinterface", version.ref = "exif" }
 documentfile = { module = "androidx.documentfile:documentfile", version.ref = "documentfile" }
 junit = { module = "junit:junit", version.ref = "junit" }
