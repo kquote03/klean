@@ -8,6 +8,8 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.klean.core.design.theme.KleanTheme
@@ -67,8 +69,16 @@ class CalendarScreenTest {
     @Test fun switchingViewsReportsTheChoice() {
         val views = mutableListOf<CalendarView>()
         show(CalendarView.AGENDA, onView = { views += it })
+        compose.onNodeWithContentDescription("View: Agenda").performClick()
         compose.onNodeWithText("Month").performClick()
         assertEquals(listOf(CalendarView.MONTH), views)
+    }
+
+    @Test @Config(qualifiers = "w360dp-h740dp") fun viewPickerFitsANarrowPhone() {
+        show(CalendarView.WEEK)
+        val root = compose.onRoot().getUnclippedBoundsInRoot()
+        val picker = compose.onNodeWithContentDescription("View: Week").getUnclippedBoundsInRoot()
+        assertTrue(picker.right <= root.right)
     }
 
     @Test fun weekAndMonthRender() {
