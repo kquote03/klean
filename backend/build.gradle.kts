@@ -79,3 +79,39 @@ jib {
 tasks.matching { it.name.startsWith("jib") }.configureEach {
     notCompatibleWithConfigurationCache("Jib uses Task.project at execution time")
 }
+
+// The web client (M26): `pnpm build` in web/ → web/dist, packaged into the jar under web/ and served at /
+// (app.klean.backend.web.WebRoutes). Skipped when web/ or pnpm is missing (the Android CI job, a plain JDK
+// box) or with -Pklean.web=false; the backend then answers 404 at / and nothing else changes.
+val webDir = rootProject.layout.projectDirectory.dir("web")
+val pnpmOnPath = providers.environmentVariable("PATH").map { path ->
+    path.split(File.pathSeparator).any { File(it, "pnpm").canExecute() }
+}.orElse(false)
+val webEnabled = providers.gradleProperty("klean.web").map { it != "false" }.orElse(true)
+val buildWeb = webEnabled.get() && pnpmOnPath.get() && webDir.file("package.json").asFile.exists()
+
+val pnpmBuild by tasks.registering(Exec::class) {
+    description = "Builds the web client (web/dist) with pnpm."
+    group = "build"
+    enabled = buildWeb
+    workingDir = webDir.asFile
+    commandLine("sh", "-c", "pnpm install --frozen-lockfile --prefer-offline && pnpm build")
+    inputs.files(fileTree(webDir) {
+        include("src/**", "public/**", "scripts/**", "index.html", "package.json", "pnpm-lock.yaml", "tsconfig.json", "vite.config.ts")
+        exclude("src/generated/**", "public/icon*.svg")
+    }).withPropertyName("webSources").withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(rootProject.layout.projectDirectory.file("core/design/tokens/klean-color-tokens.json")).withPropertyName("tokens")
+    inputs.files(
+        rootProject.layout.projectDirectory.dir("core/design/src/main/res/font").asFileTree,
+        rootProject.layout.projectDirectory.file("app/src/main/res/drawable/ic_launcher_foreground.xml"),
+        rootProject.layout.projectDirectory.file("app/src/main/res/drawable/ic_launcher_background.xml"),
+    ).withPropertyName("sharedAssets").withPathSensitivity(PathSensitivity.RELATIVE)
+    outputs.dir(webDir.dir("dist"))
+}
+
+tasks.processResources {
+    if (buildWeb) {
+        dependsOn(pnpmBuild)
+        from(webDir.dir("dist")) { into("web") }
+    }
+}

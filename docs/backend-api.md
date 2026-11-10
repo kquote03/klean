@@ -119,3 +119,13 @@ There is no route or code path that creates a Google task. 409 when not connecte
 | `POST /ai/v1/chat/completions`, `GET /ai/v1/models` | `KLEAN_AI_UPSTREAM/chat/completions`, `/models` (+ `KLEAN_AI_API_KEY`) |
 
 The caller's token is never forwarded. 503 when not configured, 502 when unreachable, `..` path segments refused.
+
+## Web client (outside `/api/v1`; M26)
+
+| Method & path | Auth | Notes |
+|---|---|---|
+| `GET /` and `GET /{path...}` | none | The web client from `web/dist` (jar resources under `web/`). A path that names a file serves it (`assets/*` with `Cache-Control: public, max-age=31536000, immutable`; everything else `no-cache`; `sw.js` adds `Service-Worker-Allowed: /`). Any other path falls back to `index.html`, so client routes survive a reload. |
+
+- Paths under `/api`, `/dav` and `/.well-known` are never answered with the app: an unknown one is a JSON 404. Existing routes are unchanged (Ktor prefers their constant segments over this tailcard), and only GET is added.
+- `web/dist` is built by `:backend:pnpmBuild` (`pnpm install --frozen-lockfile && pnpm build`), which `:backend:processResources` depends on. It is skipped when `pnpm` is not on `PATH`, `web/package.json` is missing, or with `-Pklean.web=false`; `/` then answers 404 and nothing else changes.
+- Code: `web/WebRoutes.kt`; tests: `WebRoutesTest`.

@@ -80,7 +80,7 @@ tasks.withType<Test>().configureEach {
     inputs.files(
         fileTree(rootDir) {
             include("**/src/main/res/**/*.xml", "**/src/main/AndroidManifest.xml")
-            exclude("**/build/**", ".gradle/**")
+            exclude("**/build/**", ".gradle/**", "web/**") // web/: the web client (pnpm output, node_modules)
         },
     ).withPathSensitivity(PathSensitivity.RELATIVE).withPropertyName("userFacingResources")
     // NoRawColorsTest reads every module's Kotlin sources.
