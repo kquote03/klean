@@ -7,6 +7,7 @@
 Make Klean feel like one calm, coherent app rather than "a panel of buttons and input boxes".
 - Every module is reachable in one tap, with no "More" dead end.
 - Screens show content first and controls second.
+- **Nothing feels cluttered.** Every screen has one clear primary action and few visible controls. Optional detail stays out of the way until it's asked for. The clutter budget (§1.6) is a hard acceptance criterion with a test (§2.3b).
 - One design system is applied everywhere.
 
 Alongside this, M21, M27 and M28 are finished, and M29 (the acceptance session with the user) is prepared.
@@ -46,7 +47,7 @@ Alongside this, M21, M27 and M28 are finished, and M29 (the acceptance session w
 - Still to do: M21 Google, M28 capture everywhere, M27 Wear, and preparing M29.
 
 ### Pending on `main`, from the parent
-- The `klean-server` Dockerfile and GHCR pipeline: committed locally in pieces, final gate running, not yet pushed.
+- The `klean-server` Dockerfile and GHCR pipeline: pushed (`4dbee4c`); the first CI publish is being watched.
 - The user must set the GHCR package to Public once after the first push.
 
 ### Constraints
@@ -79,13 +80,12 @@ Alongside this, M21, M27 and M28 are finished, and M29 (the acceptance session w
 3. **What to do if the user is away at checkpoint 1** (when the prototypes are ready):
    - **(default)** continue with the recommended combination (A + Soft cards) and record that choice in TASKS.md, so it can be revisited cheaply. Implementing a change costs about a day.
    - Or: stop and wait.
-4. **Hot-reload tool trial** (`xception-hash/compose-hot-reload`, unofficial, 0★, debug builds only): **(default) yes, 1-hour timebox.**
 
 ## Architecture / approach
 
 **Three phases, so iteration is cheap:**
 1. **Prototype in HTML.** No compile, near-zero RAM, viewable on the phone. The user picks a direction.
-2. **Build the design system in `core/design`.** Spacing, shape and type scales, a screen scaffold, and the shared components every screen needs. Verify with Roborazzi screenshot tests (JVM, no device) and, if the trial works, the Android hot-reload watcher.
+2. **Build the design system in `core/design`.** Spacing, shape and type scales, a screen scaffold, and the shared components every screen needs. Verify with Roborazzi screenshot tests (JVM, no device).
 3. **Re-skin screen by screen,** using only those components. Each screen gets a light and dark screenshot test plus a Waydroid check.
 
 **Navigation** moves from "first 3 by `navOrder` + More" to a `NavGroup` model.
@@ -93,7 +93,7 @@ Alongside this, M21, M27 and M28 are finished, and M29 (the acceptance session w
 **The web client** gets the same structure afterwards (Phase 4). It mirrors the tokens already.
 
 **Ordering with lane NEXT:**
-- Phase 1 and the hot-reload trial don't touch feature Kotlin, so they start now, in parallel.
+- Phase 1 doesn't touch feature Kotlin, so it starts now, in parallel.
 - Phase 2 (design system in `core/design` + the new navigation in `app/`) starts after lane NEXT merges M28. M28 touches capture UI across modules.
 - Phase 3 can run alongside M27 (Wear lives in its own module).
 
@@ -101,9 +101,9 @@ Alongside this, M21, M27 and M28 are finished, and M29 (the acceptance session w
 
 ## Phase 0 — finish what is in flight (parent, about 30 min)
 
-### 0.1 Push the server image work
+### 0.1 Push the server image work (DONE 2026-11-10: pushed `4dbee4c`; CI run 42875135736 being watched)
 
-When `~/.hermes/cache/scratch/gate-main.log` ends with `BUILD SUCCESSFUL`:
+Recorded for reference:
 
 ```bash
 cd /home/kenan1099/Src/klean
@@ -204,7 +204,8 @@ For each of the three directions, build the 8 screens.
 **Every direction must solve:**
 - every module one tap from anywhere;
 - one "+" that opens an add menu (Material 3 FAB menu: Task, Event, Reminder, Log food, Log workout, Log sleep), with text capture at the top of that menu;
-- module screens that lead with content and history, with the capture field reached from the "+".
+- module screens that lead with content and history, with the capture field reached from the "+";
+- **the clutter budget (§1.6), on every screen.** List each screen's count of visible controls at the bottom of `index.html`.
 
 **Screenshots:** take them with headless Chromium:
 
@@ -212,7 +213,7 @@ For each of the three directions, build the 8 screens.
 nix shell nixpkgs#chromium -c chromium --headless --window-size=412,915 --screenshot=out.png file://$PWD/prototypes/ui-2026-11/a-soft-cards/today.html
 ```
 
-Look at each one yourself, and fix it until it passes the `frontend-design` and `ui-ux-pro-max` checklists.
+Look at each one yourself, and fix it until it passes the `frontend-design` and `ui-ux-pro-max` checklists **and the clutter budget**. When unsure, remove rather than add.
 
 **Commit:** `feat(prototypes): three UI directions for the overhaul (HTML, no build)`.
 
@@ -239,25 +240,15 @@ Derived from the chosen prototype:
   - Track: secondary or tertiary containers.
 - **Motion:** shared-axis transitions between tabs and container transforms from Today cards into modules, 250 ms, honouring reduced motion.
 - **Components list:** the targets of Phase 2.
-
----
-
-## Phase 1b — trial the hot-reload tool (parent, 1-hour timebox, after lane NEXT releases Gradle and Waydroid)
-
-Work on a throwaway branch: `git switch -c spike/hot-reload`.
-
-1. Read `https://github.com/xception-hash/compose-hot-reload/blob/main/docs/ai-project-setup.md` in full.
-2. Apply the `dev.hotreload` Gradle plugin to `app/build.gradle.kts`, **debug variant only**, as the docs show.
-3. Run its `prepare` and `doctor` against `ANDROID_SERIAL=192.168.240.112:5555` with the Nix JDK 21 (`--project-java-home $(dirname $(dirname $(readlink -f $(nix develop -c which javac))))`).
-
-   Expected: `doctor` reports ready.
-4. Start `watch`. Edit a literal in `TodayScreen.kt`, for example the greeting's padding from 16.dp to 24.dp, and save.
-
-   Expected: the Waydroid screen changes within about 2 s without the app restarting. Capture before and after with `wshot`.
-5. Measure peak RSS during watch with `ps -o rss= -p <watcher pid>` and record it.
-6. Decide:
-   - **It worked:** keep it as a debug-only, opt-in Gradle property (`-Pklean.hotreload=true`) so CI and release builds never apply it. Document the loop in `docs/ui/iteration.md`. Commit to `main`: `build: opt-in Compose hot reload for debug builds (UI iteration)`.
-   - **It failed within the hour:** delete the branch, and note what failed in `docs/ui/iteration.md`.
+- **Clutter budget.** A hard rule, checked in prototypes, in `ClutterBudgetTest` (§2.3b) and in each Waydroid check:
+  1. **One primary action per screen.** At most one filled or tonal-filled button, or the FAB, in the first viewport. Everything else is a text button, an icon button or a menu item.
+  2. **At most 7 interactive elements in the first viewport** (412×915), not counting the navigation bar and list rows that open detail. Tapping a row counts once per list, not once per row.
+  3. **At most 2 visible text inputs on any non-form screen,** and normally 0, since capture lives in the Add menu. Forms (edit task, edit event) are exempt but must group fields, with optional ones under "More options".
+  4. **Progressive disclosure.** Secondary actions (edit, delete, share, settings, sort, filter) live in a top-bar overflow menu, a long-press menu or the detail screen, never as rows of buttons on the main screen.
+  5. **One message per empty state:** one `EmptyState` per screen section at most, with one sentence and one action. No stacked grey hint sentences.
+  6. **Breathing room.** `Space.sectionGap` between sections, no more than 3 section headers in the first viewport, and no dividers where spacing already separates.
+  7. **No duplicate entry points on the same screen.** For example, not both a "Start a workout" button and a "Start" chip for the same thing.
+  8. **Chip rows:** at most 1 per screen, single-line, capped (the "Log again" rule: at most 5 chips, at most 2 rows).
 
 ---
 
@@ -363,6 +354,59 @@ All live in `core/design/src/main/kotlin/app/klean/core/design/component/`:
 
 Commit each one separately, e.g. `feat(design): KleanScreen scaffold`.
 
+### 2.3b `ClutterBudgetTest` helper (test-first, used by every screen in Phase 3)
+
+Create `core/ui/src/testFixtures`-style shared code in `core/design/src/testFixtures/kotlin/app/klean/core/design/test/ClutterBudget.kt`. If the convention plugin doesn't enable test fixtures, put it in a small `:core:testing` module instead.
+
+```kotlin
+package app.klean.core.design.test
+
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.junit4.ComposeContentTestRule
+import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.unit.dp
+import org.junit.Assert.assertTrue
+
+/** Tag on the navigation bar and on lists whose rows open detail; those don't count toward the budget. */
+const val CLUTTER_EXEMPT = "clutter-exempt"
+
+/**
+ * The clutter budget from docs/ui/design-system.md: in the first viewport, at most [maxInteractive] tappable
+ * elements and at most [maxTextInputs] text fields, outside nodes tagged [CLUTTER_EXEMPT].
+ */
+fun ComposeContentTestRule.assertClutterBudget(maxInteractive: Int = 7, maxTextInputs: Int = 0) {
+    val viewport = onRoot().getUnclippedBoundsInRoot()
+    fun inViewport(n: androidx.compose.ui.semantics.SemanticsNode) =
+        n.boundsInRoot.top < with(density) { viewport.bottom.toPx() } && n.boundsInRoot.bottom > 0f
+    fun exempt(n: androidx.compose.ui.semantics.SemanticsNode): Boolean {
+        var p: androidx.compose.ui.semantics.SemanticsNode? = n
+        while (p != null) {
+            if (p.config.getOrNull(SemanticsProperties.TestTag) == CLUTTER_EXEMPT) return true
+            p = p.parent
+        }
+        return false
+    }
+    val nodes = onAllNodes(SemanticsMatcher("any") { true }, useUnmergedTree = false).fetchSemanticsNodes()
+        .filter { inViewport(it) && !exempt(it) }
+    val tappable = nodes.count { SemanticsActions.OnClick in it.config }
+    val inputs = nodes.count { SemanticsActions.SetText in it.config }
+    assertTrue("$tappable tappable elements in the first viewport (budget $maxInteractive)", tappable <= maxInteractive)
+    assertTrue("$inputs text inputs in the first viewport (budget $maxTextInputs)", inputs <= maxTextInputs)
+}
+```
+
+- **Test first:** `core/design/src/test/kotlin/app/klean/core/design/ClutterBudgetTest.kt`:
+  - a composable with 8 buttons fails with "8 tappable elements";
+  - one with 7 passes;
+  - a `LazyColumn` of 20 rows tagged `CLUTTER_EXEMPT` plus 2 buttons passes;
+  - one `TextField` fails with the default `maxTextInputs = 0`.
+- **Run it:** `./gradlew :core:design:testDebugUnitTest --tests '*ClutterBudgetTest'`. The tests must fail before the helper exists (compile error), then pass.
+- **Commit:** `test(design): clutter budget assertion (tappables and inputs in the first viewport)`.
+
 ### 2.4 Navigation: `NavGroup` (decision A)
 
 **Test first:** `app/src/test/kotlin/app/klean/nav/NavGroupsTest.kt`.
@@ -454,7 +498,8 @@ fun navGroups(enabled: List<ModuleId>): List<NavGroupEntry> = NavGroup.entries.m
 2. Rebuild the screen with `KleanScreen`, `ModuleCard`, `SectionHeader`, `ListRow` and `EmptyState` only:
    - no raw `dp` outside `Space`;
    - no ad-hoc `Text(style = …)` sizes outside the type scale;
-   - **the capture field leaves the module screen.** "Add" is the FAB menu; the screen opens with content.
+   - **the capture field leaves the module screen.** "Add" is the FAB menu; the screen opens with content;
+   - **meet the clutter budget.** Add `compose.assertClutterBudget()` to the screen's test for the typical and long-content states (forms pass an explicit `maxTextInputs`). In `docs/ui/audit.md`, list every action that moved and its new home.
 3. Record the "after" images and compare them with the prototype side by side. Fix until they match the chosen direction.
 4. Install on Waydroid in one `waydroid.lock` hold:
    - tap through the screen's primary flow;
@@ -496,7 +541,7 @@ fun navGroups(enabled: List<ModuleId>): List<NavGroupEntry> = NavGroup.entries.m
 | M28 Capture everywhere | lane NEXT | after M21 | **Phase 2 waits for this merge**, because both touch capture UI |
 | M27 Wear OS | lane NEXT | after M28 | Separate `wear/` module, so it can overlap Phase 3. Its tiles use the new tokens. |
 | M29 prep | lane NEXT | last | `docs/acceptance-p1.md` with the Waydroid and Backend+Browser columns pre-filled |
-| UI Phase 1 + 1b | parent | now (1) / when Gradle is free (1b) | No conflicts with lane NEXT |
+| UI Phase 1 | parent | now | No conflicts with lane NEXT |
 | UI Phase 2–3 | parent, or one UI lane in `../klean-ui` | after `m28` | Lane NEXT must not edit feature screens after M28. I'll steer it. |
 | UI Phase 4 | one web lane | after Phase 3 Today + Plan land | pnpm only |
 | M29 acceptance | user + parent | after `ui1` | On the Pixel, watch, Docker server and browser; record in `docs/acceptance-p1.md`; tag `p1` |
@@ -504,7 +549,7 @@ fun navGroups(enabled: List<ModuleId>): List<NavGroupEntry> = NavGroup.entries.m
 **RAM rule for this period:**
 - At most **one** Gradle-heavy agent at a time.
 - HTML prototyping, web/pnpm work and design research don't count against that.
-- The hot-reload watcher replaces full builds during Phase 3 if the trial works.
+- In Phase 3, iterate with Roborazzi (one module's unit tests) rather than full builds and installs. Waydroid is only for the final check of each screen.
 
 ## Tests / validation summary
 
@@ -515,6 +560,7 @@ fun navGroups(enabled: List<ModuleId>): List<NavGroupEntry> = NavGroup.entries.m
 | Components | `./gradlew :core:design:verifyRoborazziDebug` | no image diffs |
 | Screens | `./gradlew verifyRoborazziDebug` | no image diffs |
 | No ad-hoc spacing | `NoRawDpTest` (un-ignored at the end of Phase 3) | passes |
+| Not cluttered | `assertClutterBudget()` in every screen's test + Waydroid look | ≤ 7 tappables and 0 inputs in the first viewport (forms excepted); one primary action |
 | Copy | `ForbiddenCopyTest`, `web/scripts/check-copy.mjs` | pass |
 | Whole app | the gate + `connectedDebugAndroidTest` on Waydroid | BUILD SUCCESSFUL, all instrumented tests pass |
 | Web | `pnpm -C web test && pnpm -C web build && pnpm -C web visual` | pass, with new baselines |
@@ -524,7 +570,7 @@ fun navGroups(enabled: List<ModuleId>): List<NavGroupEntry> = NavGroup.entries.m
 1. **Taste is the user's call.** Prototypes front-load that decision, which is the cheap place to change course. The default path (A + Soft cards) is reversible, but redoing Phase 3 costs about a day.
 2. **Grouped tabs add one tap within a group** (Track → Sleep when Workout was last used). This is mitigated by remembering the last segment, by Today's cards (one tap into any module), and by the Add menu (one tap to log anything).
 3. **Merge friction with lane NEXT.** Phase 2–3 rewrites feature screens, so the lane must be done with screen edits (after M28) first. I'll steer it to stay in `wear/` and docs once M28 merges.
-4. **The hot-reload tool is unofficial and new.** It's debug-only and opt-in, timeboxed to one hour, with Roborazzi as the fallback.
+4. **Calm vs. capable.** Cutting visible controls can hide features. The clutter budget moves secondary actions into overflow menus and detail screens; it doesn't delete them. Every moved action is listed in `docs/ui/audit.md` with its new home, so nothing silently disappears.
 5. **Roborazzi on Robolectric NATIVE graphics** can differ slightly from a device: shadows, font hinting. Waydroid stays the final check for each screen.
 6. **Material 3 Expressive APIs are still RC** (`FloatingActionButtonMenu`, `SingleChoiceSegmentedButtonRow`, short navigation bar). If one doesn't resolve with material3 1.5.0-rc01, build the component from stable parts and note it in AGENTS.md deviations.
 7. **Usage limits.** Each phase commits per task, so any agent can resume from TASKS.md.

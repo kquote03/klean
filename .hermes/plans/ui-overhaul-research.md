@@ -73,6 +73,3 @@ Likely a blend: grouped tabs (1) + Today cards as entry points (3) + a FAB menu 
   1. **An HTML/CSS clickable prototype first.** It renders instantly with no compile, can show 2–3 directions side by side, and the user can open it on the phone. Pick a direction, then port it.
   2. **Roborazzi screenshot tests** (JVM, Robolectric native graphics) for Compose. They render screens to PNG in seconds without a device, the agent and user look at the PNGs, and they double as visual regression tests.
   3. Waydroid only for final checks and interaction.
-- **Not a good fit:**
-  - JetBrains Compose Hot Reload (needs a Compose Multiplatform desktop target; our UI is Android-only).
-  - Android Studio Live Edit (interactive IDE, not headless).
