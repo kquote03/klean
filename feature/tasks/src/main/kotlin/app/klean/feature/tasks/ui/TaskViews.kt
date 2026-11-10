@@ -21,6 +21,8 @@ data class TaskRowModel(
     val subtasksDone: Int = 0,
     val subtasksTotal: Int = 0,
     val listName: String? = null,
+    /** Lives in Google Tasks: shows the small "G" chip. */
+    val google: Boolean = false,
 )
 
 data class DayGroup(val date: LocalDate, val rows: List<TaskRowModel>)
@@ -47,7 +49,10 @@ data class TaskViewsModel(
  */
 object TaskViews {
     fun build(all: List<TaskEntity>, lists: List<TaskListEntity>, today: LocalDate, selectedListId: String?): TaskViewsModel {
-        val live = all.filter { !it.sync.deleted && it.archivedAt == null }
+        // Google lists the user switched off in Settings are hidden, with their tasks.
+        val shown = lists.filter { it.selected }
+        val hiddenLists = lists.filterNot { it.selected }.mapTo(HashSet()) { it.id }
+        val live = all.filter { !it.sync.deleted && it.archivedAt == null && it.listId !in hiddenLists }
         val children = live.filter { it.parentId != null }.groupBy { it.parentId }
         val listNames = lists.associate { it.id to it.name }
         fun row(t: TaskEntity, withList: Boolean = false): TaskRowModel {
@@ -57,6 +62,7 @@ object TaskViews {
                 priority = t.priority, done = t.completedAt != null, recurring = t.recurrence != null,
                 subtasksDone = subs.count { it.completedAt != null }, subtasksTotal = subs.size,
                 listName = if (withList) listNames[t.listId] else null,
+                google = t.origin == "GOOGLE",
             )
         }
         val ids = live.mapTo(HashSet()) { it.id }
@@ -65,7 +71,7 @@ object TaskViews {
         val open = top.filter { it.completedAt == null && it.status != TaskStatus.SOMEDAY }
         val byDue = compareBy<TaskEntity>({ it.dueDate }, { it.dueMinutes ?: -1 }, { -it.priority }, { it.position }, { it.sync.createdAt })
         val todayIso = today.toString()
-        val selected = selectedListId?.takeIf { id -> lists.any { it.id == id } } ?: lists.firstOrNull()?.id
+        val selected = selectedListId?.takeIf { id -> shown.any { it.id == id } } ?: shown.firstOrNull()?.id
         val inList = top.filter { it.listId == selected }
         return TaskViewsModel(
             review = open.filter { it.dueDate != null && it.dueDate!! < todayIso }.sortedWith(byDue).map { row(it, true) },
@@ -73,7 +79,7 @@ object TaskViews {
             upcoming = open.filter { it.dueDate != null && it.dueDate!! > todayIso }.sortedWith(byDue)
                 .groupBy { LocalDate.parse(it.dueDate!!) }
                 .map { (d, l) -> DayGroup(d, l.map { row(it, true) }) },
-            lists = lists,
+            lists = shown,
             selectedListId = selected,
             listOpen = inList.filter { it.completedAt == null && it.status != TaskStatus.SOMEDAY }
                 .sortedWith(compareBy<TaskEntity>({ it.dueDate == null }).then(byDue)).map { row(it) },
@@ -88,14 +94,63 @@ object TaskViews {
 /**
  * Turns typed or spoken text into a task: time words become the due date and time, the rest is the title.
  * "todo"/"to do"/"task" at the start is dropped. Text with no date gets no due date.
+ *
+ * Capture extras (M28), each removed from the title:
+ * - **list:** `#work` or "in my Work list" picks one of [lists] (Klean lists only; an unknown tag stays as text);
+ * - **priority:** a standalone `!` / `!!` / `!!!` (low / medium / high), or "urgent", "high priority",
+ *   "medium priority", "low priority".
  */
 object TaskText {
     private val PREFIX = Regex("""^(?:todo|to do|task)\b[:\s,-]*""", RegexOption.IGNORE_CASE)
+    private val BANGS = Regex("""(?:^|\s)(!{1,3})(?=\s|$)""")
+    private val PRIORITY_WORDS = listOf(
+        Regex("""\b(?:urgent|high priority)\b""", RegexOption.IGNORE_CASE) to 3,
+        Regex("""\bmedium priority\b""", RegexOption.IGNORE_CASE) to 2,
+        Regex("""\blow priority\b""", RegexOption.IGNORE_CASE) to 1,
+    )
+    private val TAG = Regex("""(?:^|\s)#([\p{L}\p{N}_-]+)""")
+    private val LIST_PHRASE = Regex("""\b(?:in|on|to|into)\s+(?:my\s+|the\s+)?([\p{L}\p{N} _-]{1,40}?)\s+list\b""", RegexOption.IGNORE_CASE)
 
-    fun parse(text: String, now: LocalDateTime, listId: String? = null, source: String = TaskSource.MANUAL): TaskDraft {
-        val clean = text.trim().replace(PREFIX, "").trim()
+    fun parse(
+        text: String,
+        now: LocalDateTime,
+        listId: String? = null,
+        source: String = TaskSource.MANUAL,
+        lists: List<TaskListEntity> = emptyList(),
+    ): TaskDraft {
+        var clean = text.trim().replace(PREFIX, "").trim()
+        var priority = 0
+        BANGS.find(clean)?.let { m ->
+            priority = m.groupValues[1].length
+            clean = clean.removeRange(m.range)
+        }
+        if (priority == 0) {
+            for ((rx, p) in PRIORITY_WORDS) {
+                val m = rx.find(clean) ?: continue
+                priority = p
+                clean = clean.removeRange(m.range)
+                break
+            }
+        }
+        var list = listId
+        if (lists.isNotEmpty()) {
+            val tag = TAG.findAll(clean).firstNotNullOfOrNull { m -> matchList(lists, m.groupValues[1])?.let { m to it } }
+                ?: LIST_PHRASE.findAll(clean).firstNotNullOfOrNull { m -> matchList(lists, m.groupValues[1])?.let { m to it } }
+            tag?.let { (m, l) ->
+                if (list == null) list = l.id
+                clean = clean.removeRange(m.range)
+            }
+        }
+        clean = clean.replace(Regex("""\s{2,}"""), " ").trim().trim(',', ';', ':', '-').trim()
         val p = NaturalTime.parse(clean, now)
         val title = p.rest.trim().ifEmpty { clean }
-        return TaskDraft(title = title, listId = listId, dueDate = p.date, dueMinutes = p.minutes, source = source)
+        return TaskDraft(title = title, listId = list, dueDate = p.date, dueMinutes = p.minutes, priority = priority, source = source)
+    }
+
+    /** A Klean list whose name matches [name], ignoring case, spaces, dashes and underscores. */
+    fun matchList(lists: List<TaskListEntity>, name: String): TaskListEntity? {
+        fun norm(s: String) = s.lowercase().filter { it.isLetterOrDigit() }
+        val n = norm(name).ifEmpty { return null }
+        return lists.firstOrNull { it.source != "GOOGLE" && !it.sync.deleted && norm(it.name) == n }
     }
 }

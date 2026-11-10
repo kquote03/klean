@@ -19,6 +19,7 @@
     <string name="calendar_view_three_day">3 days</string>
     <string name="calendar_view_week">Week</string>
     <string name="calendar_view_month">Month</string>
+    <string name="calendar_view_pick">View: %1$s</string>
     <string name="calendar_previous">Previous</string>
     <string name="calendar_next">Next</string>
     <string name="calendar_today">Today</string>

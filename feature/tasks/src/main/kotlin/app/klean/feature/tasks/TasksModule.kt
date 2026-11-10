@@ -86,6 +86,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -173,7 +174,9 @@ class TaskCaptureHandler @Inject constructor(
 
     override suspend fun execute(input: CaptureInput, action: CandidateAction): String {
         val now = input.capturedAt.toLocal(zone.current())
-        return repo.add(TaskText.parse(input.text, now, source = TaskSource.CAPTURE))
+        // "#work" / "in my Work list" and "!"/"urgent" pick the list and priority (M28).
+        val lists = repo.observeLists().first()
+        return repo.add(TaskText.parse(input.text, now, source = TaskSource.CAPTURE, lists = lists))
     }
 
     override suspend fun undo(recordId: String) = repo.delete(recordId)

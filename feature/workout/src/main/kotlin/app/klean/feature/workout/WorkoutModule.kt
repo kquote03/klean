@@ -310,15 +310,13 @@ fun WorkoutDashboardCard(onOpen: () -> Unit, modifier: Modifier = Modifier, vm: 
     }
 }
 
-/**
- * Health Connect (exercise sessions) is deferred to M22: this is where it will plug in. The no-op binding
- * keeps callers honest until then.
- */
+/** Health Connect for workouts (M22: [app.klean.feature.workout.health.HealthConnectWorkoutBridge]). */
 interface HealthConnectBridge {
+    /** Writes a finished session to Health Connect (best-effort; nothing without access). */
     suspend fun writeSession(sessionId: String) {}
+    /** Brings in other apps' sessions of the last [days] days; returns how many were added. */
+    suspend fun importRecent(days: Int): Int = 0
 }
-
-class NoHealthConnectBridge @Inject constructor() : HealthConnectBridge
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -330,5 +328,6 @@ abstract class WorkoutModuleBindings {
     @Binds @IntoSet abstract fun summary(s: WorkoutSurfaces): DashboardSummaryProvider
     @Binds @IntoSet abstract fun activity(s: WorkoutSurfaces): DayActivityProvider
     @Binds @IntoSet abstract fun listener(s: WorkoutSurfaces): WorkoutChangeListener
-    @Binds abstract fun healthConnect(b: NoHealthConnectBridge): HealthConnectBridge
+    @Binds abstract fun healthConnect(b: app.klean.feature.workout.health.HealthConnectWorkoutBridge): HealthConnectBridge
+    @Binds abstract fun locationFeed(f: app.klean.feature.workout.jog.AndroidLocationFeed): app.klean.feature.workout.jog.LocationFeed
 }

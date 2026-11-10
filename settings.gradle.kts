@@ -15,9 +15,11 @@ if (serverOnly) {
 include(
     ":app", ":shared",
     ":core:common", ":core:design", ":core:data", ":core:ui",
-    ":core:notifications", ":core:ai", ":core:capture", ":core:sync",
+    ":core:notifications", ":core:ai", ":core:capture", ":core:sync", ":core:health", ":core:google",
     ":feature:diet", ":feature:onboarding", ":feature:settings",
-    ":feature:tasks", ":feature:reminders", ":feature:calendar", ":feature:contacts", ":feature:workout", ":feature:sleep",
+    ":feature:tasks", ":feature:reminders", ":feature:calendar", ":feature:contacts", ":feature:workout", ":feature:sleep", ":feature:delegation",
 )
 include(":backend")
+// Wear OS app (M27).
+include(":wear")
 }

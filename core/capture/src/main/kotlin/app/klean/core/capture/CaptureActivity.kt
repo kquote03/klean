@@ -24,12 +24,16 @@ class CaptureActivity : ComponentActivity() {
     @Inject lateinit var prefs: DevicePrefs
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Before the view model reads the extras: a deep link or Assistant/shortcut intent becomes plain extras.
+        intent = normalize(intent)
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent { KleanThemeFromPrefs(prefs) { CaptureSheet(vm = vm, onDismiss = ::finish) } }
     }
 
     companion object {
+        /** Prefilled text (deep link, shortcut, Assistant). Never saved without the person tapping Save. */
+        const val EXTRA_TEXT = "prefill_text"
         /** Module id string (e.g. "diet"); absent = universal capture. */
         const val EXTRA_TARGET_MODULE = "target_module"
         const val EXTRA_START_VOICE = "start_voice"
@@ -40,6 +44,27 @@ class CaptureActivity : ComponentActivity() {
 
         /** Used when a caller passes no source, e.g. a manual `adb shell am start`. */
         val DEFAULT_SOURCE = CaptureSource.DASHBOARD
+
+        /**
+         * `klean://capture?text=…&module=…` and App Actions extras (`text`, `module`) → this activity's extras.
+         * A link with no source counts as [CaptureSource.ASSISTANT] (shortcuts, Assistant, other apps).
+         */
+        fun normalize(intent: Intent): Intent {
+            val data = intent.dataString
+            val fromLink = CaptureLinks.isCaptureLink(data) ||
+                intent.hasExtra(CaptureLinks.EXTRA_TEXT) || intent.hasExtra(CaptureLinks.EXTRA_MODULE)
+            if (!fromLink) return intent
+            val link = CaptureLinks.parse(
+                data,
+                extraText = intent.getStringExtra(CaptureLinks.EXTRA_TEXT),
+                extraModule = intent.getStringExtra(CaptureLinks.EXTRA_MODULE),
+            )
+            return Intent(intent).apply {
+                link.text?.let { putExtra(EXTRA_TEXT, it) }
+                if (!hasExtra(EXTRA_TARGET_MODULE)) link.module?.let { putExtra(EXTRA_TARGET_MODULE, it.value) }
+                if (!hasExtra(EXTRA_SOURCE)) putExtra(EXTRA_SOURCE, CaptureSource.ASSISTANT.name)
+            }
+        }
 
         fun intent(
             context: Context,

@@ -26,6 +26,10 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:scheme="klean" />
             </intent-filter>
+            <!-- App shortcuts and App Actions capabilities (M21, docs/assistant.md). -->
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts" />
         </activity>
         <!-- KleanApp provides the WorkManager configuration (HiltWorkerFactory). -->
         <provider

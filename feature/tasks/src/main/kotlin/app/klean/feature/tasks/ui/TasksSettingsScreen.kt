@@ -1,5 +1,7 @@
 package app.klean.feature.tasks.ui
 
+import app.klean.core.google.ui.GoogleTasksSection
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -66,7 +68,7 @@ class TasksSettingsViewModel @Inject constructor(
     val state: StateFlow<TasksSettingsState> = combine(
         settings.observe(TasksKeys.ReviewEnabled), settings.observe(TasksKeys.ReviewMinute),
         settings.observe(TasksKeys.DefaultListId), repo.observeLists(),
-    ) { on, minute, list, lists -> TasksSettingsState(on, minute, list, lists) }
+    ) { on, minute, list, lists -> TasksSettingsState(on, minute, list, lists.filter { it.source != "GOOGLE" }) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), TasksSettingsState())
 
     fun setReviewOn(v: Boolean) = viewModelScope.launch {
@@ -123,6 +125,7 @@ fun TasksSettingsScreen(onBack: () -> Unit, vm: TasksSettingsViewModel = hiltVie
                     s.lists.forEach { l -> DropdownMenuItem(text = { Text(l.name) }, onClick = { vm.setDefaultList(l.id); listMenu = false }) }
                 }
             }
+            GoogleTasksSection()
         }
     }
     if (pickTime) TimePickDialog(onDismiss = { pickTime = false }, onPicked = { vm.setReviewMinute(it); pickTime = false }, initialMinute = s.reviewMinute)

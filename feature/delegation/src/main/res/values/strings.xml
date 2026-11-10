@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="delegation_label">Delegation</string>
+    <string name="delegation_back">Back</string>
+    <string name="delegation_delegate">Delegate</string>
+    <string name="delegation_mode_partial">Draft it with AI (you send it)</string>
+    <string name="delegation_mode_interactive">Ask Hermes, checking with you as it goes</string>
+    <string name="delegation_mode_agentic">Let Hermes do it (asks only for big sends)</string>
+    <string name="delegation_set_up_hermes">Set up Hermes</string>
+    <string name="delegation_auto_complete">Mark the task done when it\'s finished</string>
+    <string name="delegation_start">Start</string>
+    <string name="delegation_cancel">Cancel</string>
+    <string name="delegation_status_running">Working on it</string>
+    <string name="delegation_status_input">Has a question for you</string>
+    <string name="delegation_status_approval">Waiting for your OK</string>
+    <string name="delegation_status_done">Finished</string>
+    <string name="delegation_status_failed">Stopped. You can try again from the task.</string>
+    <string name="delegation_you">You</string>
+    <string name="delegation_agent">Agent</string>
+    <string name="delegation_reply">Reply</string>
+    <string name="delegation_reply_hint">Your answer</string>
+    <string name="delegation_result">Result</string>
+    <string name="delegation_mark_done">Mark the task done</string>
+    <plurals name="delegation_accept_subtasks">
+        <item quantity="one">Add %d step as a subtask</item>
+        <item quantity="other">Add %d steps as subtasks</item>
+    </plurals>
+    <string name="delegation_review_approval">Review and decide</string>
+    <string name="delegation_approval_screen">Review</string>
+    <string name="delegation_approval_action">Wants to: %1$s</string>
+    <string name="delegation_draft">Draft</string>
+    <plurals name="delegation_recipients">
+        <item quantity="one">%d recipient</item>
+        <item quantity="other">%d recipients</item>
+    </plurals>
+    <string name="delegation_many_recipients">This goes to more than 5 people, so it always waits for you.</string>
+    <string name="delegation_remove_recipient">Remove %1$s</string>
+    <string name="delegation_add_recipient">Add a recipient</string>
+    <string name="delegation_add">Add</string>
+    <string name="delegation_edit">Edit</string>
+    <string name="delegation_approve">Approve</string>
+    <string name="delegation_approve_edited">Approve with edits</string>
+    <string name="delegation_reject">Don\'t send</string>
+    <string name="delegation_decided_approved">Approved.</string>
+    <string name="delegation_decided_edited">Approved with your edits.</string>
+    <string name="delegation_decided_rejected">Not sent.</string>
+    <string name="delegation_card_title">Waiting for your OK</string>
+    <string name="delegation_empty">Nothing is waiting for you.</string>
+    <string name="delegation_channel_approvals">Approvals</string>
+    <string name="delegation_channel_updates">Delegated tasks</string>
+    <string name="delegation_question_title">A question about \"%1$s\"</string>
+    <string name="delegation_approval_title">Ready for your OK: %1$s</string>
+    <plurals name="delegation_approval_body">
+        <item quantity="one">Review the draft and its recipient.</item>
+        <item quantity="other">Review the draft and its %d recipients.</item>
+    </plurals>
+    <string name="delegation_approval_body_none">Review what it wants to do.</string>
+    <string name="delegation_done_title">Finished: %1$s</string>
+    <string name="delegation_done_body">Open it to see the result.</string>
+    <string name="delegation_failed_title">Stopped: %1$s</string>
+    <string name="delegation_failed_body">The task is still in your list. Open it to see why.</string>
+    <string name="delegation_settings_title">Delegation</string>
+    <string name="delegation_settings_body">Klean can hand tasks to your own Hermes. Enter its API server address (or your Klean server\'s Hermes relay) and its key. Both stay on this phone.</string>
+    <string name="delegation_settings_url">Hermes address</string>
+    <string name="delegation_settings_token">Key</string>
+    <string name="delegation_settings_test">Test</string>
+    <string name="delegation_settings_save">Save</string>
+    <string name="delegation_settings_saved">Saved.</string>
+    <string name="delegation_test_ok">Hermes answered. You\'re set.</string>
+    <string name="delegation_test_token">Hermes answered, but didn\'t accept the key.</string>
+    <string name="delegation_test_unreachable">Can\'t reach Hermes at that address right now.</string>
+    <string name="delegation_test_not_set">Enter an address first.</string>
+</resources>

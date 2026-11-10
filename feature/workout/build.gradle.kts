@@ -5,6 +5,7 @@ plugins {
 dependencies {
     implementation(project(":core:notifications"))
     implementation(project(":core:capture"))
+    implementation(project(":core:health"))
     implementation(libs.core.ktx)
     testImplementation(libs.androidx.junit)
     testImplementation(libs.datastore.preferences)

@@ -2,6 +2,7 @@ package app.klean.today
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material3.DropdownMenu
@@ -92,6 +93,7 @@ fun TodayScreen(
     var menuOpen by remember { mutableStateOf(false) }
     val available by vm.captureAvailable.collectAsStateWithLifecycle()
     val justSaved by vm.justSaved.collectAsStateWithLifecycle()
+    val saved by vm.saved.collectAsStateWithLifecycle()
     val state by dash.state.collectAsStateWithLifecycle()
     var text by rememberSaveable { mutableStateOf("") }
     val ctx = LocalContext.current
@@ -149,12 +151,7 @@ fun TodayScreen(
                         enabled = available,
                     )
                     if (justSaved) {
-                        Text(
-                            stringResource(R.string.today_capture_saved),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(top = 4.dp, start = 4.dp),
-                        )
+                        SavedLine(saved, registry, onMove = vm::moveTo, onMenu = vm::holdOpen)
                     }
                 }
             }
@@ -250,4 +247,40 @@ private fun longDate(d: LocalDate): String =
 private fun shortDate(d: LocalDate): String {
     val pattern = android.text.format.DateFormat.getBestDateTimePattern(Locale.getDefault(), "dMMM")
     return d.toJava().format(DateTimeFormatter.ofPattern(pattern, Locale.getDefault()))
+}
+
+/** "Saved to Diet" under the capture bar, with "Move to…" when the text could belong elsewhere (M28). */
+@Composable
+private fun SavedLine(
+    saved: TodaySaved?,
+    registry: ModuleRegistry,
+    onMove: (app.klean.shared.capture.CandidateAction) -> Unit,
+    onMenu: (Boolean) -> Unit,
+) {
+    fun label(id: app.klean.shared.module.ModuleId): Int? = registry.all.firstOrNull { it.id == id }?.labelRes
+    var open by remember { mutableStateOf(false) }
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp, start = 4.dp)) {
+        val where = saved?.let { label(it.module) }
+        Text(
+            if (where != null) stringResource(R.string.today_capture_saved_to, stringResource(where)) else stringResource(R.string.today_capture_saved),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        if (saved != null && saved.options.isNotEmpty()) {
+            Box {
+                androidx.compose.material3.TextButton(onClick = { open = true; onMenu(true) }, modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text(stringResource(R.string.today_capture_move))
+                }
+                androidx.compose.material3.DropdownMenu(expanded = open, onDismissRequest = { open = false; onMenu(false) }) {
+                    saved.options.forEach { o ->
+                        androidx.compose.material3.DropdownMenuItem(
+                            text = { Text(label(o.moduleId)?.let { stringResource(it) } ?: o.moduleId.value) },
+                            onClick = { open = false; onMove(o) },
+                            modifier = Modifier.heightIn(min = 48.dp),
+                        )
+                    }
+                }
+            }
+        }
+    }
 }

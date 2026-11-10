@@ -11,10 +11,12 @@
     </queries>
 
     <application>
+        <!-- Exported for app shortcuts and Assistant/App Actions (res/xml/shortcuts.xml targets it by class).
+             It only opens the sheet, prefilled at most; nothing is saved until the person taps Save. -->
         <activity
             android:name=".CaptureActivity"
             android:excludeFromRecents="true"
-            android:exported="false"
+            android:exported="true"
             android:launchMode="singleInstance"
             android:taskAffinity="app.klean.capture"
             android:theme="@style/Theme.Klean.Translucent"

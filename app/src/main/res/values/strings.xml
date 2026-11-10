@@ -28,6 +28,8 @@
     <string name="setup_main_phone_switch">This is my main phone</string>
     <string name="today_empty">Nothing here yet. Turn on a module in Settings.</string>
     <string name="today_capture_saved">Saved</string>
+    <string name="today_capture_saved_to">Saved to %1$s</string>
+    <string name="today_capture_move">Move to…</string>
     <string name="today_greeting_morning">Good morning</string>
     <string name="today_greeting_afternoon">Good afternoon</string>
     <string name="today_greeting_evening">Good evening</string>
@@ -43,4 +45,13 @@
         <item quantity="one">%1$s, 1 thing logged</item>
         <item quantity="other">%1$s, %2$d things logged</item>
     </plurals>
+    <!-- App shortcuts (long-press the icon) and Assistant (M21). -->
+    <string name="shortcut_capture_short">Capture</string>
+    <string name="shortcut_capture_long">Capture anything</string>
+    <string name="shortcut_food_short">Log food</string>
+    <string name="shortcut_food_long">Log what you ate</string>
+    <string name="shortcut_task_short">New task</string>
+    <string name="shortcut_task_long">Add a task</string>
+    <string name="shortcut_remind_short">Remind me</string>
+    <string name="shortcut_remind_long">Set a reminder</string>
 </resources>

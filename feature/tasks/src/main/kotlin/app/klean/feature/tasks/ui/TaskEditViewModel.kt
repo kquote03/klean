@@ -47,6 +47,8 @@ data class TaskEditState(
     val repeat: RepeatChoice = RepeatChoice(RepeatKind.NONE),
     val someday: Boolean = false,
     val done: Boolean = false,
+    /** Lives in Google Tasks: no Delete, the list is fixed (M21). */
+    val google: Boolean = false,
     /** Set once saved or deleted: the screen closes. */
     val closed: Boolean = false,
 ) {
@@ -73,8 +75,9 @@ class TaskEditViewModel @Inject constructor(
     private val _state = MutableStateFlow(TaskEditState())
     val state: StateFlow<TaskEditState> = _state.asStateFlow()
 
+    /** Klean's own lists: tasks are never created in, or moved into, a Google list. */
     val lists: StateFlow<List<TaskListEntity>> =
-        repo.observeLists().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+        repo.observeLists().map { l -> l.filter { it.source != "GOOGLE" } }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     private val idFlow = MutableStateFlow(route.taskId)
     val subtasks: StateFlow<List<TaskEntity>> = idFlow.flatMapLatest { id ->
@@ -92,7 +95,7 @@ class TaskEditViewModel @Inject constructor(
                     loaded = true, id = t.id, parentId = t.parentId, title = t.title, notes = t.notes.orEmpty(),
                     listId = t.listId, dueDate = t.dueDate?.let(LocalDate::parse), dueMinutes = t.dueMinutes,
                     priority = t.priority, repeat = Repeats.choiceOf(t.recurrence), someday = t.status == "SOMEDAY",
-                    done = t.completedAt != null,
+                    done = t.completedAt != null, google = t.origin == "GOOGLE",
                 )
             } else {
                 val parentList = route.parentId?.let { repo.get(it)?.listId }

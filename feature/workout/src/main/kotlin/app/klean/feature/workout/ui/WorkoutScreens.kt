@@ -109,6 +109,7 @@ fun WorkoutScreen(
     onExercises: () -> Unit,
     onSettings: () -> Unit,
     vm: WorkoutHomeViewModel = hiltViewModel(),
+    run: app.klean.feature.workout.jog.RunViewModel = hiltViewModel(),
 ) {
     val s by vm.state.collectAsStateWithLifecycle()
     val fmt = rememberFormatter()
@@ -149,6 +150,7 @@ fun WorkoutScreen(
                             Text(stringResource(R.string.workout_start_empty), Modifier.padding(start = 8.dp))
                         }
                     }
+                    if (s.open == null) app.klean.feature.workout.jog.RunSection(run, Modifier.padding(top = 8.dp))
                     CaptureField(
                         value = text,
                         onValueChange = { text = it },
@@ -465,6 +467,9 @@ fun WorkoutSettingsScreen(onBack: () -> Unit, vm: WorkoutSettingsViewModel = hil
                     }
                 }
             }
+            app.klean.core.health.HealthConnectRow(
+                needed = setOf(app.klean.core.health.HealthAccess.READ_EXERCISE, app.klean.core.health.HealthAccess.WRITE_EXERCISE),
+            )
         }
     }
 }

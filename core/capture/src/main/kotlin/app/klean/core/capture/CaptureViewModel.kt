@@ -40,8 +40,15 @@ sealed interface CapturePhase {
     data object Editing : CapturePhase
     data object Saving : CapturePhase
     data class Saved(@StringRes val moduleLabelRes: Int?) : CapturePhase
-    /** Saved, and other modules could also fit: offer to move it. Stays open longer. */
-    data class SavedWithAlternatives(@StringRes val moduleLabelRes: Int?, val options: List<MoveOption>) : CapturePhase
+    /**
+     * Saved, and other modules could also fit: offer to move it. Stays open longer. [options] are the router's
+     * alternatives (chips); [more] are every other module behind one "Move to…" (the text matched nothing).
+     */
+    data class SavedWithAlternatives(
+        @StringRes val moduleLabelRes: Int?,
+        val options: List<MoveOption>,
+        val more: List<MoveOption> = emptyList(),
+    ) : CapturePhase
     data object NoModule : CapturePhase
 }
 
@@ -82,6 +89,7 @@ class CaptureViewModel @Inject constructor(
 
     private val _state = MutableStateFlow(
         CaptureUiState(
+            text = savedState.get<String>(CaptureActivity.EXTRA_TEXT).orEmpty(),
             startVoice = savedState.get<Boolean>(CaptureActivity.EXTRA_START_VOICE) == true,
             placeholderRes = target?.let { t -> registry.all.firstOrNull { it.id == t }?.capturePlaceholderRes }
                 ?: R.string.capture_placeholder,
@@ -204,28 +212,44 @@ class CaptureViewModel @Inject constructor(
             .onFailure { Log.w("Klean", "Photo import failed", it) }
     }
 
+    /** The "Move to…" menu is open: don't close under the person's finger; closed without a choice: close soon. */
+    fun holdOpen(open: Boolean) {
+        closeJob?.cancel()
+        if (!open && lastSaved != null) {
+            closeJob = viewModelScope.launch {
+                delay(CONFIRM_MS)
+                _state.update { it.copy(finished = true) }
+            }
+        }
+    }
+
     fun moveTo(option: MoveOption) {
         val saved = lastSaved ?: return
         closeJob?.cancel()
         viewModelScope.launch {
-            onSaved(service.correct(saved, option.action).copy(alternatives = emptyList()))
+            onSaved(service.correct(saved, option.action).copy(alternatives = emptyList(), others = emptyList()))
         }
     }
 
     private fun onSaved(r: CaptureResult.Saved) {
         lastSaved = r
         val label = labelOf(r.moduleId)
-        val phase = if (r.alternatives.isEmpty()) {
+        val movable = r.alternatives.isNotEmpty() || r.others.isNotEmpty()
+        val phase = if (!movable) {
             CapturePhase.Saved(label)
         } else {
-            CapturePhase.SavedWithAlternatives(label, r.alternatives.map { MoveOption(it, labelOf(it.moduleId)) })
+            CapturePhase.SavedWithAlternatives(
+                label,
+                r.alternatives.map { MoveOption(it, labelOf(it.moduleId)) },
+                r.others.map { MoveOption(it, labelOf(it.moduleId)) },
+            )
         }
         _state.update { it.copy(phase = phase) }
         closeJob = viewModelScope.launch {
             delay(
                 when {
-                    r.input.viaVoice -> maxOf(VoiceSession.UNDO_MS, if (r.alternatives.isEmpty()) 0 else ALTERNATIVES_MS)
-                    r.alternatives.isEmpty() -> CONFIRM_MS
+                    r.input.viaVoice -> maxOf(VoiceSession.UNDO_MS, if (!movable) 0 else ALTERNATIVES_MS)
+                    !movable -> CONFIRM_MS
                     else -> ALTERNATIVES_MS
                 },
             )

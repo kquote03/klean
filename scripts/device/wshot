@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# wshot <png>: Waydroid screenshot, stripping anything before the PNG magic (amdgpu warnings).
+DEV=${DEV:-192.168.240.112:5555}
+adb -s "$DEV" exec-out screencap -p > "$1.raw"
+nix shell nixpkgs#python3 -c python3 -c "import sys;d=open(sys.argv[1],'rb').read();i=d.find(b'\x89PNG');open(sys.argv[2],'wb').write(d[i:])" "$1.raw" "$1" && rm -f "$1.raw"

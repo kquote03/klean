@@ -23,6 +23,9 @@ class RuleCaptureClassifier(private val now: () -> LocalDateTime) : CaptureClass
             c.filter { it.moduleId in present }.ifEmpty { null }
 
         val t = text.trim()
+        if (DELEGATE_RX.containsMatchIn(t)) {
+            pick(CandidateAction(ModuleId.DELEGATION, DELEGATE, HIT), CandidateAction(ModuleId.TASKS, ADD_TASK, 0.8f))?.let { return it }
+        }
         if (isBirthday(t)) pick(
             CandidateAction(ModuleId.CONTACTS, ADD_BIRTHDAY, HIT),
             CandidateAction(ModuleId.BIRTHDAYS, ADD_BIRTHDAY, HIT - 0.05f),
@@ -55,6 +58,9 @@ class RuleCaptureClassifier(private val now: () -> LocalDateTime) : CaptureClass
         const val LOG_WORKOUT = "log_workout"
         const val ADD_EVENT = "add_event"
         const val ADD_TASK = "add_task"
+        /** Hand a task to an agent (M23): "ask Hermes to…", "Hermes, …", "delegate: …". */
+        const val DELEGATE = "delegate"
+        val DELEGATE_RX = Regex("""^(?:ask\s+hermes\s+to\b|hermes\s*[,:]|delegate\s*[:,]|delegate\s+to\s+hermes\b)""", setOf(RegexOption.IGNORE_CASE))
 
         private const val HIT = 0.9f
         private val OPTS = setOf(RegexOption.IGNORE_CASE)

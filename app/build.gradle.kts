@@ -40,7 +40,7 @@ android {
 dependencies {
     implementation(project(":shared"))
     listOf("common", "design", "data", "ui", "notifications", "ai", "capture", "sync").forEach { implementation(project(":core:$it")) }
-    listOf("diet", "onboarding", "settings", "tasks", "reminders", "calendar", "contacts", "workout", "sleep").forEach { implementation(project(":feature:$it")) }
+    listOf("diet", "onboarding", "settings", "tasks", "reminders", "calendar", "contacts", "workout", "sleep", "delegation").forEach { implementation(project(":feature:$it")) }
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
     implementation(libs.compose.material3)
@@ -79,7 +79,7 @@ dependencies {
 tasks.withType<Test>().configureEach {
     inputs.files(
         fileTree(rootDir) {
-            include("**/src/main/res/**/*.xml", "**/src/main/AndroidManifest.xml")
+            include("**/src/main/res/**/*.xml", "**/src/main/AndroidManifest.xml", "app/src/debug/res/xml/*.xml")
             exclude("**/build/**", ".gradle/**", "web/**") // web/: the web client (pnpm output, node_modules)
         },
     ).withPathSensitivity(PathSensitivity.RELATIVE).withPropertyName("userFacingResources")
