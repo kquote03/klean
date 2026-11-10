@@ -1,12 +1,12 @@
 #!/usr/bin/env sh
 # End-to-end run against the real backend image, built first with
-#   ./gradlew :backend:jibDockerBuild -Djib.to.image=klean-backend:m26   (override with KLEAN_IMAGE)
+#   docker build -t klean-server:e2e .   (from the repo root; override the image with KLEAN_IMAGE)
 # Uses its own compose project and volume (klean-m26e2e), so a local Klean's data is never touched, and
 # removes them afterwards. Run from web/ inside `nix develop .#web`.
 set -eu
 cd "$(dirname "$0")/.."
 COMPOSE="docker compose -p klean-m26e2e -f ../deploy/docker-compose.yml"
-export KLEAN_IMAGE="${KLEAN_IMAGE:-klean-backend:m26}"
+export KLEAN_IMAGE="${KLEAN_IMAGE:-klean-server:e2e}"
 export KLEAN_ADMIN_PASSWORD="${E2E_ADMIN_PASSWORD:-klean-e2e-password}"
 export KLEAN_BIND="${E2E_PORT:-18080}"
 export KLEAN_PUBLIC_URL="http://localhost:${KLEAN_BIND}"

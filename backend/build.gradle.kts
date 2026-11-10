@@ -1,9 +1,8 @@
 // Klean sync backend (M24): Ktor 3 server on CIO, Exposed + JDBC (SQLite default, Postgres optional),
-// packaged as a container image with Jib (`./gradlew :backend:jibDockerBuild` → klean-backend:dev).
+// packaged as the klean-server container image by the repo-root Dockerfile (docs/deploy.md).
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.jib)
     application
 }
 
@@ -54,46 +53,42 @@ tasks.test {
     systemProperty("klean.test.tmp", layout.buildDirectory.dir("tmp/backend-tests").get().asFile.absolutePath)
 }
 
-jib {
-    from {
-        image = "eclipse-temurin:21-jre"
-    }
-    to {
-        // Override for CI publishing: -Djib.to.image=ghcr.io/kquote03/klean-backend:<tag>
-        image = "klean-backend:dev"
-    }
-    container {
-        mainClass = "app.klean.backend.MainKt"
-        ports = listOf("8080")
-        volumes = listOf("/data")
-        environment = mapOf(
-            "KLEAN_DATA_DIR" to "/data",
-            "KLEAN_PORT" to "8080",
-        )
-        jvmFlags = listOf("-XX:MaxRAMPercentage=75")
-        creationTime = "USE_CURRENT_TIMESTAMP"
-    }
-}
-
-// Jib 3.5 reads Task.project at execution time; let Gradle fall back to a non-cached configuration for it.
-tasks.matching { it.name.startsWith("jib") }.configureEach {
-    notCompatibleWithConfigurationCache("Jib uses Task.project at execution time")
+// Reproducible jars (the server Dockerfile copies installDist's output): no file timestamps, fixed order.
+tasks.withType<AbstractArchiveTask>().configureEach {
+    isPreserveFileTimestamps = false
+    isReproducibleFileOrder = true
 }
 
 // The web client (M26): `pnpm build` in web/ → web/dist, packaged into the jar under web/ and served at /
-// (app.klean.backend.web.WebRoutes). Skipped when web/ or pnpm is missing (the Android CI job, a plain JDK
-// box) or with -Pklean.web=false; the backend then answers 404 at / and nothing else changes.
+// (app.klean.backend.web.WebRoutes). klean.web:
+//   auto      (default) build it when pnpm is on PATH, else leave it out (the backend then answers 404 at /)
+//   require   build it; fail without pnpm
+//   prebuilt  package an existing web/dist without running pnpm (the Dockerfile builds it in its own stage)
+//   false     leave it out
 val webDir = rootProject.layout.projectDirectory.dir("web")
 val pnpmOnPath = providers.environmentVariable("PATH").map { path ->
     path.split(File.pathSeparator).any { File(it, "pnpm").canExecute() }
 }.orElse(false)
-val webEnabled = providers.gradleProperty("klean.web").map { it != "false" }.orElse(true)
-val buildWeb = webEnabled.get() && pnpmOnPath.get() && webDir.file("package.json").asFile.exists()
+val webMode = providers.gradleProperty("klean.web").orElse("auto").get()
+val runPnpm = when (webMode) {
+    "false", "prebuilt" -> false
+    "require" -> {
+        check(pnpmOnPath.get()) { "-Pklean.web=require but pnpm is not on PATH (use nix develop .#web)" }
+        check(webDir.file("package.json").asFile.exists()) { "-Pklean.web=require but web/package.json is missing" }
+        true
+    }
+    "auto" -> pnpmOnPath.get() && webDir.file("package.json").asFile.exists()
+    else -> error("klean.web must be auto, require, prebuilt or false (was '$webMode')")
+}
+if (webMode == "prebuilt") {
+    check(webDir.file("dist/index.html").asFile.exists()) { "-Pklean.web=prebuilt but web/dist/index.html is missing" }
+}
+val packageWeb = runPnpm || webMode == "prebuilt"
 
 val pnpmBuild by tasks.registering(Exec::class) {
     description = "Builds the web client (web/dist) with pnpm."
     group = "build"
-    enabled = buildWeb
+    enabled = runPnpm
     workingDir = webDir.asFile
     commandLine("sh", "-c", "pnpm install --frozen-lockfile --prefer-offline && pnpm build")
     inputs.files(fileTree(webDir) {
@@ -110,8 +105,8 @@ val pnpmBuild by tasks.registering(Exec::class) {
 }
 
 tasks.processResources {
-    if (buildWeb) {
-        dependsOn(pnpmBuild)
+    if (packageWeb) {
+        if (runPnpm) dependsOn(pnpmBuild)
         from(webDir.dir("dist")) { into("web") }
     }
 }

@@ -1,0 +1,14 @@
+# Only what the Dockerfile copies matters; keep the context small and the layer cache stable.
+**/build/
+**/.gradle/
+**/.kotlin/
+**/node_modules/
+web/dist/
+web/src/generated/
+web/test-results/
+web/playwright-report/
+.git/
+.idea/
+.direnv/
+result
+local.properties

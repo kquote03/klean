@@ -611,3 +611,11 @@ Known gaps:
 - [x] 23.8 — gate BUILD SUCCESSFUL: 1078 tests, 0 failures, 1 skipped
 - [ ] 23.7 — Not built: resuming a delegation's event stream after the app process dies (Hermes keeps the session; Klean would need to re-attach with `Last-Event-ID`); the web has no delegation start (it edits approvals, M26). A real Hermes needs the user's URL and key
 
+## Server image (`klean-server`, Dockerfile, GHCR; plan `.hermes/plans/2026-11-10_193000-ghcr-image-and-next-milestones.md`, revised by the user: Dockerfiles, image name `klean-server`)
+
+- [x] Repo-root `Dockerfile` (multi-stage): web stage (Node 22 + pnpm via corepack → `web/dist`), server stage (JDK 21, `./gradlew :backend:installDist -Pklean.serverOnly=true -Pklean.web=prebuilt`, no Android SDK), runtime stage (JRE 21, uid 10001, `/data` volume, port 8080, OCI labels). Base images pinned by digest; build stages run on `$BUILDPLATFORM`, the runtime stage has no RUN, so amd64 + arm64 need no emulation. Jib removed
+- [x] `settings.gradle.kts`: `-Pklean.serverOnly=true` includes only `:shared` and `:backend`. `backend/build.gradle.kts`: `klean.web` = auto | require | prebuilt | false; reproducible archives (no timestamps, fixed order)
+- [x] `scripts/image-smoke.sh` (health, web app at `/`, SPA fallback, API 404, non-root, `/data` writable) and `scripts/image-repro.sh` (two `--no-cache` buildx builds with `SOURCE_DATE_EPOCH` + `rewrite-timestamp=true`, same digest)
+- [x] CI `.github/workflows/docker.yml` (replaces build.yml's `backend` job): backend tests → amd64 build + smoke + reproducibility → on pushes to main and `m*`/`p*` tags, push `ghcr.io/kquote03/klean-server` (linux/amd64 + linux/arm64; tags `latest`, `main`, `sha-<short>`, `0.1.0-<count>-<short>`, milestone tag)
+- [x] `deploy/docker-compose.yml` defaults to `ghcr.io/kquote03/klean-server:latest` with a `build:` fallback (`up -d --build`); `docs/deploy.md` rewritten (run, tags, build from source, reproducibility); `web/e2e/run.sh` uses `docker build -t klean-server:e2e .`
+- [ ] The user sets the GHCR package to public once (package settings → Change visibility); no API for it
