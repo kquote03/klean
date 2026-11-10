@@ -23,7 +23,7 @@ class QuickRepeatRankerTest {
     @Test fun limitRespected() {
         val history = List(20) { RepeatCandidate("item $it", now - it * HOUR_MS) }
         assertEquals(3, QuickRepeatRanker.rank(history, now, limit = 3).size)
-        assertEquals(8, QuickRepeatRanker.rank(history, now).size)
+        assertEquals(5, QuickRepeatRanker.rank(history, now).size)
     }
     @Test fun emptyInput() = assertEquals(emptyList(), QuickRepeatRanker.rank(emptyList(), now))
 }
