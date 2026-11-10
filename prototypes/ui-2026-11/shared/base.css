@@ -1,0 +1,116 @@
+/* Shared frame for every prototype screen: a 412x915 phone, Cantarell, the Klean pastel tokens,
+   the spacing/shape/type scales from docs/ui/design-system.md. Direction styles layer on top. */
+@import url("../tokens.css");
+
+@font-face { font-family: "Cantarell"; src: url("../fonts/cantarell_regular.ttf"); font-weight: 400; }
+@font-face { font-family: "Cantarell"; src: url("../fonts/cantarell_bold.ttf"); font-weight: 700; }
+@font-face { font-family: "Cantarell"; src: url("../fonts/cantarell_italic.ttf"); font-weight: 400; font-style: italic; }
+
+:root {
+  /* Spacing scale (Space.*) */
+  --s4: 4px; --s8: 8px; --s12: 12px; --s16: 16px; --s24: 24px; --s32: 32px; --s48: 48px;
+  --edge: var(--s16); --card-pad: var(--s16); --card-gap: var(--s12); --section-gap: var(--s24);
+  /* Shapes */
+  --r-s: 8px; --r-m: 16px; --r-l: 24px; --r-full: 999px;
+  /* Chrome */
+  --status-h: 32px; --nav-h: 80px; --gesture-h: 16px;
+  /* Shorthands for the tokens */
+  --primary: var(--md-sys-color-primary); --on-primary: var(--md-sys-color-on-primary);
+  --pc: var(--md-sys-color-primary-container); --on-pc: var(--md-sys-color-on-primary-container);
+  --secondary: var(--md-sys-color-secondary);
+  --sc: var(--md-sys-color-secondary-container); --on-sc: var(--md-sys-color-on-secondary-container);
+  --tertiary: var(--md-sys-color-tertiary);
+  --tc: var(--md-sys-color-tertiary-container); --on-tc: var(--md-sys-color-on-tertiary-container);
+  --surface: var(--md-sys-color-surface); --on-surface: var(--md-sys-color-on-surface);
+  --on-sv: var(--md-sys-color-on-surface-variant);
+  --c-lowest: var(--md-sys-color-surface-container-lowest);
+  --c-low: var(--md-sys-color-surface-container-low);
+  --c: var(--md-sys-color-surface-container);
+  --c-high: var(--md-sys-color-surface-container-high);
+  --c-highest: var(--md-sys-color-surface-container-highest);
+  --outline: var(--md-sys-color-outline); --outline-v: var(--md-sys-color-outline-variant);
+  --scrim: var(--md-sys-color-scrim);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 412px; height: 915px; overflow: hidden; }
+body {
+  font-family: "Cantarell", sans-serif; font-size: 16px; line-height: 24px;
+  background: var(--surface); color: var(--on-surface);
+  -webkit-font-smoothing: antialiased; text-wrap: pretty;
+  display: flex; flex-direction: column; position: relative;
+}
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; border-radius: var(--r-s); }
+svg.i { width: 24px; height: 24px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8;
+        stroke-linecap: round; stroke-linejoin: round; }
+svg.i.sm { width: 20px; height: 20px; }
+
+/* Type scale (Material roles, Cantarell) */
+.display-s { font-size: 36px; line-height: 44px; font-weight: 400; letter-spacing: -0.2px; }
+.headline-s { font-size: 24px; line-height: 32px; font-weight: 400; }
+.title-l { font-size: 22px; line-height: 28px; font-weight: 400; }
+.title-m { font-size: 16px; line-height: 24px; font-weight: 700; }
+.title-s { font-size: 14px; line-height: 20px; font-weight: 700; }
+.body-l { font-size: 16px; line-height: 24px; }
+.body-m { font-size: 14px; line-height: 20px; }
+.label-l { font-size: 14px; line-height: 20px; font-weight: 700; }
+.label-m { font-size: 12px; line-height: 16px; font-weight: 700; }
+.muted { color: var(--on-sv); }
+
+/* Status bar (static, decorative) */
+.status { height: var(--status-h); flex: none; display: flex; align-items: center; justify-content: space-between;
+          padding: 0 var(--s24); font-size: 14px; font-weight: 700; }
+.status .sys { display: flex; gap: 6px; align-items: center; }
+.status .sys span { display: block; background: currentColor; border-radius: 2px; }
+
+/* Scroll area between the status bar and the navigation bar */
+main { flex: 1; overflow: hidden; position: relative; padding-bottom: 96px; }
+
+/* Top bar */
+.topbar { display: flex; align-items: center; min-height: 64px; padding: 0 var(--s4) 0 var(--edge); gap: var(--s4); }
+.topbar .t { flex: 1; min-width: 0; }
+.icon-btn { width: 48px; height: 48px; display: grid; place-items: center; border-radius: var(--r-full); color: var(--on-sv); }
+.icon-btn:hover { background: var(--c-high); }
+
+/* Navigation bar (M3 short/flexible bar: 4 destinations) */
+nav.bar { flex: none; height: calc(var(--nav-h) + var(--gesture-h)); padding-bottom: var(--gesture-h);
+          display: grid; grid-template-columns: repeat(4, 1fr); background: var(--c); position: relative; z-index: 3; }
+nav.bar a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--s4);
+            min-height: 48px; color: var(--on-sv); font-size: 12px; line-height: 16px; font-weight: 700; }
+nav.bar a .pill { width: 56px; height: 32px; border-radius: var(--r-full); display: grid; place-items: center; }
+nav.bar a[aria-current="page"] { color: var(--on-surface); }
+nav.bar a[aria-current="page"] .pill { background: var(--pc); color: var(--on-pc); }
+nav.bar::after { content: ""; position: absolute; left: 50%; bottom: 6px; width: 108px; height: 4px; margin-left: -54px;
+                 border-radius: 2px; background: var(--on-surface); opacity: .35; }
+
+/* The single Add button */
+.fab { position: absolute; right: var(--edge); bottom: calc(var(--nav-h) + var(--gesture-h) + var(--s16)); z-index: 4;
+       width: 56px; height: 56px; border-radius: var(--r-m); display: grid; place-items: center;
+       background: var(--pc); color: var(--on-pc); box-shadow: 0 3px 8px rgb(0 0 0 / .12), 0 1px 2px rgb(0 0 0 / .1); }
+.fab svg.i { width: 26px; height: 26px; stroke-width: 2.2; }
+
+/* Segmented control (SegmentedTabs) */
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; margin: 0 var(--edge); border: 1px solid var(--outline);
+       border-radius: var(--r-full); overflow: hidden; }
+.seg a { min-height: 48px; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 14px; font-weight: 700;
+         color: var(--on-surface); }
+.seg a + a { border-left: 1px solid var(--outline); }
+.seg a[aria-current="page"] { background: var(--sc); color: var(--on-sc); }
+
+/* Generic rows */
+.row { display: flex; align-items: center; gap: var(--s16); min-height: 56px; padding: var(--s8) 0; }
+.row .grow { flex: 1; min-width: 0; }
+.row .meta { color: var(--on-sv); font-size: 14px; line-height: 20px; text-align: right; flex: none; }
+.check { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--outline); flex: none; }
+.dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.ellipsis { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+.seg[data-tone="p"] a[aria-current="page"] { background: var(--pc); color: var(--on-pc); }
+.seg[data-tone="t"] a[aria-current="page"] { background: var(--tc); color: var(--on-tc); }
+.av { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; flex: none; }
+/* Pressed feedback without moving anything */
+a:active, button:active { filter: brightness(.94); }

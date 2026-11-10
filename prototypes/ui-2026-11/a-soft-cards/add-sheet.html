@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=412">
+<title>A · Add</title>
+<link rel="stylesheet" href="../shared/base.css"><link rel="stylesheet" href="style.css">
+<style>
+  .backdrop { position: absolute; inset: 0; width: 412px; height: 915px; border: 0; pointer-events: none; }
+  .scrim { position: absolute; inset: 0; background: var(--surface); opacity: .82; }
+  .menu { position: absolute; right: var(--edge); bottom: calc(var(--nav-h) + var(--gesture-h) + var(--s16) + 56px + var(--s16));
+          display: flex; flex-direction: column; align-items: flex-end; gap: var(--s8); width: calc(100% - 2 * var(--edge)); }
+  .menu a { display: flex; align-items: center; gap: var(--s12); height: 56px; padding: 0 var(--s24) 0 var(--s16); border-radius: var(--r-full);
+            background: var(--pc); color: var(--on-pc); font-weight: 700; font-size: 16px; box-shadow: 0 1px 3px rgb(0 0 0 / .12); }
+  .menu a.type { width: 100%; background: var(--c-lowest); color: var(--on-sv); font-weight: 400; justify-content: space-between;
+                 padding: 0 var(--s16) 0 var(--s24); margin-bottom: var(--s8); box-shadow: 0 2px 8px rgb(0 0 0 / .14); }
+  .close { position: absolute; right: var(--edge); bottom: calc(var(--nav-h) + var(--gesture-h) + var(--s16)); width: 56px; height: 56px;
+           border-radius: 50%; display: grid; place-items: center; background: var(--primary); color: var(--on-primary); }
+</style>
+<script src="../shared/chrome.js"></script></head>
+<body data-dir="a" data-tab="today" data-nav="none" data-fab="none">
+<iframe class="backdrop" src="today.html" tabindex="-1" aria-hidden="true"></iframe>
+<div class="scrim"></div>
+<div class="menu" role="menu" data-list>
+  <a class="type" role="menuitem" href="#">Type or speak…<i data-icon="mic"></i></a>
+  <a role="menuitem" href="#"><i data-icon="moon"></i>Log sleep</a>
+  <a role="menuitem" href="#"><i data-icon="dumbbell"></i>Log workout</a>
+  <a role="menuitem" href="#"><i data-icon="note"></i>Log food</a>
+  <a role="menuitem" href="#"><i data-icon="bell"></i>Reminder</a>
+  <a role="menuitem" href="#"><i data-icon="event"></i>Event</a>
+  <a role="menuitem" href="#"><i data-icon="task"></i>Task</a>
+</div>
+<a class="close" href="today.html" aria-label="Close" data-primary><i data-icon="close"></i></a>
+</body></html>

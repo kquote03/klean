@@ -1,0 +1,48 @@
+/* Direction C: Bento. Today and the Track pages are grids of tiles sized by how much they matter right now;
+   Plan reads as a day timeline. The memorable thing: the next event is the biggest tile on the screen. */
+main { padding: 0 var(--edge) 96px; }
+main > .topbar { margin: 0 calc(-1 * var(--edge)); }
+.fab { border-radius: var(--r-l); width: 64px; height: 64px; background: var(--primary); color: var(--on-primary); }
+
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s8); }
+.tile { display: flex; flex-direction: column; border-radius: var(--r-l); padding: var(--s16); min-height: 120px; background: var(--c-low); position: relative; }
+.tile.w2 { grid-column: span 2; }
+.tile.h2 { grid-row: span 2; }
+.tile .k { font-size: 14px; line-height: 20px; font-weight: 700; opacity: .8; }
+.tile .v { font-size: 40px; line-height: 48px; letter-spacing: -0.5px; margin-top: auto; }
+.tile .v.s { font-size: 24px; line-height: 32px; letter-spacing: 0; }
+.tile .n { font-size: 14px; line-height: 20px; opacity: .85; }
+.tile .ico { position: absolute; right: var(--s16); top: var(--s16); opacity: .8; }
+.t-plan { background: var(--pc); color: var(--on-pc); }
+.t-track { background: var(--sc); color: var(--on-sc); }
+.t-people { background: var(--tc); color: var(--on-tc); }
+.tile ul { list-style: none; margin-top: var(--s12); display: flex; flex-direction: column; gap: var(--s12); }
+.tile li { display: flex; gap: var(--s8); align-items: flex-start; font-size: 16px; line-height: 22px; }
+.tile li .check { width: 20px; height: 20px; margin-top: 1px; border-color: currentColor; opacity: .7; }
+
+.seg { margin: 0 0 var(--s16); }
+.section { margin-top: var(--section-gap); }
+.section > h2 { font-size: 16px; line-height: 24px; font-weight: 700; margin-bottom: var(--s8); }
+.list .row { min-height: 56px; }
+.row small { display: block; font-size: 14px; line-height: 20px; color: var(--on-sv); }
+
+.bars { display: flex; gap: 6px; align-items: flex-end; height: 56px; margin-top: var(--s12); }
+.bars span { flex: 1; border-radius: 4px; background: color-mix(in srgb, var(--on-sc) 16%, transparent); }
+.bars span.on { background: var(--secondary); }
+
+/* Timeline (Plan, Calendar segment) */
+.strip { display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--s4); margin-bottom: var(--s16); }
+.strip a { min-height: 56px; border-radius: var(--r-m); display: flex; flex-direction: column; align-items: center; justify-content: center;
+           font-size: 12px; line-height: 16px; font-weight: 700; color: var(--on-sv); }
+.strip a b { font-size: 18px; line-height: 24px; color: var(--on-surface); }
+.strip a[aria-current] { background: var(--pc); color: var(--on-pc); }
+.strip a[aria-current] b { color: var(--on-pc); }
+.tl { position: relative; padding-left: 64px; }
+.tl::before { content: ""; position: absolute; left: 52px; top: 8px; bottom: 8px; width: 2px; background: var(--outline-v); border-radius: 1px; }
+.tl .it { position: relative; display: block; margin-bottom: var(--s12); }
+.tl .it .tm { position: absolute; left: -64px; width: 44px; text-align: right; font-size: 14px; line-height: 20px; color: var(--on-sv); top: 12px; }
+.tl .it .blk { display: block; border-radius: var(--r-m); padding: var(--s12) var(--s16); }
+.tl .it.ev .blk { background: var(--sc); color: var(--on-sc); }
+.tl .it.anchor .blk { padding: var(--s8) var(--s16); color: var(--on-sv); font-size: 14px; }
+.tl .it.anytime .blk { background: var(--c-low); }
+.tl .gap { height: 24px; }

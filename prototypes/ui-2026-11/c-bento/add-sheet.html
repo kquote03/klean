@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=412">
+<title>C · Add</title>
+<link rel="stylesheet" href="../shared/base.css"><link rel="stylesheet" href="style.css">
+<script src="../shared/chrome.js"></script></head>
+<style>
+  .backdrop { position: absolute; inset: 0; width: 412px; height: 915px; border: 0; pointer-events: none; }
+  .scrim { position: absolute; inset: 0; background: var(--scrim); opacity: .32; }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--surface); border-radius: 28px 28px 0 0;
+           padding: var(--s8) var(--edge) calc(var(--gesture-h) + var(--s16)); }
+  .handle { width: 32px; height: 4px; border-radius: 2px; background: var(--outline); margin: var(--s8) auto var(--s16); }
+  .field { display: flex; align-items: center; gap: var(--s8); min-height: 56px; border-radius: var(--r-l); background: var(--c-high); padding: 0 var(--s4) 0 var(--s16); }
+  .field input { flex: 1; border: 0; background: none; font: inherit; color: var(--on-surface); outline: none; min-height: 48px; }
+  .field label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .opts { margin-top: var(--s12); display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s8); }
+  .opts a { border-radius: var(--r-l); min-height: 96px; padding: var(--s12); display: flex; flex-direction: column; justify-content: space-between; font-weight: 700; font-size: 14px; }
+</style>
+<body data-dir="c" data-tab="today" data-nav="none" data-fab="none">
+<iframe class="backdrop" src="today.html" tabindex="-1" aria-hidden="true"></iframe>
+<div class="scrim"></div>
+<div class="sheet" role="dialog" aria-label="Add">
+  <div class="handle"></div>
+  <div class="field"><label for="cap">Add anything</label><input id="cap" placeholder="Type or speak…"><a class="icon-btn" href="#" aria-label="Speak"><i data-icon="mic"></i></a></div>
+  <div class="opts" data-list>
+    <a href="#" class="t-plan"><i data-icon="task"></i>Task</a>
+    <a href="#" class="t-plan"><i data-icon="event"></i>Event</a>
+    <a href="#" class="t-plan"><i data-icon="bell"></i>Reminder</a>
+    <a href="#" class="t-track"><i data-icon="note"></i>Log food</a>
+    <a href="#" class="t-track"><i data-icon="dumbbell"></i>Log workout</a>
+    <a href="#" class="t-track"><i data-icon="moon"></i>Log sleep</a>
+  </div>
+</div>
+</body></html>

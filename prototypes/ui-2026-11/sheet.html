@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>Klean prototypes: contact sheet</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+  @font-face { font-family: "Cantarell"; src: url("fonts/cantarell_regular.ttf"); font-weight: 400; }
+  @font-face { font-family: "Cantarell"; src: url("fonts/cantarell_bold.ttf"); font-weight: 700; }
+  body { margin: 0; padding: 32px 40px 40px; font-family: Cantarell, sans-serif; background: var(--md-sys-color-surface-container-high);
+         color: var(--md-sys-color-on-surface); width: max-content; }
+  h1 { font-size: 28px; line-height: 36px; font-weight: 400; margin: 0 0 4px; }
+  p.lede { margin: 0 0 24px; color: var(--md-sys-color-on-surface-variant); font-size: 16px; }
+  .row { display: flex; gap: 24px; }
+  figure { margin: 0; }
+  iframe { width: 412px; height: 915px; border: 0; border-radius: 28px; background: var(--md-sys-color-surface);
+           box-shadow: 0 0 0 1px var(--md-sys-color-outline-variant); display: block; }
+  figcaption { margin-top: 10px; font-size: 16px; font-weight: 700; display: flex; justify-content: space-between; }
+  figcaption span { font-weight: 400; color: var(--md-sys-color-on-surface-variant); }
+</style>
+<script src="counts.js"></script>
+</head><body>
+<script>
+  const dirs = { a: ['a-soft-cards', 'A: Soft cards', 'Pastel tonal bands on large rounded cards. Navigation: Today, Plan, Track, People.'],
+                 b: ['b-airy-list', 'B: Airy list', 'Almost no containers; type, spacing and small colour marks carry the hierarchy. Same navigation.'],
+                 c: ['c-bento', 'C: Bento', 'Tiles sized by importance; Plan shown as a day timeline. Same navigation.'] };
+  const screens = [['today', 'Today'], ['plan', 'Plan'], ['track', 'Track'], ['people', 'People'], ['workout', 'Workout'], ['sleep', 'Sleep'], ['diet', 'Diet'], ['add-sheet', 'Add menu']];
+  const d = dirs[new URLSearchParams(location.search).get('d') || 'a'];
+  const C = window.CLUTTER || {};
+  document.write(`<h1>${d[1]}</h1><p class="lede">${d[2]}</p><div class="row">` + screens.map(([s, label]) => {
+    const c = C[`${d[0]}/${s}`]; const n = c ? `${c.tap} controls, ${c.inputs} inputs` : '';
+    return `<figure><iframe src="${d[0]}/${s}.html" title="${label}" loading="eager"></iframe><figcaption>${label}<span>${n}</span></figcaption></figure>`;
+  }).join('') + '</div>');
+</script>
+</body></html>

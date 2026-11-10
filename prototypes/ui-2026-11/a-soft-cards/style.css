@@ -1,0 +1,49 @@
+/* Direction A: Soft cards. Pastel tonal hero bands on large rounded cards, generous spacing.
+   The memorable thing: each card opens with its module's pastel band carrying one big fact. */
+main { padding-left: var(--edge); padding-right: var(--edge); }
+main > .topbar { margin: 0 calc(-1 * var(--edge)); }
+
+.hello { padding: var(--s16) 0 var(--s24); display: flex; align-items: flex-start; }
+.hello .t { flex: 1; }
+.hello .icon-btn { margin-right: calc(-1 * var(--s12)); margin-top: -2px; }
+
+.card { display: block; background: var(--c-low); border-radius: var(--r-l); overflow: hidden; }
+.card + .card { margin-top: var(--card-gap); }
+.card .hero { padding: var(--s16) var(--s16) var(--s16) var(--s16); display: flex; gap: var(--s12); align-items: flex-start; }
+.card .hero .grow { flex: 1; min-width: 0; }
+.card .hero .label { font-size: 14px; line-height: 20px; font-weight: 700; opacity: .8; }
+.card .hero .big { font-size: 24px; line-height: 32px; }
+.card .hero .sub { font-size: 14px; line-height: 20px; opacity: .85; }
+.card .hero .badge { width: 40px; height: 40px; border-radius: var(--r-full); display: grid; place-items: center; background: rgb(255 255 255 / .55); flex: none; }
+.plan .hero { background: var(--pc); color: var(--on-pc); }
+.track .hero { background: var(--sc); color: var(--on-sc); }
+.people .hero { background: var(--tc); color: var(--on-tc); }
+.card .body { padding: var(--s4) var(--s16) var(--s8); }
+.card .body .row { min-height: 48px; padding: var(--s4) 0; gap: var(--s12); }
+.card .body .lead { width: 24px; display: grid; place-items: center; color: var(--on-sv); flex: none; }
+
+.section { margin-top: var(--section-gap); }
+.section > h2 { font-size: 16px; line-height: 24px; font-weight: 700; margin-bottom: var(--s8); }
+.section > h2 .muted { font-weight: 400; }
+.list { background: var(--c-low); border-radius: var(--r-l); padding: var(--s4) var(--s16); }
+.list .row + .row { box-shadow: 0 -1px 0 var(--surface); }
+.list .row { min-height: 56px; }
+
+.seg { margin: 0 0 var(--s16); }
+
+/* Workout saved cards */
+.hscroll { display: flex; gap: var(--card-gap); overflow: hidden; margin-right: calc(-1 * var(--edge)); }
+.saved { flex: none; width: 216px; border-radius: var(--r-l); padding: var(--s16); background: var(--sc); color: var(--on-sc);
+         display: flex; flex-direction: column; gap: var(--s4); min-height: 148px; }
+.saved .go { margin-top: auto; display: flex; align-items: center; gap: var(--s8); font-weight: 700; font-size: 14px; }
+.saved .go .disc { width: 40px; height: 40px; border-radius: 50%; background: var(--secondary); color: var(--md-sys-color-on-secondary); display: grid; place-items: center; }
+.saved.new { background: var(--c-low); color: var(--on-surface); width: 128px; align-items: flex-start; }
+.saved.new .disc { background: var(--c-highest); color: var(--on-surface); }
+
+/* Week bars */
+.week { display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--s8); align-items: end; height: 96px; padding-top: var(--s8); }
+.week .d { display: flex; flex-direction: column; align-items: center; gap: var(--s4); height: 100%; justify-content: flex-end; }
+.week .bar { width: 100%; max-width: 24px; border-radius: var(--r-s); background: color-mix(in srgb, var(--on-sc) 16%, transparent); }
+.week .bar.on { background: var(--secondary); }
+.week .lbl { font-size: 12px; line-height: 16px; font-weight: 700; opacity: .8; }
+.week .today .lbl { opacity: 1; text-decoration: underline; text-underline-offset: 3px; }

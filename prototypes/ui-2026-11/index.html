@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Klean UI prototypes, November 2026</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+  @font-face { font-family: "Cantarell"; src: url("fonts/cantarell_regular.ttf"); font-weight: 400; }
+  @font-face { font-family: "Cantarell"; src: url("fonts/cantarell_bold.ttf"); font-weight: 700; }
+  :root { --s: .5; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 32px 24px 64px; font-family: Cantarell, sans-serif; line-height: 1.5;
+         background: var(--md-sys-color-surface-container-low); color: var(--md-sys-color-on-surface); }
+  h1 { font-weight: 400; font-size: 32px; line-height: 40px; margin: 0 0 8px; }
+  h2 { font-weight: 700; font-size: 20px; margin: 48px 0 4px; }
+  p { margin: 0 0 12px; max-width: 72ch; color: var(--md-sys-color-on-surface-variant); }
+  a { color: var(--md-sys-color-primary); }
+  .strip { display: flex; gap: 16px; overflow-x: auto; padding: 12px 2px 8px; }
+  figure { margin: 0; flex: none; }
+  .phone { width: calc(412px * var(--s)); height: calc(915px * var(--s)); overflow: hidden; border-radius: 18px;
+           box-shadow: 0 0 0 1px var(--md-sys-color-outline-variant); background: var(--md-sys-color-surface); }
+  .phone iframe { width: 412px; height: 915px; border: 0; transform: scale(var(--s)); transform-origin: 0 0; pointer-events: none; }
+  figcaption { font-size: 14px; margin-top: 6px; display: flex; justify-content: space-between; gap: 8px; width: calc(412px * var(--s)); }
+  figcaption a { font-weight: 700; text-decoration: none; min-height: 24px; }
+  figcaption span { color: var(--md-sys-color-on-surface-variant); }
+  table { border-collapse: collapse; margin-top: 12px; font-size: 15px; background: var(--md-sys-color-surface); border-radius: 16px; overflow: hidden; }
+  th, td { padding: 10px 14px; text-align: left; }
+  th { font-weight: 700; background: var(--md-sys-color-surface-container); }
+  tr + tr td { border-top: 1px solid var(--md-sys-color-surface-container-high); }
+  td.n { font-variant-numeric: tabular-nums; }
+  .ok { color: var(--md-sys-color-secondary); font-weight: 700; }
+  .over { color: var(--md-sys-color-tertiary); font-weight: 700; }
+  @media (min-width: 1400px) { :root { --s: .62; } }
+</style>
+<script src="counts.js"></script>
+</head><body>
+<h1>Klean, three directions</h1>
+<p>Eight screens each, with the same seeded day: Tuesday 10 November, 8:52 in the morning. Every direction uses the same navigation
+(Today, Plan, Track, People) and the same single Add button, so what differs is the look. Tap a screen name to open it full size;
+on a phone, open any screen directly.</p>
+<p>Full-width sheets per direction: <a href="sheet.html?d=a">A</a>, <a href="sheet.html?d=b">B</a>, <a href="sheet.html?d=c">C</a>.</p>
+
+<div id="dirs"></div>
+
+<h2>Navigation, the other options</h2>
+<p>The three looks above all use navigation A: four grouped tabs, Today, Plan (Tasks and Calendar), Track (Workout, Sleep, Diet) and People.
+Any look works with either alternative, so this choice is separate.</p>
+<p><b>B, customizable bar:</b> Today plus three modules you pick (for example Tasks, Calendar, Workout); the rest open from Today's cards
+and a module sheet. Fewer taps for your favourites, two taps for everything else.</p>
+<p><b>C, Today as the directory:</b> the bar holds Today, Add and Search; every module opens from its Today card. The calmest bar,
+but every module is two taps from anywhere except Today.</p>
+
+<h2>Clutter count per screen</h2>
+<p>Counted by <code>shared/chrome.js</code> on the first viewport (412 by 915), outside the navigation bar. A list of rows counts once.
+Budget: at most 7 controls, no text inputs outside the Add menu, one primary action.</p>
+<div id="table"></div>
+
+<script>
+  const dirs = [['a-soft-cards', 'A: Soft cards', 'Pastel tonal bands on large rounded cards, generous spacing. Each card opens with its module colour carrying one big fact.'],
+                ['b-airy-list', 'B: Airy list', 'Almost no containers; type size, weight and spacing carry the hierarchy, colour appears only as small marks. Today opens with the day as one sentence.'],
+                ['c-bento', 'C: Bento', 'Tiles sized by how much they matter right now; the next event is the biggest thing on Today. Plan is shown as a day timeline (Calendar segment).']];
+  const screens = [['today', 'Today'], ['plan', 'Plan'], ['track', 'Track'], ['people', 'People'], ['workout', 'Workout'], ['sleep', 'Sleep'], ['diet', 'Diet'], ['add-sheet', 'Add menu']];
+  const C = window.CLUTTER || {};
+  const fmt = c => c ? `${c.tap} controls${c.inputs ? `, ${c.inputs} input` : ''}` : '';
+  document.getElementById('dirs').innerHTML = dirs.map(([dir, name, blurb]) =>
+    `<h2>${name}</h2><p>${blurb}</p><div class="strip">` + screens.map(([s, label]) =>
+      `<figure><div class="phone"><iframe src="${dir}/${s}.html" title="${name}, ${label}" loading="lazy" tabindex="-1"></iframe></div>
+       <figcaption><a href="${dir}/${s}.html">${label}</a><span>${fmt(C[dir + '/' + s])}</span></figcaption></figure>`).join('') + '</div>').join('');
+  const verdict = (c, s) => { if (!c) return ''; const inputsOk = s === 'add-sheet' ? c.inputs <= 2 : c.inputs === 0;
+    return (c.tap <= 7 && inputsOk && c.primary <= 1) ? '<span class="ok">within</span>' : '<span class="over">over</span>'; };
+  document.getElementById('table').innerHTML = '<table><tr><th>Screen</th>' + dirs.map(d => `<th>${d[1]}</th>`).join('') + '</tr>' +
+    screens.map(([s, label]) => `<tr><td>${label}</td>` + dirs.map(([dir]) => { const c = C[dir + '/' + s];
+      return `<td class="n">${c ? `${c.tap} controls, ${c.inputs} inputs, ${c.primary} primary ` : 'not counted '}${verdict(c, s)}</td>`; }).join('') + '</tr>').join('') + '</table>';
+</script>
+</body></html>
