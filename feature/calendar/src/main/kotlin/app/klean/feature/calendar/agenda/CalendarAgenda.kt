@@ -52,6 +52,8 @@ data class AgendaItem(
     /** Klean event id (EVENT only). */
     val eventId: String? = null,
     val recurring: Boolean = false,
+    /** The occurrence's real start (EVENT only), for "delete only this one". */
+    val occurrenceStart: Long? = null,
     val location: String? = null,
     val notes: String? = null,
     /** Deep link for items from other modules. */
@@ -154,7 +156,7 @@ class CalendarAgenda(
                     start = if (e.allDay) first.atStartOfDayIn(tz).toEpochMilliseconds() else start,
                     end = if (e.allDay) last.plus(1, DateTimeUnit.DAY).atStartOfDayIn(tz).toEpochMilliseconds() else end,
                     allDay = e.allDay, firstDay = first, lastDay = last, sourceName = src?.name, color = src?.color,
-                    eventId = e.id, recurring = e.rrule != null, location = e.location, notes = e.notes,
+                    eventId = e.id, recurring = e.rrule != null, occurrenceStart = start, location = e.location, notes = e.notes,
                 )
             }
         }

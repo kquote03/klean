@@ -242,3 +242,13 @@ class KleanCalendarMirrorFactory @Inject constructor(
 
     suspend fun onIo(block: suspend KleanCalendarMirror.() -> Unit) = withContext(Dispatchers.IO) { mirror.block() }
 }
+
+/**
+ * The mirror as the app wires it: an [EventChangeListener] after every write and a [Reschedulable] for the full
+ * resync (startup, boot, permission granted, module switched on or off). Provider work runs on IO.
+ */
+@Singleton
+class MirrorHook @Inject constructor(private val factory: KleanCalendarMirrorFactory) : EventChangeListener, Reschedulable {
+    override suspend fun onEventsChanged(ids: List<String>) = factory.onIo { onEventsChanged(ids) }
+    override suspend fun reschedule() = factory.onIo { reschedule() }
+}

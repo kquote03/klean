@@ -1,2 +1,111 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources></resources>
+<resources>
+    <string name="calendar_label">Calendar</string>
+    <string name="calendar_capture_placeholder">An event: dentist friday 9:30</string>
+
+    <!-- Today -->
+    <string name="calendar_card_title">Agenda</string>
+    <string name="calendar_card_empty">Nothing planned today</string>
+    <string name="calendar_summary_next">Next</string>
+    <string name="calendar_summary_next_value">%1$s %2$s</string>
+    <string name="calendar_summary_today">Calendar</string>
+    <string name="calendar_summary_nothing">Nothing else today</string>
+    <string name="calendar_status_next">%1$s %2$s</string>
+    <string name="calendar_all_day">All day</string>
+
+    <!-- Calendar screen -->
+    <string name="calendar_view_agenda">Agenda</string>
+    <string name="calendar_view_day">Day</string>
+    <string name="calendar_view_three_day">3 days</string>
+    <string name="calendar_view_week">Week</string>
+    <string name="calendar_view_month">Month</string>
+    <string name="calendar_previous">Previous</string>
+    <string name="calendar_next">Next</string>
+    <string name="calendar_today">Today</string>
+    <string name="calendar_settings">Calendar settings</string>
+    <string name="calendar_new_event">New event</string>
+    <string name="calendar_agenda_empty">Nothing planned for these two weeks</string>
+    <string name="calendar_day_today">Today · %1$s</string>
+    <string name="calendar_day_tomorrow">Tomorrow · %1$s</string>
+    <string name="calendar_access_title">Your phone\'s calendars</string>
+    <string name="calendar_access_body">Klean can show the events from your other calendars here, and add its own events to them so other apps see them too.</string>
+    <string name="calendar_access_allow">Show them</string>
+    <string name="calendar_access_later">Not now</string>
+    <string name="calendar_kind_task">Task</string>
+    <string name="calendar_kind_reminder">Reminder</string>
+    <string name="calendar_kind_birthday">Birthday</string>
+    <string name="calendar_from_source">From %1$s</string>
+    <string name="calendar_read_only">Shown from another place; change it there.</string>
+    <string name="calendar_open">Open</string>
+    <string name="calendar_close">Close</string>
+    <plurals name="calendar_month_cell">
+        <item quantity="one">%1$s, %2$d thing</item>
+        <item quantity="other">%1$s, %2$d things</item>
+    </plurals>
+    <string name="calendar_time_range">%1$s – %2$s</string>
+
+    <!-- Event editor -->
+    <string name="calendar_edit_new">New event</string>
+    <string name="calendar_edit_title">Edit event</string>
+    <string name="calendar_edit_back">Close without saving</string>
+    <string name="calendar_edit_save">Save</string>
+    <string name="calendar_edit_name">Title</string>
+    <string name="calendar_edit_all_day">All day</string>
+    <string name="calendar_edit_starts">Starts</string>
+    <string name="calendar_edit_ends">Ends</string>
+    <string name="calendar_edit_location">Place</string>
+    <string name="calendar_edit_notes">Notes</string>
+    <string name="calendar_edit_repeat">Repeat</string>
+    <string name="calendar_repeat_none">Once</string>
+    <string name="calendar_repeat_daily">Every day</string>
+    <string name="calendar_repeat_weekly">Every week</string>
+    <string name="calendar_repeat_monthly">Every month</string>
+    <string name="calendar_repeat_yearly">Every year</string>
+    <string name="calendar_repeat_custom">Custom: %1$s</string>
+    <string name="calendar_edit_reminder">Reminder</string>
+    <string name="calendar_reminder_none">None</string>
+    <string name="calendar_reminder_at_start">At the start</string>
+    <string name="calendar_reminder_10">10 minutes before</string>
+    <string name="calendar_reminder_60">1 hour before</string>
+    <string name="calendar_reminder_1440">1 day before</string>
+    <string name="calendar_reminder_minutes">%1$d minutes before</string>
+    <string name="calendar_edit_delete">Delete</string>
+    <string name="calendar_delete_title">Delete this event?</string>
+    <string name="calendar_delete_recurring_title">Delete a repeating event</string>
+    <string name="calendar_delete_this">Only this one</string>
+    <string name="calendar_delete_all">Every time</string>
+    <string name="calendar_cancel">Cancel</string>
+    <string name="calendar_ok">OK</string>
+    <string name="calendar_pick_date">Choose a date</string>
+    <string name="calendar_pick_time">Choose a time</string>
+
+    <!-- Settings -->
+    <string name="calendar_settings_title">Calendar</string>
+    <string name="calendar_settings_back">Back</string>
+    <string name="calendar_settings_calendars">Calendars shown</string>
+    <string name="calendar_settings_klean">Klean</string>
+    <string name="calendar_settings_klean_summary">Your Klean events</string>
+    <string name="calendar_settings_phone_summary">From this phone</string>
+    <string name="calendar_settings_access">Show your phone\'s calendars</string>
+    <string name="calendar_settings_also">Also shown</string>
+    <string name="calendar_settings_tasks">Tasks with a date</string>
+    <string name="calendar_settings_reminders">Reminders</string>
+    <string name="calendar_settings_new_events">New events</string>
+    <string name="calendar_settings_default_reminder">Reminder for new events</string>
+    <string name="calendar_settings_files">Files</string>
+    <string name="calendar_settings_import">Import an .ics file</string>
+    <string name="calendar_settings_import_summary">Adds the events; ones already here are updated</string>
+    <string name="calendar_settings_export">Export to an .ics file</string>
+    <string name="calendar_settings_export_summary">Your Klean events, for any calendar app</string>
+    <string name="calendar_export_file_name">klean-calendar.ics</string>
+    <plurals name="calendar_imported">
+        <item quantity="one">Added %1$d event, updated %2$d</item>
+        <item quantity="other">Added %1$d events, updated %2$d</item>
+    </plurals>
+    <plurals name="calendar_exported">
+        <item quantity="one">Saved %1$d event</item>
+        <item quantity="other">Saved %1$d events</item>
+    </plurals>
+    <string name="calendar_import_failed">That file couldn\'t be read as a calendar</string>
+    <string name="calendar_export_failed">The file couldn\'t be saved</string>
+</resources>
