@@ -31,9 +31,10 @@ class SleepMathTest {
             s("night", at(nov9, 23), at(nov10, 7)),
             s("before", at(nov8, 23), at(nov9, 7)),
         )
-        // At 08:00 the nap hasn't happened; at 16:00 it's the latest.
+        // A nap later the same day doesn't replace the night.
         assertEquals("night", SleepMath.lastNight(sessions.drop(1), nov10, q, Dubai)?.id)
-        assertEquals("nap", SleepMath.lastNight(sessions, nov10, q, Dubai)?.id)
+        assertEquals("night", SleepMath.lastNight(sessions, nov10, q, Dubai)?.id)
+        assertEquals("nap", SleepMath.lastNight(sessions.take(1), nov10, q, Dubai)?.id)
         assertEquals("before", SleepMath.lastNight(sessions, nov9, q, Dubai)?.id)
         // An open session has no wake yet.
         assertNull(SleepMath.lastNight(listOf(s("open", at(nov9, 23), null)), nov10, q, Dubai))

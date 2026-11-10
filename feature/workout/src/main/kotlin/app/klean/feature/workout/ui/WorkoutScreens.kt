@@ -306,8 +306,8 @@ fun SessionScreen(onBack: () -> Unit, onDeleted: (String) -> Unit, vm: SessionVi
                         val add = stringResource(R.string.workout_add_set, row.exercise)
                         FilledTonalButton(
                             onClick = { vm.addSet(row) },
-                            modifier = Modifier.heightIn(min = 48.dp).padding(start = 8.dp),
-                        ) { Text(stringResource(R.string.workout_add_set_short), Modifier.semanticsLabel(add)) }
+                            modifier = Modifier.padding(start = 8.dp).heightIn(min = 48.dp).semanticsLabel(add),
+                        ) { Text(stringResource(R.string.workout_add_set_short)) }
                     }
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         row.done.forEach { set ->

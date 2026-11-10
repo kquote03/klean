@@ -29,9 +29,12 @@ object SleepMath {
 
     fun wakeDay(s: SleepSessionEntity, q: QuietHours, zone: TimeZone): LocalDate? = s.wakeAt?.let { DayWindows.logicalDate(it, q, zone) }
 
-    /** The latest finished session whose wake falls in the logical day [today]. */
+    /**
+     * "Last night": the longest finished session whose wake falls in the logical day [today], so a nap later
+     * in the day doesn't replace the night (the plan said "latest"; a 20-minute nap shown as last night read oddly).
+     */
     fun lastNight(sessions: List<SleepSessionEntity>, today: LocalDate, q: QuietHours, zone: TimeZone): SleepSessionEntity? =
-        sessions.filter { !it.sync.deleted && wakeDay(it, q, zone) == today }.maxByOrNull { it.wakeAt!! }
+        sessions.filter { !it.sync.deleted && wakeDay(it, q, zone) == today }.maxByOrNull { duration(it) ?: 0 }
 
     /** The last [count] logical days ending with [today], newest first; each holds its longest finished session. */
     fun nights(sessions: List<SleepSessionEntity>, today: LocalDate, count: Int, q: QuietHours, zone: TimeZone): List<Night> {
