@@ -9,6 +9,7 @@
     <string name="settings_appearance">Appearance</string>
     <string name="settings_ai_providers">AI providers</string>
     <string name="settings_backup">Backup</string>
+    <string name="settings_sync">Sync</string>
     <string name="settings_permissions">Permissions</string>
     <string name="settings_about">About</string>
     <string name="settings_run_setup">Run setup again</string>
