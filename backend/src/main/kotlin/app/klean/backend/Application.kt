@@ -10,6 +10,7 @@ import app.klean.backend.google.googlePublicRoutes
 import app.klean.backend.google.googleRoutes
 import app.klean.backend.proxy.aiProxyRoutes
 import app.klean.backend.proxy.hermesRoutes
+import app.klean.backend.web.webRoutes
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
@@ -99,5 +100,7 @@ fun Application.kleanModule(services: Services) {
                 services.backup.routes(this)
             }
         }
+        // The web client (M26) at /, with an SPA fallback for every path outside /api and /dav.
+        webRoutes()
     }
 }
