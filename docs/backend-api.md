@@ -61,6 +61,13 @@ sha256 is stored. Pair codes are case-insensitive and the dash is optional.
 
 `sha256` is lowercase hex of the content. Upload blobs before pushing records that reference them.
 
+**Blob references in records (M25, Android).** Rows keep their own file-name columns (`food_entry.photo_file`,
+`contact.photo_blob`, `workout_session.route_blob`). A record whose blob column is set also carries
+`"blob_sha256": {"<column>": "<sha256>"}` in `json`; it is not a column, so clients ignore it on apply and use it to
+fetch the file (`GET /blobs/{sha256}`) and store it under the column's file name. The server stores it like any
+other key. Android sends booleans as JSON `true`/`false`, never sends device-local columns
+(`event.provider_event_id`, `contact.provider_raw_id`), and ignores `dav_` keys.
+
 ## DAV (outside `/api/v1`; HTTP Basic, user `klean`, password = any device token, normally an app password)
 
 `/.well-known/carddav` and `/.well-known/caldav` → 301 `/dav/`. Principal `/dav/principal/`; address book
