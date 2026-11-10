@@ -465,3 +465,7 @@ Verified on Waydroid (Android 13, 540×1212) on 2026-11-10 (M19 Calendar), scree
 - [x] Fresh install with stale mirror rows from an earlier install → startup resync removes the orphans; new event mirrored
 - [x] Settings › Modules › Calendar off: gone from the bar and Today (no Agenda card, no tile), the provider "Klean" calendar is deleted, status line falls back to "Nothing planned. Add anything here." (`27`–`29`); on again: calendar re-created with the event, Agenda card back. Crash buffer empty
 - [~] ICS import through the system picker: the picker hung Waydroid's `system` process (ANR, session restarted); import is covered by `CalendarRepositoryTest` (update by UID, all-day) and `CalendarSettingsViewModelTest`. Check on the Pixel
+
+## M19 — Contacts & birthdays (`feature/contacts`, branch `m19-contacts`; plan `.hermes/plans/2026-11-09_165408-klean-holistic-full-product.md` §M18–M20 + module plan §S4)
+
+- [x] 19K.1 — data: `ContactRepository`/`DefaultContactRepository` (UUIDv7, `SyncStamper` in `db.transact`, tombstones, `ContactChangeListener` multibinding after writes), JSON phones/emails/addresses/N (`LabeledValue`, `PostalAddress`, `StructuredName`), validated `Birthday` (Feb 29 allowed without a year or in a leap year), default reminder days from the synced `birthdays.defaultReminders` (0,3), find-by-name, VCF 3/4 import (update by UID) and export through the shared `VCardCodec` (`ContactVcf`; unmodelled properties kept in `contact.custom`), merge. Additive `ContactDao.live()`. `ContactRepositoryTest` 11 — m19-contacts

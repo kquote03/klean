@@ -1,0 +1,29 @@
+BEGIN:VCARD
+VERSION:3.0
+UID:sara-1
+FN:Sara Haddad
+N:Haddad;Sara;;;
+TEL;TYPE=CELL:+971 50 123 4567
+EMAIL;TYPE=INTERNET:sara@example.com
+ADR;TYPE=HOME:;;12 Palm Street;Dubai;;00000;United Arab 
+ Emirates
+BDAY:1985-04-12
+NOTE:Likes tulips\, not roses
+END:VCARD
+BEGIN:VCARD
+VERSION:4.0
+UID:urn:uuid:omar-2
+FN:Omar Khalil
+TEL;TYPE=work,voice;VALUE=uri:tel:+97143334444
+EMAIL;TYPE=work:omar@work.example
+BDAY:--0229
+ORG:Khalil & Sons
+END:VCARD
+BEGIN:VCARD
+VERSION:3.0
+UID:lina-3
+FN:Lina Nasser
+NICKNAME:Lini
+TEL:0501112222
+BDAY:19921103
+END:VCARD
