@@ -11,4 +11,5 @@ import dagger.multibindings.IntoSet
 @InstallIn(SingletonComponent::class)
 abstract class StatusModule {
     @Binds @IntoSet abstract fun notification(n: KleanStatusNotifier): StatusSurface
+    @Binds abstract fun replyChoices(c: CaptureReplyChoices): StatusReplyChoices
 }

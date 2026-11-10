@@ -53,6 +53,7 @@ class AndroidReminderNotifier @Inject constructor(
             .addAction(0, ctx.getString(R.string.reminders_action_done), ReminderIntents.action(ctx, r.id, ReminderIntents.DONE))
             .addAction(0, ctx.getString(R.string.reminders_action_snooze_10), ReminderIntents.action(ctx, r.id, ReminderIntents.SNOOZE_10))
             .addAction(0, ctx.getString(R.string.reminders_action_later), SnoozeActivity.pendingIntent(ctx, r.id))
+            .extend(watchActions(ctx, r.id, ReminderIntents.DONE, R.string.reminders_action_done))
             .build()
         nm.notify(r.id, NOTIFICATION_ID, n)
     }
@@ -87,8 +88,21 @@ class AndroidReminderNotifier @Inject constructor(
                 .addAction(0, ctx.getString(R.string.reminders_action_dismiss), ReminderIntents.action(ctx, r.id, ReminderIntents.DISMISS))
                 .addAction(0, ctx.getString(R.string.reminders_action_snooze_10), ReminderIntents.action(ctx, r.id, ReminderIntents.SNOOZE_10))
                 .addAction(0, ctx.getString(R.string.reminders_action_later), SnoozeActivity.pendingIntent(ctx, r.id))
+                .extend(watchActions(ctx, r.id, ReminderIntents.DISMISS, R.string.reminders_action_dismiss))
                 .build()
         }
+
+        /**
+         * The watch's buttons (M27): the phone's first action and "10 min", both handled on the phone with
+         * no UI. "Later…" opens a picker on the phone, which is no use on a wrist, so it's left off.
+         */
+        fun watchActions(ctx: Context, id: String, first: String, firstLabel: Int): NotificationCompat.WearableExtender =
+            NotificationCompat.WearableExtender()
+                .addAction(NotificationCompat.Action.Builder(R.drawable.ic_reminder, ctx.getString(firstLabel), ReminderIntents.action(ctx, id, first)).build())
+                .addAction(
+                    NotificationCompat.Action.Builder(R.drawable.ic_reminder, ctx.getString(R.string.reminders_action_snooze_10), ReminderIntents.action(ctx, id, ReminderIntents.SNOOZE_10))
+                        .build(),
+                )
 
         /** Tasks → Reminders tab. */
         fun openReminders(ctx: Context): PendingIntent = PendingIntent.getActivity(
