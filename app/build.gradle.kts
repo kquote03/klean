@@ -56,6 +56,8 @@ dependencies {
     implementation(libs.serialization.json)
     implementation(libs.work.runtime)
     implementation(libs.hilt.work)
+    // Wear OS Data Layer (M27). Needs Play services at run time; without them the watch path is a no-op.
+    implementation(libs.play.services.wearable)
     ksp(libs.hilt.androidx.compiler)
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)
