@@ -163,7 +163,13 @@ fun KleanAppUi(vm: ShellViewModel = hiltViewModel(), deepLinks: Flow<Intent> = e
             Column {
                 if (legacy != null) LegacyGroupHeader(chrome(legacy.first, legacy.second))
                 Box(if (legacy != null) Modifier.weight(1f).consumeWindowInsets(WindowInsets.statusBars) else Modifier.weight(1f)) {
-                    startWithSetup?.let { KleanNavHost(nav = nav, shell = vm, enabled = enabled, startWithSetup = it) }
+                    startWithSetup?.let {
+                        KleanNavHost(
+                            nav = nav, shell = vm, enabled = enabled, startWithSetup = it,
+                            // A Today card opens its group where the user left it, like the bar does.
+                            onOpenGroup = { g -> groups.firstOrNull { b -> b.group == g }?.landing(last)?.let(::open) },
+                        )
+                    }
                 }
             }
         }

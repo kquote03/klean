@@ -167,81 +167,35 @@ class ShellSmokeTest {
         assertEquals(listOf("Today", "Track"), barLabels())
     }
 
-    // A tall screen, so the week strip is composed in the lazy list.
+    // Today: one card per group, built from the modules' tiles; a card opens its group.
     @Config(qualifiers = "w411dp-h891dp")
-    @Test fun todayShowsGreetingTilesAndWeek() {
+    @Test fun todayShowsAGroupCardThatOpensItsGroup() {
         val gate = FakeModuleGate()
-        val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
         val tiles = object : DashboardSummaryProvider {
             override val moduleId = ModuleId.DIET
             override fun summaries() = flowOf(listOf(SummaryItem("diet.today", "Today", "3 entries", route = NestedStart)))
         }
-        val activity = object : DayActivityProvider {
-            override val moduleId = ModuleId.DIET
-            override fun activity(from: LocalDate, to: LocalDate) = flowOf(mapOf(today to 3))
-            override fun dayRoute(date: LocalDate): Any = NestedInner
-        }
-        val vm = shell(setOf(NestedModule()), gate, DashboardContributions(setOf(tiles), setOf(activity), gate))
+        val vm = shell(setOf(NestedModule()), gate, DashboardContributions(setOf(tiles), emptySet(), gate))
         compose.setContent { KleanTheme { KleanAppUi(vm) } }
         compose.waitForIdle()
-        assertTrue(
-            compose.onAllNodes(hasText("Good morning") or hasText("Good afternoon") or hasText("Good evening") or hasText("Hello"))
-                .fetchSemanticsNodes().isNotEmpty(),
-        )
         compose.onNodeWithText("3 entries").assertExists()
-        compose.onNodeWithText("This week").assertExists()
-        compose.onAllNodes(hasContentDescription("nothing logged", substring = true)).assertCountEquals(6)
-        compose.onNode(hasContentDescription("3 things logged", substring = true)).performClick()
-        compose.waitForIdle()
-        compose.onNodeWithText("Inner screen").assertExists()
-        compose.onNode(hasClickAction() and hasText("Track")).assertIsSelected()
-    }
-
-    // A tall screen, so the week strip is composed in the lazy list.
-    @Config(qualifiers = "w411dp-h891dp")
-    @Test fun todayTileOpensItsRouteAndPreviousWeekCanComeBack() {
-        val gate = FakeModuleGate()
-        val tiles = object : DashboardSummaryProvider {
-            override val moduleId = ModuleId.DIET
-            override fun summaries() = flowOf(listOf(SummaryItem("diet.today", "Today", "3 entries", route = NestedStart)))
-        }
-        val activity = object : DayActivityProvider {
-            override val moduleId = ModuleId.DIET
-            override fun activity(from: LocalDate, to: LocalDate) = flowOf(emptyMap<LocalDate, Int>())
-            override fun dayRoute(date: LocalDate): Any = NestedInner
-        }
-        val vm = shell(setOf(NestedModule()), gate, DashboardContributions(setOf(tiles), setOf(activity), gate))
-        compose.setContent { KleanTheme { KleanAppUi(vm) } }
-        compose.waitForIdle()
-        compose.onNodeWithContentDescription("Previous week").performClick()
-        compose.waitForIdle()
-        assertTrue(compose.onAllNodes(hasText("Week of", substring = true)).fetchSemanticsNodes().isNotEmpty())
-        compose.onNodeWithContentDescription("Next week").performClick()
-        compose.waitForIdle()
-        compose.onNodeWithText("This week").assertExists()
         compose.onNodeWithText("3 entries").performClick()
         compose.waitForIdle()
         compose.onNodeWithText("Open inner").assertExists()
+        compose.onNode(hasClickAction() and hasText("Track")).assertIsSelected()
     }
 
-    // A tall screen, so the week strip is composed in the lazy list.
     @Config(qualifiers = "w411dp-h891dp")
-    @Test fun moduleOffHidesItsTilesAndWeek() {
+    @Test fun moduleOffHidesItsCard() {
         val gate = FakeModuleGate(setOf(ModuleId.DIET))
         val tiles = object : DashboardSummaryProvider {
             override val moduleId = ModuleId.DIET
             override fun summaries() = flowOf(listOf(SummaryItem("diet.today", "Today", "3 entries")))
         }
-        val activity = object : DayActivityProvider {
-            override val moduleId = ModuleId.DIET
-            override fun activity(from: LocalDate, to: LocalDate) = flowOf(emptyMap<LocalDate, Int>())
-            override fun dayRoute(date: LocalDate): Any = NestedInner
-        }
-        val vm = shell(setOf(NestedModule()), gate, DashboardContributions(setOf(tiles), setOf(activity), gate))
+        val vm = shell(setOf(NestedModule()), gate, DashboardContributions(setOf(tiles), emptySet(), gate))
         compose.setContent { KleanTheme { KleanAppUi(vm) } }
         compose.waitForIdle()
         compose.onNodeWithText("3 entries").assertDoesNotExist()
-        compose.onNodeWithText("This week").assertDoesNotExist()
         compose.onNodeWithText("Nothing here yet. Turn on a module in Settings.").assertIsDisplayed()
     }
 
@@ -290,13 +244,18 @@ class ShellSmokeTest {
         @Composable override fun DashboardCard(onOpen: () -> Unit, modifier: Modifier) { Text("Diet card") }
     }
 
-    /** M16.5: hiding Diet's card on Today keeps Diet itself (its nav item) where it is. */
-    @Test fun hidingTheDietCardKeepsTheDietNavItem() {
+    /** M16.5: hiding Diet on Today (Arrange Today) removes its card and keeps the Track tab where it is. */
+    @Test fun hidingTheDietCardKeepsTheTrackNavItem() {
         val layout = InMemoryTodayLayout()
-        val vm = shell(setOf(dietWithCard()), layout = layout)
+        val gate = FakeModuleGate()
+        val tiles = object : DashboardSummaryProvider {
+            override val moduleId = ModuleId.DIET
+            override fun summaries() = flowOf(listOf(SummaryItem("diet.today", "Today", "3 entries")))
+        }
+        val vm = shell(setOf(dietWithCard()), gate, DashboardContributions(setOf(tiles), emptySet(), gate), layout = layout)
         compose.setContent { KleanTheme { KleanAppUi(vm) } }
         compose.waitForIdle()
-        compose.onNodeWithText("Diet card").assertExists()
+        compose.onNodeWithText("3 entries").assertExists()
         compose.onNodeWithContentDescription("More options").performClick()
         compose.waitForIdle()
         compose.onNodeWithText("Arrange Today").performClick()
@@ -306,9 +265,8 @@ class ShellSmokeTest {
         compose.onNodeWithText("Done").performClick()
         compose.waitForIdle()
         assertEquals(setOf("diet"), layout.hidden.value)
-        compose.onNodeWithText("Diet card").assertDoesNotExist()
+        compose.onNodeWithText("3 entries").assertDoesNotExist()
         compose.onNode(hasClickAction() and hasText("Track")).assertExists()
-        compose.onNodeWithText("Nothing here yet. Turn on a module in Settings.").assertDoesNotExist()
     }
 
     /** M16.6: an update's new modules are listed once on Today, already on; a switch turns one off. */

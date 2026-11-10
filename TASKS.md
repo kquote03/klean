@@ -673,7 +673,7 @@ Direction: navigation A (grouped tabs) + Soft cards, the recommended default (no
 
 ### Phase 3 — screens (Today, Add menu, Tasks, Calendar in this lane; Track, People, Settings, Onboarding, widgets in the next)
 
-- [ ] 3.1 — Today
+- [x] 3.1 — Today: weekday header (Settings, ⋮ Arrange Today), one `ModuleCard` per group (Plan: next dated item + 3 rows; Track: Sleep, then food and workout; People: next birthday), approvals first, one `EmptyState`; capture field, tiles, week strip and module card buttons moved (docs/ui/audit.md). `TodayCardsTest` 6, `TodayDashboardViewModelTest` 3, `TodayShotsTest` 4 (typical/empty/long + Add menu open, all within budget: 6 tappables, 0 inputs, 1 primary), shell tests updated; `TodayViewModel` (inline capture) removed, Move-to lives in the capture sheet
 - [ ] 3.2 — Add menu + capture sheet
 - [ ] 3.3 — Tasks (+ Reminders view)
 - [ ] 3.4 — Calendar

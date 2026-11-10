@@ -24,7 +24,13 @@ import app.klean.widget.TodayWidgetReceiver
  * [startWithSetup]: a first run opens on the setup wizard; it is also reachable from Settings.
  */
 @Composable
-fun KleanNavHost(nav: NavHostController, shell: ShellViewModel, enabled: List<KleanModule>, startWithSetup: Boolean = false) {
+fun KleanNavHost(
+    nav: NavHostController,
+    shell: ShellViewModel,
+    enabled: List<KleanModule>,
+    startWithSetup: Boolean = false,
+    onOpenGroup: (NavGroup) -> Unit = {},
+) {
     val registry = shell.registry
     NavHost(navController = nav, startDestination = if (startWithSetup) OnboardingRoute else TodayRoute) {
         composable<OnboardingRoute> {
@@ -47,10 +53,10 @@ fun KleanNavHost(nav: NavHostController, shell: ShellViewModel, enabled: List<Kl
         }
         composable<TodayRoute>(deepLinks = listOf(navDeepLink { uriPattern = "klean://today" })) {
             TodayScreen(
-                registry = registry, capture = shell.capture, clock = shell.clock,
-                dashboard = shell.dashboard, zone = shell.zone, ticker = shell.ticker,
+                registry = registry, dashboard = shell.dashboard, todayItems = shell.todayItems,
+                clock = shell.clock, zone = shell.zone, ticker = shell.ticker,
+                onOpenGroup = onOpenGroup,
                 layout = shell.todayLayout,
-                onOpen = { nav.navigate(it) },
                 onArrange = { nav.navigate(ArrangeTodayRoute) },
                 onSettings = { nav.navigate(SettingsRoute) { launchSingleTop = true } },
             )

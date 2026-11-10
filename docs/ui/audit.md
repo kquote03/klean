@@ -234,3 +234,22 @@ Only 4 of 20 screens meet the budget outright. The common causes, in order of we
 | Contacts (bar item) | bottom bar | People tab |
 | Tasks, Calendar (bar items) | bottom bar | Plan tab, switched with the Tasks · Calendar segments (last one remembered) |
 | More list | bottom bar | removed; every module is one tap away in its group |
+| Today: capture field and its mic | top of Today | Add menu → "Type or speak…" (the capture sheet, which keeps "Saved to … · Move to…") |
+| Today: greeting | header | the weekday (`displaySmall`) and date |
+| Today: eight summary tiles | under the capture field | inside the three group cards (Plan, Track, People), one fact each in the hero, up to 3 rows |
+| Today: week strip with previous/next | Today | removed (it repeated the cards); days live in Plan › Calendar (week, month) |
+| Today: module cards' buttons ("Going to bed", "Start a workout", card capture fields) | each module card | Add menu → Log sleep / Log workout; the module opens from its group card |
+| Today: Settings | More | Today's top bar (Tune icon) |
+| Tasks: Today and Upcoming tabs | Tasks tab row | one list: Today, Coming up, Still want these? |
+| Tasks: Lists, Reminders, Done tabs | Tasks tab row | Tasks overflow → Lists, Reminders, Finished; "All tasks" brings the list back |
+| Tasks: "Add a task" field, mic, send, FAB | every Tasks tab | Add menu → Task (capture sheet); full form: Tasks overflow → New task |
+| Tasks: review chips (Keep for today, Pick a date, Someday, Done, Let it go) | under each "Still want these?" row | long press on the row |
+| Tasks: list ⋮ (rename, delete) | Lists tab | tap the selected list's chip |
+| Tasks: "Finished tasks stay here…" + empty sentence | Done tab | one line under the Finished list, or the empty state |
+| Reminders: "Remind me…" field | Reminders tab | Add menu → Reminder; overflow → New reminder |
+| Reminders: per-row ⋮ | every row | long press (a reminder that went off keeps its one-tap Done) |
+| Calendar: view picker button | under the top bar | Calendar overflow → Agenda, Day, 3 days, Week, Month (current one checked) |
+| Calendar: Today button, settings gear | top bar | Calendar overflow → Today, Calendar settings |
+| Calendar: "New event" extended FAB | bottom right | Add menu → Event (capture sheet); full form: Calendar overflow → New event |
+| Calendar: "Your phone's calendars" banner (Not now / Show them) | above the agenda | Calendar overflow → Show phone calendars, the empty agenda's action, Settings › Calendar |
+| Calendar: a header per day | agenda | four calm sections: Earlier, Today, This week, Later (rows carry the weekday) |

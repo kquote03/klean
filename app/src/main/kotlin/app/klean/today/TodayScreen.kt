@@ -1,292 +1,213 @@
 package app.klean.today
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.MoreVert
-import androidx.compose.material.icons.rounded.Tune
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
-import kotlinx.coroutines.flow.combine
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.RadioButtonUnchecked
+import androidx.compose.material.icons.rounded.Tune
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.klean.R
-import app.klean.core.capture.CaptureActivity
-import app.klean.core.capture.UniversalCaptureService
 import app.klean.core.common.ZoneProvider
-import app.klean.core.design.component.CaptureField
-import app.klean.core.design.component.NeutralEmpty
-import app.klean.core.design.component.SummaryTile
-import app.klean.core.design.component.WeekDayCell
-import app.klean.core.design.component.WeekOverview
+import app.klean.core.design.component.CardTone
+import app.klean.core.design.component.EmptyState
+import app.klean.core.design.component.KleanScreen
+import app.klean.core.design.component.ListRow
+import app.klean.core.design.component.MenuAction
+import app.klean.core.design.component.ModuleCard
+import app.klean.core.design.component.OverflowMenu
+import app.klean.core.design.theme.Space
 import app.klean.core.ui.module.DashboardContributions
+import app.klean.core.ui.module.KleanModule
 import app.klean.core.ui.module.ModuleRegistry
+import app.klean.core.ui.module.TodayItems
 import app.klean.feature.diet.ui.MinuteTicker
-import app.klean.shared.diet.CaptureSource
+import app.klean.nav.NavGroup
 import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
-import java.time.format.TextStyle
-import java.time.temporal.WeekFields
 import java.util.Locale
 import kotlin.time.Clock
+import kotlinx.coroutines.flow.combine
 import kotlinx.datetime.LocalDate
 
 /**
- * Today: a calm welcome (greeting + date), the universal capture field, the modules' summary tiles,
- * a neutral week overview and the module cards. Lives in :app until a second consumer justifies
- * :feature:today.
+ * Today (Soft cards): the weekday, then one card per group (Plan, Track, People) that opens the group. Adding is the
+ * Add button; Settings is the top-bar button; "Arrange Today" is in the overflow menu. Lives in :app.
  */
 @Composable
 fun TodayScreen(
     registry: ModuleRegistry,
-    capture: UniversalCaptureService,
-    clock: Clock,
     dashboard: DashboardContributions,
+    todayItems: TodayItems,
+    clock: Clock,
     zone: ZoneProvider,
     ticker: MinuteTicker,
-    onOpen: (Any) -> Unit,
+    onOpenGroup: (NavGroup) -> Unit,
     layout: TodayLayoutStore = InMemoryTodayLayout(),
     onArrange: () -> Unit = {},
     onSettings: () -> Unit = {},
-    vm: TodayViewModel = viewModel { TodayViewModel(capture, clock) },
-    dash: TodayDashboardViewModel = viewModel {
-        TodayDashboardViewModel(dashboard, clock, zone, WeekFields.of(Locale.getDefault()).firstDayOfWeek, ticker.ticks())
-    },
 ) {
-    val cardsFlow = remember(registry, layout) {
-        combine(registry.dashboardCards, layout.order, layout.hidden) { c, order, hidden -> arrangeTodayCards(c, order, hidden) }
+    val visibleFlow = remember(registry, layout) {
+        combine(registry.enabled, registry.dashboardCards, layout.order, layout.hidden) { on, cards, order, hidden ->
+            // Modules without a card of their own (Reminders) still feed their group's card.
+            arrangeTodayCards(cards, order, hidden) + on.filter { it.dashboardSlot == null }
+        }
     }
-    val cards by cardsFlow.collectAsStateWithLifecycle(initialValue = emptyList())
+    val vm: TodayDashboardViewModel = viewModel {
+        TodayDashboardViewModel(dashboard, todayItems, visibleFlow, clock, zone, ticker.ticks())
+    }
+    val state by vm.state.collectAsStateWithLifecycle()
     val hasCards by registry.dashboardCards.collectAsStateWithLifecycle(initialValue = emptyList())
-    var menuOpen by remember { mutableStateOf(false) }
-    val available by vm.captureAvailable.collectAsStateWithLifecycle()
-    val justSaved by vm.justSaved.collectAsStateWithLifecycle()
-    val saved by vm.saved.collectAsStateWithLifecycle()
-    val state by dash.state.collectAsStateWithLifecycle()
-    var text by rememberSaveable { mutableStateOf("") }
-    val ctx = LocalContext.current
-    Scaffold(contentWindowInsets = WindowInsets.safeDrawing) { padding ->
-        LazyColumn(
-            // The list stops below the status bar, so scrolled cards never run under its icons.
-            modifier = Modifier.fillMaxSize().padding(top = padding.calculateTopPadding()),
-            contentPadding = PaddingValues(
-                start = 16.dp, end = 16.dp,
-                top = 16.dp,
-                bottom = padding.calculateBottomPadding() + 16.dp,
-            ),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            item(key = "header") {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
-                    Column(Modifier.weight(1f).semantics(mergeDescendants = true) { heading() }) {
-                        Text(greetingText(state.greeting), style = MaterialTheme.typography.headlineMedium)
-                        if (state.loaded) {
-                            Text(
-                                longDate(state.today),
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
-                    IconButton(onClick = onSettings, modifier = Modifier.size(48.dp)) {
-                        Icon(Icons.Rounded.Tune, contentDescription = stringResource(R.string.nav_settings))
-                    }
-                    if (hasCards.isNotEmpty()) {
-                        Box {
-                            IconButton(onClick = { menuOpen = true }) {
-                                Icon(Icons.Rounded.MoreVert, contentDescription = stringResource(R.string.today_more_options))
-                            }
-                            DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.today_arrange)) },
-                                    onClick = { menuOpen = false; onArrange() },
-                                )
-                            }
-                        }
-                    }
+    TodayContent(
+        state = state,
+        canArrange = hasCards.isNotEmpty(),
+        onOpenGroup = onOpenGroup,
+        onArrange = onArrange,
+        onSettings = onSettings,
+    )
+}
+
+/** Today without its data sources, for screenshot tests. */
+@Composable
+fun TodayContent(
+    state: TodayState,
+    canArrange: Boolean,
+    onOpenGroup: (NavGroup) -> Unit,
+    onArrange: () -> Unit,
+    onSettings: () -> Unit,
+) {
+    val arrange = stringResource(R.string.today_arrange)
+    KleanScreen(
+        title = weekday(state.today),
+        header = {
+            TodayHeader(
+                state = state,
+                menu = if (canArrange) listOf(MenuAction(arrange, onClick = onArrange)) else emptyList(),
+                onSettings = onSettings,
+            )
+        },
+    ) { pad ->
+        LazyColumn(Modifier.fillMaxSize(), contentPadding = pad, verticalArrangement = Arrangement.spacedBy(Space.cardGap)) {
+            items(state.approvals, key = { "m/" + it.id.value }) { m -> ApprovalsCard(m) }
+            if (state.loaded && state.cards.isEmpty() && state.approvals.isEmpty()) {
+                item(key = "empty") {
+                    EmptyState(stringResource(R.string.today_empty), action = MenuAction(stringResource(R.string.nav_settings), onClick = onSettings))
                 }
             }
-            item(key = "capture") {
-                Column {
-                    CaptureField(
-                        value = text,
-                        onValueChange = { text = it },
-                        onSubmit = {
-                            val submitted = text
-                            vm.submit(submitted) { saved -> if (saved && text == submitted) text = "" }
-                        },
-                        // Voice runs in the capture sheet, which owns the mic permission and the Undo chip.
-                        onMic = { ctx.startActivity(CaptureActivity.intent(ctx, CaptureSource.DASHBOARD, startVoice = true)) },
-                        onPhoto = null,
-                        placeholder = stringResource(R.string.today_capture_placeholder),
-                        enabled = available,
-                    )
-                    if (justSaved) {
-                        SavedLine(saved, registry, onMove = vm::moveTo, onMenu = vm::holdOpen)
-                    }
-                }
-            }
-            if (state.summaries.isNotEmpty()) {
-                item(key = "tiles") {
-                    // Rows of tiles at least 150 dp wide. Tiles in a row share its height (the tallest
-                    // value decides), so a two-line value doesn't leave its neighbour short.
-                    BoxWithConstraints {
-                        // Larger text needs wider tiles: one column at big font scales instead of cut-off values.
-                        val scale = androidx.compose.ui.platform.LocalDensity.current.fontScale.coerceAtLeast(1f)
-                        val perRow = (maxWidth / (158.dp * scale)).toInt().coerceAtLeast(1)
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            state.summaries.chunked(perRow).forEach { row ->
-                                Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    row.forEach { tile ->
-                                        SummaryTile(
-                                            label = tile.label,
-                                            value = tile.value,
-                                            icon = tile.icon,
-                                            onClick = tile.route?.let { r -> { onOpen(r) } },
-                                            modifier = Modifier.weight(1f).fillMaxHeight(),
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            if (state.showWeek && state.week.isNotEmpty()) {
-                item(key = "week") {
-                    val title = if (state.weekOffset == 0) {
-                        stringResource(R.string.today_week_this)
-                    } else {
-                        stringResource(R.string.today_week_of, shortDate(state.week.first().date))
-                    }
-                    val cells = state.week.map { day ->
-                        val label = longDate(day.date)
-                        WeekDayCell(
-                            key = day.date.toString(),
-                            weekday = day.date.toJava().dayOfWeek.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
-                            dayNumber = day.date.day.toString(),
-                            count = day.count,
-                            isToday = day.isToday,
-                            isFuture = day.isFuture,
-                            description = if (day.count == 0) {
-                                stringResource(R.string.today_day_nothing, label)
-                            } else {
-                                pluralStringResource(R.plurals.today_day_description, day.count, label, day.count)
-                            },
-                        )
-                    }
-                    WeekOverview(
-                        title = title,
-                        days = cells,
-                        onDay = { cell -> state.week.firstOrNull { it.date.toString() == cell.key }?.route?.let(onOpen) },
-                        onPrevious = dash::previousWeek,
-                        onNext = dash::nextWeek,
-                        canGoNext = state.canGoNext,
-                        previousDescription = stringResource(R.string.today_week_previous),
-                        nextDescription = stringResource(R.string.today_week_next),
-                    )
-                }
-            }
-            if (hasCards.isEmpty()) {
-                item(key = "empty") { NeutralEmpty(stringResource(R.string.today_empty)) }
-            } else {
-                items(cards, key = { it.id.value }) { module ->
-                    module.DashboardCard(onOpen = { onOpen(module.startRoute) }, modifier = Modifier)
-                }
-            }
+            items(state.cards, key = { it.group.name }) { card -> GroupCard(card) { onOpenGroup(card.group) } }
         }
     }
 }
 
+/** Delegation's approvals lead Today when there are any; the card opens each approval itself. */
 @Composable
-private fun greetingText(g: Greeting): String = stringResource(
-    when (g) {
-        Greeting.MORNING -> R.string.today_greeting_morning
-        Greeting.AFTERNOON -> R.string.today_greeting_afternoon
-        Greeting.EVENING -> R.string.today_greeting_evening
-        Greeting.NIGHT -> R.string.today_greeting_night
-    },
-)
+private fun ApprovalsCard(module: KleanModule) = module.DashboardCard(onOpen = {}, modifier = Modifier)
+
+@Composable
+private fun TodayHeader(state: TodayState, menu: List<MenuAction>, onSettings: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().padding(start = Space.screenEdge, end = Space.xxs, top = Space.md, bottom = Space.lg),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Column(Modifier.weight(1f).semantics(mergeDescendants = true) { heading() }) {
+            Text(weekday(state.today), style = MaterialTheme.typography.displaySmall)
+            Text(dayAndMonth(state.today), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        IconButton(onClick = onSettings, modifier = Modifier.size(Space.touchTarget)) {
+            Icon(Icons.Rounded.Tune, contentDescription = stringResource(R.string.nav_settings))
+        }
+        OverflowMenu(menu)
+    }
+}
+
+@Composable
+private fun GroupCard(card: TodayCard, onOpen: () -> Unit) {
+    val tone = when (card.group) {
+        NavGroup.PLAN -> CardTone.PRIMARY
+        NavGroup.TRACK -> CardTone.SECONDARY
+        else -> CardTone.TERTIARY
+    }
+    val groupName = stringResource(
+        when (card.group) {
+            NavGroup.PLAN -> R.string.nav_plan
+            NavGroup.TRACK -> R.string.nav_track
+            else -> R.string.nav_people
+        },
+    )
+    val label = card.label ?: stringResource(R.string.today_card_next)
+    val fact = card.fact ?: stringResource(R.string.today_card_clear)
+    val dot = dotColor(tone)
+    ModuleCard(
+        label = label,
+        fact = fact,
+        supporting = card.supporting,
+        tone = tone,
+        onClick = onOpen,
+        onClickLabel = stringResource(R.string.today_card_open, groupName),
+        body = if (card.rows.isEmpty()) {
+            null
+        } else {
+            {
+                card.rows.forEach { row ->
+                    ListRow(
+                        title = row.text,
+                        meta = row.meta,
+                        dense = true,
+                        titleMaxLines = 1,
+                        leading = { RowMark(row, dot) },
+                    )
+                }
+            }
+        },
+    )
+}
+
+@Composable
+private fun RowMark(row: TodayRow, dot: Color) {
+    val icon = row.icon
+    when {
+        row.isTask -> Icon(Icons.Rounded.RadioButtonUnchecked, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        icon != null -> Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        else -> Box(Modifier.size(Space.xs).background(dot, CircleShape))
+    }
+}
+
+@Composable
+private fun dotColor(tone: CardTone): Color = when (tone) {
+    CardTone.PRIMARY -> MaterialTheme.colorScheme.primary
+    CardTone.SECONDARY -> MaterialTheme.colorScheme.secondary
+    CardTone.TERTIARY -> MaterialTheme.colorScheme.tertiary
+}
 
 private fun LocalDate.toJava(): java.time.LocalDate = java.time.LocalDate.of(year, month.ordinal + 1, day)
 
-/** "Monday, November 9, 2026" in the user's locale. */
-private fun longDate(d: LocalDate): String =
-    d.toJava().format(DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).withLocale(Locale.getDefault()))
+/** "Wednesday" in the user's locale. */
+internal fun weekday(d: LocalDate): String = d.toJava().format(DateTimeFormatter.ofPattern("EEEE", Locale.getDefault()))
 
-/** "9 Nov" / "Nov 9", whichever the locale prefers. */
-private fun shortDate(d: LocalDate): String {
-    val pattern = android.text.format.DateFormat.getBestDateTimePattern(Locale.getDefault(), "dMMM")
+/** "11 November" / "November 11", whichever the locale prefers. */
+internal fun dayAndMonth(d: LocalDate): String {
+    val pattern = android.text.format.DateFormat.getBestDateTimePattern(Locale.getDefault(), "dMMMM")
     return d.toJava().format(DateTimeFormatter.ofPattern(pattern, Locale.getDefault()))
-}
-
-/** "Saved to Diet" under the capture bar, with "Move to…" when the text could belong elsewhere (M28). */
-@Composable
-private fun SavedLine(
-    saved: TodaySaved?,
-    registry: ModuleRegistry,
-    onMove: (app.klean.shared.capture.CandidateAction) -> Unit,
-    onMenu: (Boolean) -> Unit,
-) {
-    fun label(id: app.klean.shared.module.ModuleId): Int? = registry.all.firstOrNull { it.id == id }?.labelRes
-    var open by remember { mutableStateOf(false) }
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp, start = 4.dp)) {
-        val where = saved?.let { label(it.module) }
-        Text(
-            if (where != null) stringResource(R.string.today_capture_saved_to, stringResource(where)) else stringResource(R.string.today_capture_saved),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        if (saved != null && saved.options.isNotEmpty()) {
-            Box {
-                androidx.compose.material3.TextButton(onClick = { open = true; onMenu(true) }, modifier = Modifier.heightIn(min = 48.dp)) {
-                    Text(stringResource(R.string.today_capture_move))
-                }
-                androidx.compose.material3.DropdownMenu(expanded = open, onDismissRequest = { open = false; onMenu(false) }) {
-                    saved.options.forEach { o ->
-                        androidx.compose.material3.DropdownMenuItem(
-                            text = { Text(label(o.moduleId)?.let { stringResource(it) } ?: o.moduleId.value) },
-                            onClick = { open = false; onMove(o) },
-                            modifier = Modifier.heightIn(min = 48.dp),
-                        )
-                    }
-                }
-            }
-        }
-    }
 }

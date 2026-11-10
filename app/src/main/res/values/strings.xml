@@ -35,6 +35,9 @@
     <string name="setup_main_phone_body">Is this your main phone? Alarms ring only on your main phone.</string>
     <string name="setup_main_phone_switch">This is my main phone</string>
     <string name="today_empty">Nothing here yet. Turn on a module in Settings.</string>
+    <string name="today_card_next">Next</string>
+    <string name="today_card_clear">Nothing planned</string>
+    <string name="today_card_open">Open %1$s</string>
     <string name="today_capture_saved">Saved</string>
     <string name="today_capture_saved_to">Saved to %1$s</string>
     <string name="today_capture_move">Move to…</string>
