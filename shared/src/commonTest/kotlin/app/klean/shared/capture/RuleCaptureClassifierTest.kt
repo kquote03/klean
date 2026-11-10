@@ -89,6 +89,16 @@ class RuleCaptureClassifierTest {
 
     private suspend fun expect2(text: String, options: List<CaptureOption>, module: ModuleId) =
         assertEquals(module, first(text, options)?.moduleId, "for \"$text\"")
+    // M23: "ask Hermes to…" hands the task over; without Delegation it is an ordinary task.
+    @Test fun askHermesDelegates() = runTest {
+        val withDelegation = all + opt(ModuleId.DELEGATION, RuleCaptureClassifier.DELEGATE)
+        listOf("ask Hermes to book a table for Friday", "Hermes, email the team about the offsite", "delegate: find a plumber").forEach { t ->
+            val c = rules.classify(t, withDelegation)!!.first()
+            assertEquals(ModuleId.DELEGATION, c.moduleId, t)
+            assertEquals(RuleCaptureClassifier.DELEGATE, c.actionType, t)
+        }
+        assertEquals(ModuleId.TASKS, rules.classify("ask Hermes to book a table for Friday", all)!!.first().moduleId)
+    }
 }
 
 class CompositeCaptureClassifierTest {

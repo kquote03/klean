@@ -18,5 +18,7 @@ value class ModuleId(val value: String) {
         val BIRTHDAYS = ModuleId("birthdays")
         val WORKOUT = ModuleId("workout")
         val SLEEP = ModuleId("sleep")
+        /** AI delegation and Hermes (M23). */
+        val DELEGATION = ModuleId("delegation")
     }
 }
