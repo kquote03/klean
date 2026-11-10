@@ -1,5 +1,7 @@
 package app.klean.today
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.DoNotDisturbOn
 import android.content.Context
 import app.klean.R
 import app.klean.core.common.ZoneProvider
@@ -24,7 +26,7 @@ import kotlinx.datetime.TimeZone
 
 /** One "Quiet hours · until 8:00 AM" tile while quiet hours are on, otherwise nothing. */
 fun quietTile(quiet: QuietHours, nowMs: Long, tz: TimeZone, label: String, until: (Long) -> String): List<SummaryItem> =
-    if (quiet.contains(nowMs, tz)) listOf(SummaryItem(QuietHoursSummary.KEY, label, until(quiet.nextAllowed(nowMs, tz)))) else emptyList()
+    if (quiet.contains(nowMs, tz)) listOf(SummaryItem(QuietHoursSummary.KEY, label, until(quiet.nextAllowed(nowMs, tz)), icon = Icons.Rounded.DoNotDisturbOn)) else emptyList()
 
 /**
  * App-owned tile on Today: shown only during quiet hours, so it explains why no check-ins arrive.

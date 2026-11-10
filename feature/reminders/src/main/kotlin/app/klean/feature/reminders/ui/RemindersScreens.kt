@@ -84,7 +84,7 @@ fun RemindersTab(onEdit: (String?) -> Unit, modifier: Modifier = Modifier, vm: R
     val draft by vm.draft.collectAsStateWithLifecycle()
     val ctx = LocalContext.current
     val fmt = remember { ReminderFormatter(ctx.applicationContext, SystemZone, kotlin.time.Clock.System) }
-    LazyColumn(modifier.fillMaxSize()) {
+    LazyColumn(modifier.fillMaxSize(), contentPadding = app.klean.core.design.component.FabClearance) {
         item {
             CaptureField(
                 value = draft,

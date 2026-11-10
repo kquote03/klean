@@ -97,10 +97,11 @@ fun TodayScreen(
     val ctx = LocalContext.current
     Scaffold(contentWindowInsets = WindowInsets.safeDrawing) { padding ->
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
+            // The list stops below the status bar, so scrolled cards never run under its icons.
+            modifier = Modifier.fillMaxSize().padding(top = padding.calculateTopPadding()),
             contentPadding = PaddingValues(
                 start = 16.dp, end = 16.dp,
-                top = padding.calculateTopPadding() + 16.dp,
+                top = 16.dp,
                 bottom = padding.calculateBottomPadding() + 16.dp,
             ),
             verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -162,7 +163,9 @@ fun TodayScreen(
                     // Rows of tiles at least 150 dp wide. Tiles in a row share its height (the tallest
                     // value decides), so a two-line value doesn't leave its neighbour short.
                     BoxWithConstraints {
-                        val perRow = (maxWidth / 158.dp).toInt().coerceAtLeast(1)
+                        // Larger text needs wider tiles: one column at big font scales instead of cut-off values.
+                        val scale = androidx.compose.ui.platform.LocalDensity.current.fontScale.coerceAtLeast(1f)
+                        val perRow = (maxWidth / (158.dp * scale)).toInt().coerceAtLeast(1)
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             state.summaries.chunked(perRow).forEach { row ->
                                 Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(8.dp)) {

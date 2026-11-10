@@ -166,10 +166,17 @@ private fun NightRow(n: Night, day: String, longest: Long, fmt: SleepFormatter, 
                     Modifier.fillMaxHeight().fillMaxWidth((ms.toFloat() / longest).coerceIn(0.04f, 1f))
                         .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(6.dp)),
                 )
+            } else {
+                // An empty night reads on one line where the bar would be, not squeezed into the duration column.
+                Text(
+                    stringResource(R.string.sleep_no_night),
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1, modifier = Modifier.align(Alignment.CenterStart),
+                )
             }
         }
         Text(
-            n.durationMs?.let { fmt.duration(it) } ?: stringResource(R.string.sleep_no_night),
+            n.durationMs?.takeIf { it > 0 }?.let { fmt.duration(it) }.orEmpty(),
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(start = 12.dp).width(72.dp),
         )

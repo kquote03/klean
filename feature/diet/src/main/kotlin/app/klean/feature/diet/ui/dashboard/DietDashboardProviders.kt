@@ -1,5 +1,10 @@
 package app.klean.feature.diet.ui.dashboard
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Restaurant
+import androidx.compose.material.icons.rounded.History
+import androidx.compose.material.icons.rounded.Schedule
+import androidx.compose.material.icons.rounded.LocalFireDepartment
 import android.content.Context
 import app.klean.core.common.ZoneProvider
 import app.klean.core.data.db.entity.FoodEntryEntity
@@ -86,15 +91,15 @@ class DietDashboardProviders(
 
     private fun tiles(day: Day, prefs: DietViewPrefs, promptsOn: Boolean, next: Long?): List<SummaryItem> = buildList {
         val entries = day.entries
-        add(SummaryItem(KEY_TODAY, text.todayLabel(), text.count(entries.size), route = DietRoute))
+        add(SummaryItem(KEY_TODAY, text.todayLabel(), text.count(entries.size), icon = Icons.Rounded.Restaurant, route = DietRoute))
         entries.maxByOrNull { it.eatenAt }?.let { last ->
-            add(SummaryItem(KEY_LAST, text.lastLabel(), text.last(shorten(last.rawText), fmt.time(last.eatenAt)), route = DietRoute))
+            add(SummaryItem(KEY_LAST, text.lastLabel(), text.last(shorten(last.rawText), fmt.time(last.eatenAt)), icon = Icons.Rounded.History, route = DietRoute))
         }
         if (promptsOn && next != null) {
-            add(SummaryItem(KEY_NEXT, text.nextLabel(), text.next(fmt.time(next)), route = DietRoute))
+            add(SummaryItem(KEY_NEXT, text.nextLabel(), text.next(fmt.time(next)), icon = Icons.Rounded.Schedule, route = DietRoute))
         }
         if (prefs.showCalories) {
-            knownCalories(day.items)?.let { add(SummaryItem(KEY_KCAL, text.kcalLabel(), fmt.kcal(it), route = DietRoute)) }
+            knownCalories(day.items)?.let { add(SummaryItem(KEY_KCAL, text.kcalLabel(), fmt.kcal(it), icon = Icons.Rounded.LocalFireDepartment, route = DietRoute)) }
         }
     }
 

@@ -1,5 +1,7 @@
 package app.klean.nav
 
+import androidx.compose.ui.unit.sp
+import androidx.compose.material3.MaterialTheme
 import android.content.Intent
 import androidx.compose.material.icons.Icons
 import androidx.compose.runtime.LaunchedEffect
@@ -52,7 +54,7 @@ fun KleanAppUi(vm: ShellViewModel = hiltViewModel(), deepLinks: Flow<Intent> = e
                 selected = current.isOn(TodayRoute),
                 onClick = { nav.navigateTopLevel(TodayRoute) },
                 icon = { Icon(Icons.Rounded.Today, contentDescription = null) },
-                label = { Text(stringResource(R.string.nav_today)) },
+                label = { NavLabel(stringResource(R.string.nav_today)) },
             )
             val layout = navLayout(enabled.filter { it.inNavigation })
             layout.primary.forEach { module ->
@@ -60,7 +62,7 @@ fun KleanAppUi(vm: ShellViewModel = hiltViewModel(), deepLinks: Flow<Intent> = e
                     selected = current.isOn(module.graphRoute),
                     onClick = { nav.navigateTopLevel(module.startRoute) },
                     icon = { Icon(module.icon, contentDescription = null) },
-                    label = { Text(stringResource(module.labelRes)) },
+                    label = { NavLabel(stringResource(module.labelRes)) },
                 )
             }
             if (layout.overflow.isEmpty()) {
@@ -68,7 +70,7 @@ fun KleanAppUi(vm: ShellViewModel = hiltViewModel(), deepLinks: Flow<Intent> = e
                     selected = current.isOn(SettingsRoute),
                     onClick = { nav.navigateTopLevel(SettingsRoute) },
                     icon = { Icon(Icons.Rounded.Settings, contentDescription = null) },
-                    label = { Text(stringResource(R.string.nav_settings)) },
+                    label = { NavLabel(stringResource(R.string.nav_settings)) },
                 )
             } else {
                 // More owns everything the other items don't: its list, the overflow modules, Settings and its pages.
@@ -78,7 +80,7 @@ fun KleanAppUi(vm: ShellViewModel = hiltViewModel(), deepLinks: Flow<Intent> = e
                     // Always lands on the list itself, not on whichever overflow page was open last.
                     onClick = { nav.navigate(MoreRoute) { launchSingleTop = true; popUpTo(TodayRoute) } },
                     icon = { Icon(Icons.Rounded.MoreHoriz, contentDescription = null) },
-                    label = { Text(stringResource(R.string.nav_more)) },
+                    label = { NavLabel(stringResource(R.string.nav_more)) },
                 )
             }
         },
@@ -94,4 +96,15 @@ private fun NavController.navigateTopLevel(route: Any) = navigate(route) {
     launchSingleTop = true
     restoreState = true
     popUpTo(TodayRoute) { saveState = true }
+}
+
+/** A bar label on one line: at large font scales it shrinks to fit rather than breaking a word ("Calenda r"). */
+@Composable
+private fun NavLabel(text: String) {
+    val max = MaterialTheme.typography.labelMedium.fontSize
+    Text(
+        text,
+        maxLines = 1,
+        autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = 8.sp, maxFontSize = max),
+    )
 }

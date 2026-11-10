@@ -79,7 +79,7 @@ fun AgendaCard(onOpen: () -> Unit, modifier: Modifier = Modifier, vm: AgendaCard
         state.items.forEach { item ->
             val meta = metaLabel(item)
             EntryRow(
-                time = timeLabel(item, fmt),
+                time = timeLabel(item, fmt, stacked = true),
                 text = item.title,
                 meta = meta?.let { m -> { Text(m, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) } },
                 onClick = onOpen,

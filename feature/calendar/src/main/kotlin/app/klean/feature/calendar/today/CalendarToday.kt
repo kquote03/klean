@@ -1,5 +1,7 @@
 package app.klean.feature.calendar.today
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Event
 import android.content.Context
 import android.text.format.DateFormat
 import app.klean.core.common.ZoneProvider
@@ -125,9 +127,9 @@ class CalendarDashboardProviders(
         val now = clock.now().toEpochMilliseconds()
         val next = nextTimed(items, day, now)
         val tile = if (next != null) {
-            SummaryItem(KEY_NEXT, text.nextLabel(), text.nextValue(text.time(next.start), next.title), route = CalendarRoute)
+            SummaryItem(KEY_NEXT, text.nextLabel(), text.nextValue(text.time(next.start), next.title), icon = Icons.Rounded.Event, route = CalendarRoute)
         } else {
-            SummaryItem(KEY_NEXT, text.todayLabel(), text.nothingElseToday(), route = CalendarRoute)
+            SummaryItem(KEY_NEXT, text.todayLabel(), text.nothingElseToday(), icon = Icons.Rounded.Event, route = CalendarRoute)
         }
         listOf(tile)
     }.distinctUntilChanged()
