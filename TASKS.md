@@ -465,3 +465,13 @@ Verified on Waydroid (Android 13, 540×1212) on 2026-11-10 (M19 Calendar), scree
 - [x] Fresh install with stale mirror rows from an earlier install → startup resync removes the orphans; new event mirrored
 - [x] Settings › Modules › Calendar off: gone from the bar and Today (no Agenda card, no tile), the provider "Klean" calendar is deleted, status line falls back to "Nothing planned. Add anything here." (`27`–`29`); on again: calendar re-created with the event, Agenda card back. Crash buffer empty
 - [~] ICS import through the system picker: the picker hung Waydroid's `system` process (ANR, session restarted); import is covered by `CalendarRepositoryTest` (update by UID, all-day) and `CalendarSettingsViewModelTest`. Check on the Pixel
+
+## M20 — Workout & sleep (branch `m20-body`; plan `.hermes/plans/2026-11-09_165408-klean-holistic-full-product.md` §M18–M20, module plan §S5/§S6)
+- [x] 20.1 — Sleep schedule is the source of quiet hours (`core/data/sleep/SleepScheduleRepository`, one-time migration of `core.quietHours`, key kept as a mirror; `QuietHoursService` API unchanged; quiet-hours editor writes the schedule)
+- [x] 20.2 — Workout model + `TemplateText` parser/formatter, `WorkoutRepository` (templates, sessions, sets, freeform log, auto-created exercises, history)
+- [ ] 20.3 — Sleep logic (`SleepMath`, `SleepText`) + `SleepRepository` (go to bed / wake up / toggle / log / edit)
+- [ ] 20.4 — Workout module: screens (home, template editor, session, exercises + history), capture `log_workout`, Today card, tile, activity, status line, Today items, settings
+- [ ] 20.5 — Gentle workout suggestion: format rotation (`prompt_log` trigger WORKOUT), quiet hours, every N days, off by default
+- [ ] 20.6 — Sleep module: screens (nights list, edit, settings with the schedule editor), capture `log_sleep`, Today card with one tap, tile, activity, status line, Today items (widget toggle)
+- [ ] 20.7 — Bedtime reminder (30 min before, once) and the "Sleeping since" notification with "I'm up"
+- [ ] 20.8 — `WorkoutDisableTest` / `SleepDisableTest` (androidTest), gate, Waydroid walkthrough

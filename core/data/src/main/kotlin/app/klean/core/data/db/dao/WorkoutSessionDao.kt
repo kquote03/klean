@@ -22,4 +22,8 @@ interface WorkoutSessionDao {
 
     @Query("SELECT MAX(started_at) FROM workout_session WHERE deleted = 0")
     suspend fun lastSessionStart(): Long?
+
+    // M20 (workout lane): the session still running.
+    @Query("SELECT * FROM workout_session WHERE ended_at IS NULL AND deleted = 0 ORDER BY started_at DESC LIMIT 1")
+    suspend fun open(): WorkoutSessionEntity?
 }
