@@ -107,3 +107,36 @@ jobs:
           name: backend-test-reports
           path: backend/build/reports/tests/
           retention-days: 7
+
+  # The web client (M26): unit tests (capture rules against the shared fixture, LWW, queue, tokens and
+  # contrast, copy), type check and production build, and the copy guard. Separate from the gate and backend.
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: web/package.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+      - name: Copy check
+        run: pnpm check-copy
