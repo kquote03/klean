@@ -14,6 +14,7 @@ class AndroidFeatureConventionPlugin : Plugin<Project> {
             }
             listOf("navigation-compose", "hilt-navigation-compose", "lifecycle-runtime-compose",
                 "lifecycle-viewmodel-compose", "serialization-json").forEach { add("implementation", catalog.lib(it)) }
+            add("testImplementation", project(":core:testing"))
             listOf("robolectric", "turbine", "coroutines-test", "androidx-test-core").forEach { add("testImplementation", catalog.lib(it)) }
         }
     }

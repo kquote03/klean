@@ -12,8 +12,12 @@ import androidx.compose.ui.platform.LocalContext
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun KleanTheme(dynamicColor: Boolean = false, content: @Composable () -> Unit) {
-    val dark = isSystemInDarkTheme()
+fun KleanTheme(
+    dynamicColor: Boolean = false,
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    content: @Composable () -> Unit,
+) {
+    val dark = darkTheme
     val ctx = LocalContext.current
     val scheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= 31 -> if (dark) dynamicDarkColorScheme(ctx) else dynamicLightColorScheme(ctx)

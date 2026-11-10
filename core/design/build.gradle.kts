@@ -5,6 +5,7 @@ plugins {
 }
 dependencies {
     testImplementation(libs.junit)
+    testImplementation(project(":core:testing"))
     testImplementation(libs.serialization.json)
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core)
