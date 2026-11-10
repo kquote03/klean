@@ -68,7 +68,7 @@ class ReminderEngineTest {
     }
     private var refreshes = 0
     private val refresh = dagger.Lazy { StatusRefresh { setOf(object : app.klean.core.ui.module.StatusSurface { override suspend fun refresh() { refreshes++ } }) } }
-    private val firer = ReminderFirer(db, repo, scheduler, gate, prefs, quiet, notifier, ringer, log, clock, refresh)
+    private val firer = ReminderFirer(db, repo, scheduler, gate, prefs, quiet, notifier, ringer, log, clock, refresh, app.klean.core.notifications.PromptAudience(db, prefs))
     private val actions = ReminderActions(db, repo, notifier, ringer, log, clock, DubaiZone, refresh)
 
     @Before fun exact() = ShadowAlarmManager.setCanScheduleExactAlarms(true)

@@ -189,6 +189,7 @@ class ReminderFirer @Inject constructor(
     private val log: ReminderPromptLog,
     private val clock: Clock,
     private val statusRefresh: dagger.Lazy<StatusRefresh>,
+    private val audience: app.klean.core.notifications.PromptAudience,
 ) {
     enum class Result { SKIPPED, REARMED, RANG, ALARM_ELSEWHERE, PINGED }
 
@@ -215,7 +216,8 @@ class ReminderFirer @Inject constructor(
         } else {
             val format = log.nextFormat()
             log.sent(r.id, format, due)
-            notifier.ping(r, format)
+            // Several synced phones (M25): the one used last gets the sound, the others a silent copy.
+            notifier.ping(r, format, quiet = !audience.isLoudHere())
             Result.PINGED
         }
         statusRefresh.get().refresh()
