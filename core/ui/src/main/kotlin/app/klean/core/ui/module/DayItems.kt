@@ -1,4 +1,4 @@
-package app.klean.feature.calendar.agenda
+package app.klean.core.ui.module
 
 import app.klean.shared.module.ModuleId
 import dagger.Module
@@ -25,9 +25,7 @@ data class DayItem(
 
 /**
  * A module's dated items for the calendar views. Bind with @IntoSet; gate-filtered by [moduleId].
- *
- * Defined here for now so Calendar and Contacts (birthdays) can be built in parallel; after the M19 merge the
- * parent moves it to `core/ui/.../module/Dashboard.kt` and both modules bind into the one set.
+ * Calendar consumes the set; Tasks, Reminders and Contacts (birthdays) contribute.
  */
 interface DayItemsProvider {
     val moduleId: ModuleId

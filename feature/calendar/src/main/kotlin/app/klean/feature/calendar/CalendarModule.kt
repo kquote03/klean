@@ -22,7 +22,7 @@ import app.klean.core.ui.module.StatusLineProvider
 import app.klean.core.ui.module.TodayItemsProvider
 import app.klean.feature.calendar.agenda.AgendaSource
 import app.klean.feature.calendar.agenda.CalendarAgenda
-import app.klean.feature.calendar.agenda.DayItemsProvider
+import app.klean.core.ui.module.DayItemsProvider
 import app.klean.feature.calendar.agenda.ReminderDayItems
 import app.klean.feature.calendar.agenda.TaskDueItems
 import app.klean.feature.calendar.capture.CalendarCaptureHandler

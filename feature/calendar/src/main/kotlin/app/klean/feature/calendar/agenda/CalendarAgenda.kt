@@ -1,5 +1,8 @@
 package app.klean.feature.calendar.agenda
 
+import app.klean.core.ui.module.DayItemsProvider
+import app.klean.core.ui.module.DayItemKind
+import app.klean.core.ui.module.DayItem
 import app.klean.core.common.ZoneProvider
 import app.klean.core.data.db.KleanDatabase
 import app.klean.core.data.db.entity.CalendarSourceEntity
@@ -196,7 +199,7 @@ class CalendarAgenda(
     }
 
     private fun dayItem(d: DayItem, tz: TimeZone): AgendaItem {
-        val start = if (d.minutes != null) atMinute(d.date, d.minutes, tz) else d.date.atStartOfDayIn(tz).toEpochMilliseconds()
+        val start = d.minutes?.let { atMinute(d.date, it, tz) } ?: d.date.atStartOfDayIn(tz).toEpochMilliseconds()
         val kind = when (d.kind) {
             DayItemKind.BIRTHDAY -> AgendaKind.BIRTHDAY
             DayItemKind.TASK -> AgendaKind.TASK
