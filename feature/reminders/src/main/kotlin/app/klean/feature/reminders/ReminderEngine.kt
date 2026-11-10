@@ -190,6 +190,8 @@ class ReminderFirer @Inject constructor(
     private val clock: Clock,
     private val statusRefresh: dagger.Lazy<StatusRefresh>,
     private val audience: app.klean.core.notifications.PromptAudience,
+    /** E.g. the watch ping (M27); told once the alarm rings here. */
+    private val ringListeners: Set<@JvmSuppressWildcards app.klean.core.notifications.AlarmRingListener> = emptySet(),
 ) {
     enum class Result { SKIPPED, REARMED, RANG, ALARM_ELSEWHERE, PINGED }
 
@@ -208,6 +210,7 @@ class ReminderFirer @Inject constructor(
         val result = if (r.isAlarm) {
             if (prefs.isMainPhone.first()) {
                 if (!ringer.ring(r)) notifier.alarmFallback(r)
+                ringListeners.tell(r.id, r.title, ringing = true)
                 Result.RANG
             } else {
                 notifier.ping(r, PromptFormat.STANDARD, quiet = true)
@@ -244,6 +247,7 @@ class ReminderActions @Inject constructor(
     private val clock: Clock,
     private val zone: ZoneProvider,
     private val statusRefresh: dagger.Lazy<StatusRefresh>,
+    private val ringListeners: Set<@JvmSuppressWildcards app.klean.core.notifications.AlarmRingListener> = emptySet(),
 ) {
     private fun now() = clock.now().toEpochMilliseconds()
 
@@ -277,10 +281,16 @@ class ReminderActions @Inject constructor(
         ringer.stop(id)
         notifier.cancel(id)
         val r = db.reminderDao().get(id)?.takeUnless { it.sync.deleted } ?: return
+        // A ringing alarm handled here (or on the alarm screen) stops buzzing the watch too.
+        if (r.isAlarm && r.state == RINGING) ringListeners.tell(r.id, r.title, ringing = false)
         change(r)
         log.outcome(id, outcome)
         statusRefresh.get().refresh()
     }
+}
+
+private fun Set<app.klean.core.notifications.AlarmRingListener>.tell(id: String, title: String, ringing: Boolean) = forEach {
+    runCatching { it.onAlarm(id, title, ringing) }.onFailure { e -> Log.w("Klean", "alarm listener failed", e) }
 }
 
 /** Receives a reminder's system alarm. */

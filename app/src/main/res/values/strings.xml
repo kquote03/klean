@@ -65,4 +65,6 @@
     <string name="shortcut_task_long">Add a task</string>
     <string name="shortcut_remind_short">Remind me</string>
     <string name="shortcut_remind_long">Set a reminder</string>
+    <!-- Wear OS: the name of a workout session that didn't start from a saved workout. -->
+    <string name="watch_workout_session">Workout</string>
 </resources>

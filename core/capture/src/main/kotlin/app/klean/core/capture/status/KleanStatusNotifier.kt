@@ -52,6 +52,8 @@ class KleanStatusNotifier @Inject constructor(
     @ApplicationContext private val ctx: Context,
     private val statusLine: StatusLine,
     private val settings: SettingsRepository,
+    /** Quick chips for the watch's reply (M27). */
+    private val choices: StatusReplyChoices = StatusReplyChoices.NONE,
 ) : StatusSurface {
     private val mutex = Mutex()
 
@@ -75,7 +77,8 @@ class KleanStatusNotifier @Inject constructor(
             confirmation?.second == line -> confirmation
             else -> null
         }
-        post(nm, build(line, confirmation?.first))
+        val chips = runCatching { choices.choices() }.getOrDefault(emptyList())
+        post(nm, build(line, confirmation?.first, chips))
     }
 
     /** Re-posts whenever the line itself changes (debounced), e.g. a module's data or the gate. */
@@ -106,7 +109,7 @@ class KleanStatusNotifier @Inject constructor(
     @SuppressLint("MissingPermission") // checked in canPost()
     private fun post(nm: NotificationManagerCompat, n: Notification) = nm.notify(NotificationIds.STATUS, n)
 
-    internal fun build(line: List<StatusFragment>, savedTo: String?): Notification {
+    internal fun build(line: List<StatusFragment>, savedTo: String?, chips: List<String> = emptyList()): Notification {
         val text = if (line.isEmpty()) ctx.getString(R.string.status_empty) else line.joinToString(" · ") { it.text }
         // The lock-screen version says how much there is, never what.
         val publicTitle = if (line.isEmpty()) {
@@ -136,6 +139,7 @@ class KleanStatusNotifier @Inject constructor(
             .setContentIntent(openToday())
             .setDeleteIntent(repostIntent())
             .addAction(addSomething())
+            .extend(NotificationCompat.WearableExtender().addAction(addSomething(chips)))
             .build()
     }
 
@@ -143,9 +147,11 @@ class KleanStatusNotifier @Inject constructor(
      * Inline reply. RemoteInput needs a mutable PendingIntent. No authentication and no UI, so it
      * works from the lock screen when the user allows notification content there.
      */
-    private fun addSomething(): NotificationCompat.Action {
+    private fun addSomething(chips: List<String>? = null): NotificationCompat.Action {
         val remote = RemoteInput.Builder(StatusReplyReceiver.KEY_TEXT)
             .setLabel(ctx.getString(R.string.status_reply_hint))
+            // On a watch (the WearableExtender copy): voice or keyboard, plus the most common recent entries.
+            .apply { if (!chips.isNullOrEmpty()) setChoices(chips.take(MAX_CHIPS).toTypedArray<CharSequence>()).setAllowFreeFormInput(true) }
             .build()
         val mutable = if (Build.VERSION.SDK_INT >= 31) PendingIntent.FLAG_MUTABLE else 0
         val pi = PendingIntent.getBroadcast(
@@ -177,6 +183,8 @@ class KleanStatusNotifier @Inject constructor(
     companion object {
         const val DEEP_LINK_TODAY = "klean://today"
         const val DEBOUNCE_MS = 500L
+        /** Chips on the watch reply, most common first (bounded, like every suggestion row). */
+        const val MAX_CHIPS = 5
         // 10–17 were the diet status and prompt codes; distinct codes keep each PendingIntent's extras apart.
         internal const val RC_REPLY = 20
         internal const val RC_REPOST = 21

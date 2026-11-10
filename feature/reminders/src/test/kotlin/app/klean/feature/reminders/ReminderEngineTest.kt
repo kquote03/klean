@@ -68,8 +68,10 @@ class ReminderEngineTest {
     }
     private var refreshes = 0
     private val refresh = dagger.Lazy { StatusRefresh { setOf(object : app.klean.core.ui.module.StatusSurface { override suspend fun refresh() { refreshes++ } }) } }
-    private val firer = ReminderFirer(db, repo, scheduler, gate, prefs, quiet, notifier, ringer, log, clock, refresh, app.klean.core.notifications.PromptAudience(db, prefs))
-    private val actions = ReminderActions(db, repo, notifier, ringer, log, clock, DubaiZone, refresh)
+    private val watchPings = mutableListOf<Triple<String, String, Boolean>>()
+    private val ringListener = app.klean.core.notifications.AlarmRingListener { id, title, ringing -> watchPings += Triple(id, title, ringing) }
+    private val firer = ReminderFirer(db, repo, scheduler, gate, prefs, quiet, notifier, ringer, log, clock, refresh, app.klean.core.notifications.PromptAudience(db, prefs), setOf(ringListener))
+    private val actions = ReminderActions(db, repo, notifier, ringer, log, clock, DubaiZone, refresh, setOf(ringListener))
 
     @Before fun exact() = ShadowAlarmManager.setCanScheduleExactAlarms(true)
 
@@ -193,6 +195,28 @@ class ReminderEngineTest {
         assertEquals(ReminderFirer.Result.ALARM_ELSEWHERE, firer.fire(id))
         assertTrue(rang.isEmpty())
         assertEquals(listOf(Triple(id, PromptFormat.STANDARD, true)), pings)
+    }
+
+    @Test fun aRingingAlarmPingsTheWatchAndHandlingItStopsThePing() = runBlocking {
+        val id = repo.add("wake", noon, "Asia/Dubai", isAlarm = true)
+        firer.fire(id)
+        assertEquals(listOf(Triple(id, "wake", true)), watchPings)
+        actions.dismiss(id)
+        assertEquals(listOf(Triple(id, "wake", true), Triple(id, "wake", false)), watchPings)
+    }
+
+    @Test fun theFallbackAlarmPingsTheWatchTooButPingsAndOtherPhonesDont() = runBlocking {
+        ringWorks = false
+        val alarm = repo.add("wake", noon, "Asia/Dubai", isAlarm = true)
+        firer.fire(alarm)
+        assertEquals(listOf(Triple(alarm, "wake", true)), watchPings)
+        val ping = repo.add("tea", noon, "Asia/Dubai", isAlarm = false)
+        firer.fire(ping)
+        actions.done(ping)
+        prefs.setIsMainPhone(false)
+        val elsewhere = repo.add("other", noon, "Asia/Dubai", isAlarm = true)
+        firer.fire(elsewhere)
+        assertEquals(1, watchPings.size)
     }
 
     @Test fun handledRemindersDontFire() = runBlocking {

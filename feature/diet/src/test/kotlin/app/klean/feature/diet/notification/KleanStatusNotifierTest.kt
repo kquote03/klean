@@ -173,4 +173,23 @@ class KleanStatusNotifierTest {
         stack().notifier.refresh()
         assertNull(posted())
     }
+
+    /** M27: the watch gets its own copy of "Add something" with voice/keyboard plus quick chips (bounded). */
+    @Test fun theWatchGetsAReplyActionWithQuickChips() = runBlocking {
+        val chips = (1..8).map { "food $it" }
+        val notifier = app.klean.core.capture.status.KleanStatusNotifier(
+            ctx, app.klean.core.ui.module.StatusLine(setOf(tasks), gate), settings,
+            app.klean.core.capture.status.StatusReplyChoices { chips },
+        )
+        notifier.refresh()
+        val n = posted()!!
+        val wear = NotificationCompat.WearableExtender(n).actions.single()
+        assertEquals("Add something", wear.title.toString())
+        val input = wear.remoteInputs!!.single()
+        assertEquals(StatusReplyReceiver.KEY_TEXT, input.resultKey)
+        assertEquals(chips.take(5), input.choices!!.map { it.toString() })
+        assertTrue(input.allowFreeFormInput)
+        // The phone's own inline reply has no chips.
+        assertNull(NotificationCompat.getAction(n, 0)!!.remoteInputs!!.single().choices)
+    }
 }

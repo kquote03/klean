@@ -5,11 +5,11 @@ import androidx.wear.tiles.RequestBuilders
 import androidx.wear.tiles.testing.TestTileClient
 import app.klean.wear.clickables
 import app.klean.wear.ctx
-import app.klean.wear.data.ActiveWorkout
-import app.klean.wear.data.FoodLine
-import app.klean.wear.data.NextUp
-import app.klean.wear.data.WatchState
-import app.klean.wear.data.WorkoutRef
+import app.klean.shared.wear.ActiveWorkout
+import app.klean.shared.wear.FoodLine
+import app.klean.shared.wear.NextUp
+import app.klean.shared.wear.WatchState
+import app.klean.shared.wear.WorkoutRef
 import app.klean.wear.storeState
 import app.klean.wear.texts
 import app.klean.wear.ui.SendActivity

@@ -1,5 +1,9 @@
 package app.klean.wear.data
 
+import app.klean.shared.wear.WatchState
+import app.klean.shared.wear.WatchMessage
+import app.klean.shared.wear.WearCodec
+import app.klean.shared.wear.WearPaths
 import android.content.Context
 import android.util.Log
 import com.google.android.gms.tasks.Task

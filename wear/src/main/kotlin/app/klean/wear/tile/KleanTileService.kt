@@ -13,7 +13,7 @@ import androidx.wear.tiles.RequestBuilders
 import androidx.wear.tiles.TileBuilders
 import androidx.wear.tiles.TileService
 import app.klean.wear.data.WatchGraph
-import app.klean.wear.data.WatchState
+import app.klean.shared.wear.WatchState
 import com.google.common.util.concurrent.ListenableFuture
 import java.time.ZoneId
 

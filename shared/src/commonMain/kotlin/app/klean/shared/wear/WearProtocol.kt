@@ -1,4 +1,4 @@
-package app.klean.wear.data
+package app.klean.shared.wear
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -7,8 +7,8 @@ import kotlinx.serialization.json.Json
 /**
  * The phone ↔ watch Data Layer protocol (M27). The watch never talks to the backend: the phone sends a
  * [WatchState] snapshot as a DataItem at [WearPaths.STATE], and the watch sends [WatchMessage]s back with
- * `MessageClient`. Pure Kotlin with no Android types, so the phone side can share it (it moves to `:shared`
- * when the phone's `WearSyncService` lands).
+ * `MessageClient`. Pure Kotlin with no Android types: the phone (`app/…/wear`) and the watch (`:wear`) share
+ * this one copy.
  */
 object WearPaths {
     const val PREFIX = "/klean"
@@ -57,6 +57,8 @@ data class WatchState(
     val active: ActiveWorkout? = null,
     /** Diet module switched off on the phone: food tiles say so instead of offering to log. */
     val dietOn: Boolean = true,
+    /** Ids of the modules switched on on the phone (`ModuleId.value`), sorted. Empty from an older phone. */
+    val modules: List<String> = emptyList(),
 )
 
 /** Watch → phone (and the phone's alarm ping back). */

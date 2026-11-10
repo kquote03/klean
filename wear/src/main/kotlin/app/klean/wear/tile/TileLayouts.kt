@@ -15,7 +15,7 @@ import androidx.wear.protolayout.LayoutElementBuilders.Spacer
 import androidx.wear.protolayout.LayoutElementBuilders.Text
 import androidx.wear.protolayout.ModifiersBuilders
 import app.klean.wear.R
-import app.klean.wear.data.WatchState
+import app.klean.shared.wear.WatchState
 import app.klean.wear.ui.SendActivity
 import app.klean.wear.ui.WatchCaptureActivity
 import java.time.Instant

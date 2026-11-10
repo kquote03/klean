@@ -9,10 +9,10 @@ import androidx.wear.protolayout.LayoutElementBuilders.LayoutElement
 import androidx.wear.protolayout.LayoutElementBuilders.Row
 import androidx.wear.protolayout.LayoutElementBuilders.Text
 import app.klean.wear.data.WatchGraph
-import app.klean.wear.data.WatchMessage
+import app.klean.shared.wear.WatchMessage
 import app.klean.wear.data.PhoneLink
-import app.klean.wear.data.WatchState
-import app.klean.wear.data.WearCodec
+import app.klean.shared.wear.WatchState
+import app.klean.shared.wear.WearCodec
 
 val ctx: Context get() = ApplicationProvider.getApplicationContext()
 
