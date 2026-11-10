@@ -14,6 +14,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.onNodeWithTag
 import app.klean.core.design.theme.KleanTheme
+import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.captureRoboImage
 import androidx.compose.ui.unit.dp
 
@@ -21,6 +22,7 @@ import androidx.compose.ui.unit.dp
 const val PHONE = "w412dp-h915dp-xxhdpi"
 
 private const val SHOT = "shot"
+private const val SETTLE_MS = 2_000L
 
 /**
  * Renders [content] in light, then dark, and captures each into `src/test/snapshots/<name>-{light,dark}.png`
@@ -47,8 +49,14 @@ class Shot internal constructor(private val rule: ComposeContentTestRule, privat
     fun capture(name: String) {
         for (d in listOf(false, true)) {
             dark.value = d
+            // Let ripples and menu animations settle, so a capture after a tap is the same on every run.
+            rule.mainClock.advanceTimeBy(SETTLE_MS)
             rule.waitForIdle()
-            rule.onNodeWithTag(SHOT).captureRoboImage("src/test/snapshots/$name-${if (d) "dark" else "light"}.png")
+            rule.onNodeWithTag(SHOT).captureRoboImage(
+                "src/test/snapshots/$name-${if (d) "dark" else "light"}.png",
+                // A pressed button's ripple can leave a few pixels behind after a tap; layout changes are far larger.
+                roborazziOptions = RoborazziOptions(compareOptions = RoborazziOptions.CompareOptions(changeThreshold = 0.005f)),
+            )
         }
     }
 }

@@ -247,7 +247,8 @@ private fun AgendaList(state: CalendarUiState, fmt: CalendarFormat, onItem: (Age
             item(key = "h$bucket") { SectionHeader(stringResource(bucket.labelRes()), first = i == 0) }
             val rows = days.flatMap { (day, items) -> items.map { day to it } }
             listGroup("b$bucket", rows, { (day, it) -> "$day/${it.key}" }) { (day, item) ->
-                val time = timeLabel(item, fmt)
+                // The start only: the range lives in the event; a long range squeezed the title on narrow phones.
+                val time = if (item.allDay) stringResource(R.string.calendar_all_day) else fmt.time(item.start)
                 val dated = bucket != AgendaBucket.TODAY
                 ListRow(
                     title = item.title,

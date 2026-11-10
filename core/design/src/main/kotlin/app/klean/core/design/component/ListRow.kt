@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -61,7 +62,8 @@ fun ListRow(
         if (leading != null) {
             Box(Modifier.heightIn(min = Space.touchTarget).widthIn(min = Space.touchTarget), contentAlignment = Alignment.Center) { leading() }
         }
-        Column(Modifier.weight(1f)) {
+        // The title gets at least two thirds of the row: a long time or day never squeezes it to a letter (font 1.5).
+        Column(Modifier.weight(2f)) {
             Text(
                 title,
                 style = MaterialTheme.typography.bodyLarge,
@@ -81,7 +83,14 @@ fun ListRow(
             }
         }
         if (meta != null) {
-            Text(meta, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+            Text(
+                meta,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 2,
+                textAlign = TextAlign.End,
+                modifier = Modifier.weight(1f, fill = false),
+            )
         }
         trailing?.invoke()
     }
