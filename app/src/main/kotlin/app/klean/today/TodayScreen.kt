@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.Tune
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -80,6 +82,7 @@ fun TodayScreen(
     onOpen: (Any) -> Unit,
     layout: TodayLayoutStore = InMemoryTodayLayout(),
     onArrange: () -> Unit = {},
+    onSettings: () -> Unit = {},
     vm: TodayViewModel = viewModel { TodayViewModel(capture, clock) },
     dash: TodayDashboardViewModel = viewModel {
         TodayDashboardViewModel(dashboard, clock, zone, WeekFields.of(Locale.getDefault()).firstDayOfWeek, ticker.ticks())
@@ -119,6 +122,9 @@ fun TodayScreen(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
+                    }
+                    IconButton(onClick = onSettings, modifier = Modifier.size(48.dp)) {
+                        Icon(Icons.Rounded.Tune, contentDescription = stringResource(R.string.nav_settings))
                     }
                     if (hasCards.isNotEmpty()) {
                         Box {

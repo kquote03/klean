@@ -66,6 +66,18 @@ class DevicePrefsTest {
         scope.cancel()
     }
 
+    /** Each navigation group remembers its last module; setting one keeps the others. */
+    @Test fun lastModulePerGroup() = runBlocking {
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        val prefs = open(scope)
+        assertEquals(emptyMap<String, String>(), prefs.lastInGroup.first())
+        prefs.setLastInGroup("plan", "calendar")
+        prefs.setLastInGroup("track", "sleep")
+        prefs.setLastInGroup("plan", "tasks")
+        assertEquals(mapOf("plan" to "tasks", "track" to "sleep"), prefs.lastInGroup.first())
+        scope.cancel()
+    }
+
     @Test fun exportImportCarriesTypedPrefsButNotPerInstallOnes() = runBlocking {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
         val prefs = open(scope)

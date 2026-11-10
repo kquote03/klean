@@ -52,6 +52,7 @@ class DevicePrefs @Inject constructor(
         val cardOrder = stringPreferencesKey("cardOrder")
         val hiddenCards = stringSetPreferencesKey("hiddenCards")
         val pendingNewModules = stringSetPreferencesKey("pendingNewModules")
+        val lastInGroup = stringPreferencesKey("lastInGroup")
     }
 
     /** Stable id of this install. Generated (UUIDv7) and persisted on first use. */
@@ -124,6 +125,18 @@ class DevicePrefs @Inject constructor(
     /** Modules an update added (switched on), listed once in the "New in Klean" sheet. */
     val pendingNewModules: Flow<Set<String>> = flow(K.pendingNewModules, emptySet())
     suspend fun setPendingNewModules(v: Set<String>) = put(K.pendingNewModules, v)
+
+    /** The module last open in each navigation group ("plan" → "calendar"); device-local, never exported. */
+    val lastInGroup: Flow<Map<String, String>> = store.data.map { p ->
+        p[K.lastInGroup]?.split(',')?.mapNotNull { e -> e.split('=').takeIf { it.size == 2 }?.let { it[0] to it[1] } }?.toMap() ?: emptyMap()
+    }
+    suspend fun setLastInGroup(group: String, module: String) {
+        store.edit { p ->
+            val now = (p[K.lastInGroup]?.split(',')?.mapNotNull { e -> e.split('=').takeIf { it.size == 2 }?.let { it[0] to it[1] } }?.toMap() ?: emptyMap()) +
+                (group to module)
+            p[K.lastInGroup] = now.entries.joinToString(",") { "${it.key}=${it.value}" }
+        }
+    }
 
     /**
      * Device prefs that travel in a backup, as strings. Leaves out what only makes sense on this

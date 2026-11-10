@@ -8,6 +8,3 @@ import kotlinx.serialization.Serializable
 
 /** Reorder and hide Today's cards. */
 @Serializable object ArrangeTodayRoute
-
-/** Modules that don't fit in the bottom bar, plus Settings. */
-@Serializable object MoreRoute

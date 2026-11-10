@@ -52,6 +52,7 @@ fun KleanNavHost(nav: NavHostController, shell: ShellViewModel, enabled: List<Kl
                 layout = shell.todayLayout,
                 onOpen = { nav.navigate(it) },
                 onArrange = { nav.navigate(ArrangeTodayRoute) },
+                onSettings = { nav.navigate(SettingsRoute) { launchSingleTop = true } },
             )
             NewModulesSheet(registry, shell.newModules)
         }
@@ -60,9 +61,6 @@ fun KleanNavHost(nav: NavHostController, shell: ShellViewModel, enabled: List<Kl
         }
         composable<SettingsRoute> {
             SettingsScreen(modules = enabled, onOpen = { nav.navigate(it) }, onRunSetup = { nav.navigate(OnboardingRoute) })
-        }
-        composable<MoreRoute> {
-            MoreScreen(modules = navLayout(enabled.filter { it.inNavigation }).overflow, onOpen = { nav.navigate(it) })
         }
         settingsGraph(nav, registry, shell.permissions)
         registry.all.forEach { it.registerGraph(this, nav) }

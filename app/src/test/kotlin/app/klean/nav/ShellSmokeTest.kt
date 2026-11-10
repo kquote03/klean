@@ -53,8 +53,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 
-/** Stand-in for the on-device check: with no modules the shell shows Today + Settings,
- * and the settings skeleton navigates to the modules screen. */
+/** Stand-in for the on-device check: the bar of groups, Settings from Today, and the settings skeleton. */
 @RunWith(AndroidJUnit4::class)
 class ShellSmokeTest {
     @get:Rule val compose = createComposeRule()
@@ -65,6 +64,7 @@ class ShellSmokeTest {
         dashboard: DashboardContributions? = null,
         layout: TodayLayoutStore = InMemoryTodayLayout(),
         newModules: NewModulesStore = InMemoryNewModules(),
+        groupMemory: NavGroupMemory = InMemoryNavGroupMemory(),
     ): ShellViewModel =
         ShellViewModel(
             ModuleRegistry(modules, gate), UniversalCaptureService(emptySet(), gate, DefaultCaptureRouter(null)), Clock.System,
@@ -73,6 +73,7 @@ class ShellSmokeTest {
             ticker = OneTick,
             todayLayout = layout,
             newModules = newModules,
+            groupMemory = groupMemory,
         )
 
     /** One clock read; the real ticker loops once a minute forever. */
@@ -85,8 +86,13 @@ class ShellSmokeTest {
         @Composable override fun DashboardCard(onOpen: () -> Unit, modifier: Modifier) {}
     }
 
+    private fun openSettings() {
+        compose.onNodeWithContentDescription("Settings").performClick()
+        compose.waitForIdle()
+    }
+
     private fun openModulesScreen() {
-        compose.onAllNodes(hasClickAction() and hasText("Settings"))[0].performClick()
+        openSettings()
         compose.waitForIdle()
         compose.onNodeWithText("Turn modules on or off").performClick()
         compose.waitForIdle()
@@ -109,8 +115,7 @@ class ShellSmokeTest {
         val vm = shell(setOf(diet()), FakeModuleGate(setOf(ModuleId.DIET)))
         compose.setContent { KleanTheme { KleanAppUi(vm) } }
         compose.waitForIdle()
-        compose.onAllNodes(hasClickAction() and hasText("Settings"))[0].performClick()
-        compose.waitForIdle()
+        openSettings()
         compose.onNodeWithText("Quiet hours").assertIsDisplayed()
         compose.onAllNodesWithText("Diet").assertCountEquals(0)
     }
@@ -121,12 +126,12 @@ class ShellSmokeTest {
         val vm = shell(setOf(module))
         compose.setContent { KleanTheme { KleanAppUi(vm) } }
         compose.waitForIdle()
-        compose.onNode(hasClickAction() and hasText("Diet")).performClick()
+        compose.onNode(hasClickAction() and hasText("Track")).performClick()
         compose.waitForIdle()
         compose.onNodeWithText("Open inner").performClick()
         compose.waitForIdle()
         compose.onNodeWithText("Inner screen").assertExists()
-        compose.onNode(hasClickAction() and hasText("Diet")).assertIsSelected()
+        compose.onNode(hasClickAction() and hasText("Track")).assertIsSelected()
         compose.onNode(hasClickAction() and hasText("Today")).assertIsNotSelected()
     }
 
@@ -134,8 +139,7 @@ class ShellSmokeTest {
         val vm = shell(emptySet())
         compose.setContent { KleanTheme { KleanAppUi(vm) } }
         compose.waitForIdle()
-        compose.onAllNodes(hasClickAction() and hasText("Settings"))[0].performClick()
-        compose.waitForIdle()
+        openSettings()
         compose.onNode(hasScrollAction()).performScrollToNode(hasText("Permissions"))
         compose.onNodeWithText("Permissions").performClick()
         compose.waitForIdle()
@@ -148,23 +152,19 @@ class ShellSmokeTest {
         compose.setContent { KleanTheme { KleanAppUi(vm) } }
         compose.onNodeWithText("Nothing here yet. Turn on a module in Settings.").assertIsDisplayed()
         assertTrue(compose.onAllNodesWithText("Today").fetchSemanticsNodes().isNotEmpty())
-        compose.onAllNodesWithText("Settings")[0].performClick()
-        compose.waitForIdle()
-        assertTrue(compose.onAllNodesWithText("Settings").fetchSemanticsNodes().size >= 2)
+        openSettings()
+        assertTrue(compose.onAllNodesWithText("Settings").fetchSemanticsNodes().isNotEmpty())
         compose.onNodeWithText("Quiet hours").assertIsDisplayed()
         compose.onNodeWithText("Turn modules on or off").performClick()
         compose.waitForIdle()
         compose.onNodeWithText("No modules are installed yet.").assertIsDisplayed()
     }
 
-    @Test fun dietModuleAddsBottomBarItemBetweenTodayAndSettings() {
+    @Test fun dietAloneBringsTheTrackGroup() {
         val vm = shell(setOf(diet()))
         compose.setContent { KleanTheme { KleanAppUi(vm) } }
         compose.waitForIdle()
-        val labels = compose.onAllNodes(hasClickAction() and (hasText("Today") or hasText("Diet") or hasText("Settings")))
-            .fetchSemanticsNodes()
-            .mapNotNull { n -> n.config.getOrNull(SemanticsProperties.Text)?.joinToString { it.text } }
-        assertEquals(listOf("Today", "Diet", "Settings"), labels)
+        assertEquals(listOf("Today", "Track"), barLabels())
     }
 
     // A tall screen, so the week strip is composed in the lazy list.
@@ -194,7 +194,7 @@ class ShellSmokeTest {
         compose.onNode(hasContentDescription("3 things logged", substring = true)).performClick()
         compose.waitForIdle()
         compose.onNodeWithText("Inner screen").assertExists()
-        compose.onNode(hasClickAction() and hasText("Diet")).assertIsSelected()
+        compose.onNode(hasClickAction() and hasText("Track")).assertIsSelected()
     }
 
     // A tall screen, so the week strip is composed in the lazy list.
@@ -250,38 +250,38 @@ class ShellSmokeTest {
             .fetchSemanticsNodes()
             .mapNotNull { n -> n.config.getOrNull(SemanticsProperties.Text)?.joinToString { it.text } }
 
-    /** Five modules on: the bar keeps Today + 3 + More; More lists the 4th and 5th, then Settings. */
-    // A tall screen, so Settings' general rows are composed under the five module rows.
-    @Config(qualifiers = "w411dp-h891dp")
-    @Test fun moreThanThreeModulesMoveTheRestUnderMore() {
-        val vm = shell(fiveFakeModules())
+    /** Navigation decision A: four groups, no More; a group's tabs switch modules and the group remembers the last one. */
+    @Test fun modulesSitInFourGroupsWithTabsAndMemory() {
+        val memory = InMemoryNavGroupMemory()
+        val vm = shell(fiveFakeModules(), groupMemory = memory)
         compose.setContent { KleanTheme { KleanAppUi(vm) } }
         compose.waitForIdle()
-        assertEquals(listOf("Today", "OK", "Cancel", "Copy", "More"), barLabels())
-        compose.onNode(hasClickAction() and hasText("More")).performClick()
+        assertEquals(listOf("Today", "Plan", "Track", "People"), barLabels())
+        compose.onNode(hasClickAction() and hasText("Plan")).performClick()
         compose.waitForIdle()
-        compose.onNode(hasClickAction() and hasText("More")).assertIsSelected()
-        compose.onNodeWithText("Paste").assertIsDisplayed()
-        compose.onNodeWithText("Cut").assertIsDisplayed()
-        compose.onNodeWithText("OK").assertIsDisplayed() // in the bar only
-        compose.onAllNodesWithText("Copy").assertCountEquals(1)
-        compose.onNodeWithText("Cut").performClick()
+        compose.onNodeWithText("Screen of OK").assertIsDisplayed()
+        compose.onNode(hasClickAction() and hasText("Copy")).performClick()
+        compose.waitForIdle()
+        compose.onNodeWithText("Screen of Copy").assertIsDisplayed()
+        compose.onNode(hasClickAction() and hasText("Plan")).assertIsSelected()
+        assertEquals(mapOf("plan" to "calendar"), memory.last.value)
+        compose.onNode(hasClickAction() and hasText("Today")).performClick()
+        compose.waitForIdle()
+        compose.onNode(hasClickAction() and hasText("Plan")).performClick()
+        compose.waitForIdle()
+        compose.onNodeWithText("Screen of Copy").assertIsDisplayed()
+        // A one-module group shows no tabs.
+        compose.onNode(hasClickAction() and hasText("Track")).performClick()
         compose.waitForIdle()
         compose.onNodeWithText("Screen of Cut").assertIsDisplayed()
-        compose.onNode(hasClickAction() and hasText("More")).assertIsSelected()
-        compose.onNode(hasClickAction() and hasText("More")).performClick()
-        compose.waitForIdle()
-        compose.onNodeWithText("Settings").performClick()
-        compose.waitForIdle()
-        compose.onNodeWithText("Quiet hours").assertExists()
-        compose.onNode(hasClickAction() and hasText("More")).assertIsSelected()
+        compose.onAllNodes(hasClickAction() and hasText("Cut")).assertCountEquals(0)
     }
 
-    @Test fun threeModulesKeepSettingsInTheBar() {
-        val vm = shell(fiveFakeModules().take(3).toSet())
+    @Test fun aGroupWithEveryModuleOffLeavesTheBar() {
+        val vm = shell(fiveFakeModules(), FakeModuleGate(setOf(ModuleId.WORKOUT)))
         compose.setContent { KleanTheme { KleanAppUi(vm) } }
         compose.waitForIdle()
-        assertEquals(listOf("Today", "OK", "Cancel", "Copy", "Settings"), barLabels())
+        assertEquals(listOf("Today", "Plan", "People"), barLabels())
     }
 
     /** Diet laid out like the real one, with a visible card. */
@@ -307,7 +307,7 @@ class ShellSmokeTest {
         compose.waitForIdle()
         assertEquals(setOf("diet"), layout.hidden.value)
         compose.onNodeWithText("Diet card").assertDoesNotExist()
-        compose.onNode(hasClickAction() and hasText("Diet")).assertExists()
+        compose.onNode(hasClickAction() and hasText("Track")).assertExists()
         compose.onNodeWithText("Nothing here yet. Turn on a module in Settings.").assertDoesNotExist()
     }
 

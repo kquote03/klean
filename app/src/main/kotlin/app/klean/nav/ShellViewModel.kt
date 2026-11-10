@@ -41,6 +41,7 @@ class ShellViewModel @Inject constructor(
     val ticker: MinuteTicker = MinuteTicker(),
     val todayLayout: TodayLayoutStore = InMemoryTodayLayout(),
     val newModules: NewModulesStore = InMemoryNewModules(),
+    val groupMemory: NavGroupMemory = InMemoryNavGroupMemory(),
     val onboardingSteps: Set<@JvmSuppressWildcards OnboardingStepProvider> = emptySet(),
 ) : ViewModel() {
     private val _startWithSetup = MutableStateFlow<Boolean?>(null)

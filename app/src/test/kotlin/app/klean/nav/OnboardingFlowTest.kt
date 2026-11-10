@@ -8,6 +8,7 @@ import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
@@ -117,7 +118,8 @@ class OnboardingFlowTest {
 
     @Test fun setupCanBeRunAgainFromSettings() {
         start(show = false)
-        tap("Settings")
+        compose.onNodeWithContentDescription("Settings").performClick()
+        compose.waitForIdle()
         compose.onNode(hasScrollAction()).performScrollToNode(hasText("Run setup again"))
         tap("Run setup again")
         compose.onNodeWithText("Welcome to Klean").assertExists()

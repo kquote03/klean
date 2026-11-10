@@ -29,6 +29,9 @@ object AppBindingsModule {
     fun newModules(impl: DevicePrefsNewModules): NewModulesStore = impl
 
     @Provides
+    fun navGroupMemory(impl: app.klean.nav.DevicePrefsNavGroupMemory): app.klean.nav.NavGroupMemory = impl
+
+    @Provides
     fun todayLayout(impl: DevicePrefsTodayLayout): TodayLayoutStore = impl
 
     @Provides

@@ -657,3 +657,23 @@ Known gaps:
 
 - [x] 29.0 — Every acceptance criterion from the brief, grouped as in the brief (Foundation, Diet, Tasks and reminders, AI delegation, Calendar/contacts/birthdays, Workout and sleep, Backend/web/multi-device, Tests), with Waydroid / Pixel / Watch / Backend+Browser columns; Waydroid and Backend+Browser pre-filled with evidence (TASKS refs, tests, screenshot folders), Pixel and Watch cells say what to check; an "Open before p1" list (phone-side Wear, OAuth clients, real Hermes, web parity/push, UI overhaul) — next
 - [ ] 29.1 — The user's session: Pixel and watch columns; tag `p1` after every row passes
+
+## UI overhaul (branch `ui`, worktree `../klean-ui`; plan `.hermes/plans/2026-11-10_222226-ui-overhaul-and-remaining-milestones.md`, spec `docs/ui/design-system.md`)
+
+Direction: navigation A (grouped tabs) + Soft cards, the recommended default (no other answer from the user).
+
+### Phase 2 — design system and navigation
+
+- [x] 2.1 — Roborazzi 1.78.0 through `klean.android.compose` (and `klean.roborazzi` for `:app`), native graphics, references in `<module>/src/test/snapshots/`; `:core:testing` holds `shot()` (light + dark, phone frame `PHONE` = 412×915) and the clutter helper; `KleanTheme(darkTheme = …)`
+- [x] 2.2 — `Space` (4…48, `screenEdge`/`cardPadding`/`cardGap`/`sectionGap`/`touchTarget`, `hairline`) and `KleanShapes` (8/16/24) in `KleanTheme`; type roles per the spec (`titleLarge` regular, `labelMedium` bold); `NoRawDpTest` (feature-wide check `@Ignore`d until the end of Phase 3; redesigned screens are checked now)
+- [x] 2.3 — Components with Roborazzi shots (`ComponentShotsTest`): `KleanScreen` (top bar, overflow `MenuAction`s, group chrome via `LocalGroupChrome`, the Add menu via `LocalAddMenu`, snackbar), `SectionHeader`, `ModuleCard` (+ `CardTone`), `ListRow` / `ListGroup` / `listGroup`, `EmptyState`, `AddMenu` (M3 Expressive `FloatingActionButtonMenu`), `SegmentedTabs`, `WeekBars`, `SavedCard` / `NewSavedCard`
+- [x] 2.3b — `assertClutterBudget()` / `clutterCount()` in `:core:testing`, tag `CLUTTER_EXEMPT` in `core/design`; `ClutterBudgetTest` 4 (8 buttons fail, 7 pass, an exempt list counts once, a text field fails the default)
+- [x] 2.4 — `NavGroup` (Today, Plan, Track, People; no More), `NavGroupsTest` 6, `AddMenuEntriesTest` 2; bar of groups, last module per group remembered (`DevicePrefs.lastInGroup`), legacy module screens get the group title + tabs from the shell until they're redesigned (`KleanModule.drawsGroupChrome`); Settings from Today's top bar and every group's overflow; `MoreScreen`/`NavLayout` deleted; Add menu on every `KleanScreen`
+- [x] 2.5 — Phase 2 gate (`assembleDebug :app:assembleDebugAndroidTest :shared:jvmTest testDebugUnitTest :backend:test :wear:testDebugUnitTest verifyRoborazziDebug`): BUILD SUCCESSFUL, 1162 tests, 0 failures, 2 skipped (the fixture writer, `NoRawDpTest`'s feature-wide check)
+
+### Phase 3 — screens (Today, Add menu, Tasks, Calendar in this lane; Track, People, Settings, Onboarding, widgets in the next)
+
+- [ ] 3.1 — Today
+- [ ] 3.2 — Add menu + capture sheet
+- [ ] 3.3 — Tasks (+ Reminders view)
+- [ ] 3.4 — Calendar

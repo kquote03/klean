@@ -231,3 +231,6 @@ Only 4 of 20 screens meet the budget outright. The common causes, in order of we
 | Per-row ⋮ on reminders | every row | long-press menu and detail screen |
 | Workout, Sleep, Diet | More | Track tab |
 | Settings | More | gear in Today's top bar, group overflow menus |
+| Contacts (bar item) | bottom bar | People tab |
+| Tasks, Calendar (bar items) | bottom bar | Plan tab, switched with the Tasks · Calendar segments (last one remembered) |
+| More list | bottom bar | removed; every module is one tap away in its group |
