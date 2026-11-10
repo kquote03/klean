@@ -2,7 +2,7 @@
 # "nightly" pre-release, so the newest APK is always at:
 #   https://github.com/<owner>/<repo>/releases/download/nightly/klean-debug.apk
 # The server image (backend + web) is tested on every run and pushed to GHCR on pushes to main and on
-# milestone tags (m*, p*): ghcr.io/<owner>/klean-backend (see docker.yml).
+# milestone tags (m*, p*): ghcr.io/<owner>/klean-server (see docker.yml).
 name: ci
 
 on:

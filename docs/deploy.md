@@ -1,21 +1,59 @@
-# Deploying the Klean backend
+# Deploying the Klean server
 
-The backend is one container (`klean-backend`) with one volume (`/data`) and one port (8080). It holds the
-SQLite database, photo/attachment blobs, and generated keys (VAPID). Klean on the phone works fully without it;
-the backend adds sync between devices, the web client, DAV for other apps, and server-side integrations.
+The server is one container image, `klean-server`, with one volume (`/data`) and one port (8080). It runs the
+sync backend and serves the Klean web app at `/`. The volume holds the SQLite database, photo/attachment blobs
+and generated keys (VAPID). Klean on the phone works fully without it; the server adds sync between devices,
+the web app, DAV for other apps, and server-side integrations.
 
-## Build and run
+## Run
+
+Every push to `main` builds, tests and publishes `ghcr.io/kquote03/klean-server` for linux/amd64 and
+linux/arm64 (`.github/workflows/docker.yml`). Compose uses it by default:
 
 ```sh
-nix develop -c ./gradlew :backend:jibDockerBuild      # → image klean-backend:dev (local Docker daemon)
-docker compose -f deploy/docker-compose.yml up -d
+docker compose -f deploy/docker-compose.yml up -d     # pulls ghcr.io/kquote03/klean-server:latest
 curl -s localhost:8080/api/v1/health                 # {"status":"ok"}
 docker compose -f deploy/docker-compose.yml logs -f   # one JSON object per line
 docker compose -f deploy/docker-compose.yml down      # keeps the klean-data volume
 ```
 
-Without Docker: `./gradlew :backend:installDist` and run `backend/build/install/backend/bin/backend`
-(set `KLEAN_DATA_DIR`, default `./data`).
+Or plain Docker: `docker run -d --name klean -p 8080:8080 -v klean-data:/data ghcr.io/kquote03/klean-server:latest`.
+
+Image tags:
+
+| Tag | Meaning |
+|---|---|
+| `latest`, `main` | Newest commit on `main` |
+| `sha-<short>` | One commit |
+| `0.1.0-<count>-<short>` | Same version name as that commit's nightly APK |
+| `m25`, `m26`, … | Milestones |
+
+For a deployment that never changes under you, pin a tag: `KLEAN_IMAGE=ghcr.io/kquote03/klean-server:sha-<short>`.
+
+The container runs as an unprivileged user (uid 10001). If you bind-mount a host directory instead of the named
+volume, make it writable for that uid: `sudo chown 10001:10001 /srv/klean`.
+
+## Build from source
+
+Only Docker is needed: the `Dockerfile` at the repo root builds the web app (Node, pnpm) and the server (JDK,
+Gradle) in their own stages, then copies the result onto a JRE image.
+
+```sh
+docker build -t klean-server:dev .
+scripts/image-smoke.sh klean-server:dev                       # optional: API, web app, non-root, /data writable
+docker compose -f deploy/docker-compose.yml up -d --build     # or build + run through compose
+```
+
+Builds are reproducible: base images are pinned by digest, dependencies by lockfiles, jars carry no timestamps.
+`scripts/image-repro.sh` builds twice without cache (with `SOURCE_DATE_EPOCH` = the commit time and
+`rewrite-timestamp=true`) and checks that both image digests match; CI runs it on every push.
+Multi-arch: `docker buildx build --platform linux/amd64,linux/arm64 .` (the build stages run natively; only the
+runtime stage is per-architecture, so no emulation is needed).
+
+Without Docker: `nix develop .#web -c ./gradlew :backend:installDist` and run
+`backend/build/install/backend/bin/backend` (set `KLEAN_DATA_DIR`, default `./data`). `-Pklean.web` is `auto`
+(default: include the web app when pnpm is on PATH), `require`, `prebuilt` (package an existing `web/dist`) or
+`false`.
 
 ## Configuration (environment)
 
@@ -93,7 +131,9 @@ password. The address book is `/dav/contacts/klean/`, the calendar `/dav/calenda
 ## Updating
 
 ```sh
-./gradlew :backend:jibDockerBuild && docker compose -f deploy/docker-compose.yml up -d
+docker compose -f deploy/docker-compose.yml pull && docker compose -f deploy/docker-compose.yml up -d
 ```
+
+(From source: `docker compose -f deploy/docker-compose.yml up -d --build`.)
 
 Schema changes are additive and applied at start.
