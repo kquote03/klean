@@ -100,7 +100,7 @@ fun ApprovalContent(
     var newRecipient by rememberSaveable { mutableStateOf("") }
     Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(s.taskTitle, style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
-        Text(stringResource(R.string.delegation_approval_action, s.action), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(stringResource(R.string.delegation_approval_action, s.action.replace('_', ' ')), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         if (s.done) {
             Text(
                 stringResource(
@@ -297,7 +297,7 @@ fun ApprovalsCard(onOpenApproval: (String) -> Unit, modifier: Modifier = Modifie
                 ListItem(
                     modifier = Modifier.clickable { onOpenApproval(p.approval.id) }.heightIn(min = 56.dp),
                     headlineContent = { Text(p.taskTitle) },
-                    supportingContent = { Text(stringResource(R.string.delegation_approval_action, p.approval.action)) },
+                    supportingContent = { Text(stringResource(R.string.delegation_approval_action, p.approval.action.replace('_', ' '))) },
                 )
             }
         }
