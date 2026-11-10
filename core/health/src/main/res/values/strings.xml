@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="health_title">Health Connect</string>
+    <string name="health_unavailable">Health Connect isn\'t on this phone. Klean keeps its own log either way.</string>
+    <string name="health_needs_update">Health Connect needs an update before Klean can use it.</string>
+    <string name="health_update">Update</string>
+    <string name="health_offer">Share sleep and workouts with Health Connect, and bring in nights and workouts from your other apps.</string>
+    <string name="health_connect">Connect</string>
+    <string name="health_connected">Connected. Nights and workouts from other apps show up here, and Klean\'s workouts go to Health Connect.</string>
+    <string name="health_manage">Manage</string>
+    <string name="health_privacy_title">Klean and your health data</string>
+    <string name="health_privacy_body">Klean reads sleep sessions and workouts so they appear in your log, and writes the workouts you record in Klean. Nothing leaves your phone unless you set up your own sync server, and you can turn access off at any time in Health Connect.</string>
+    <string name="health_privacy_close">Close</string>
+</resources>
