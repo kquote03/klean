@@ -16,7 +16,11 @@ class NoRawDpTest {
     }.toList()
 
     /** The screens redesigned so far (UI overhaul Phase 3). Each new one joins this list. */
-    private val converted = listOf<String>()
+    private val converted = listOf(
+        "app/src/main/kotlin/app/klean/today/TodayScreen.kt",
+        "feature/tasks/src/main/kotlin/app/klean/feature/tasks/ui/TasksScreen.kt",
+        "feature/calendar/src/main/kotlin/app/klean/feature/calendar/ui/CalendarScreen.kt",
+    )
 
     @Test fun redesignedScreensUseTheSpacingScale() {
         val found = offenders(converted.asSequence().map { File(root, it) }.filter { it.exists() })

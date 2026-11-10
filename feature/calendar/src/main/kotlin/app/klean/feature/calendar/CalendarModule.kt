@@ -79,6 +79,7 @@ class CalendarKleanModule @Inject constructor(
     override val graphRoute: Any = CalendarGraph
     override val settingsRoute: Any = CalendarSettingsRoute
     override val capturePlaceholderRes: Int = R.string.calendar_capture_placeholder
+    override val drawsGroupChrome: Boolean = true
 
     override fun registerGraph(builder: NavGraphBuilder, nav: NavController) = with(builder) {
         navigation<CalendarGraph>(startDestination = CalendarRoute) {

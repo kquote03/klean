@@ -8,8 +8,6 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.onRoot
-import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.klean.core.design.theme.KleanTheme
@@ -40,45 +38,53 @@ class CalendarScreenTest {
         item("rent", "Pay rent", dubai(2026, 11, 11), dubai(2026, 11, 12), kind = AgendaKind.TASK, allDay = true),
     )
 
-    private fun state(view: CalendarView): CalendarUiState {
+    private fun state(view: CalendarView, list: List<AgendaItem> = items): CalendarUiState {
         val (from, to) = CalendarRange.of(view, today)
         val days = generateSequence(from) { d -> d.plus(1, kotlinx.datetime.DateTimeUnit.DAY) }.takeWhile { it <= to }.toList()
-        return CalendarUiState(view, today, today, days, items, byDay(items, from, to), canReadDevice = false, loaded = true)
+        return CalendarUiState(view, today, today, days, list, byDay(list, from, to), canReadDevice = false, loaded = true)
     }
 
-    private fun show(view: CalendarView, onItem: (AgendaItem) -> Unit = {}, onView: (CalendarView) -> Unit = {}) = compose.setContent {
+    private fun show(
+        view: CalendarView,
+        list: List<AgendaItem> = items,
+        onItem: (AgendaItem) -> Unit = {},
+        onView: (CalendarView) -> Unit = {},
+        onAllow: () -> Unit = {},
+    ) = compose.setContent {
         KleanTheme {
             CalendarScreenContent(
-                state = state(view), showAccess = true, onAllow = {}, onLater = {}, onView = onView, onPrevious = {}, onNext = {},
+                state = state(view, list), showAccess = true, onAllow = onAllow, onLater = {}, onView = onView, onPrevious = {}, onNext = {},
                 onToday = {}, onOpenDay = {}, onItem = onItem, onNew = {}, onOpenSettings = {},
             )
         }
     }
 
-    @Test fun agendaListsItemsUnderTheirDaysAndAsksForPhoneCalendarsCalmly() {
+    @Test fun agendaGroupsItemsCalmlyAndOpensThem() {
         val opened = mutableListOf<String>()
         show(CalendarView.AGENDA, onItem = { opened += it.key })
-        compose.onNodeWithText("Dentist").assertIsDisplayed()
+        compose.onNodeWithText("Today").assertIsDisplayed()
+        compose.onNodeWithText("This week").assertIsDisplayed()
         compose.onNodeWithText("From Work", substring = true).assertIsDisplayed()
         compose.onNodeWithText("Task", substring = true).assertIsDisplayed()
-        compose.onNodeWithText("Show them").assertIsDisplayed()
+        // No standing banner: the phone's calendars are offered from the menu.
+        compose.onNodeWithText("Not now").assertDoesNotExist()
         compose.onNodeWithText("Dentist").performClick()
         assertEquals(listOf("dent"), opened)
     }
 
-    @Test fun switchingViewsReportsTheChoice() {
-        val views = mutableListOf<CalendarView>()
-        show(CalendarView.AGENDA, onView = { views += it })
-        compose.onNodeWithContentDescription("View: Agenda").performClick()
-        compose.onNodeWithText("Month").performClick()
-        assertEquals(listOf(CalendarView.MONTH), views)
+    @Test fun anEmptyAgendaOffersThePhonesCalendarsOnce() {
+        var asked = 0
+        show(CalendarView.AGENDA, list = emptyList(), onAllow = { asked++ })
+        compose.onNodeWithText("Show phone calendars").performClick()
+        assertEquals(1, asked)
     }
 
-    @Test @Config(qualifiers = "w360dp-h740dp") fun viewPickerFitsANarrowPhone() {
-        show(CalendarView.WEEK)
-        val root = compose.onRoot().getUnclippedBoundsInRoot()
-        val picker = compose.onNodeWithContentDescription("View: Week").getUnclippedBoundsInRoot()
-        assertTrue(picker.right <= root.right)
+    @Test fun switchingViewsFromTheMenuReportsTheChoice() {
+        val views = mutableListOf<CalendarView>()
+        show(CalendarView.AGENDA, onView = { views += it })
+        compose.onNodeWithContentDescription("More options").performClick()
+        compose.onNodeWithText("Month").performClick()
+        assertEquals(listOf(CalendarView.MONTH), views)
     }
 
     @Test fun weekAndMonthRender() {
@@ -103,5 +109,13 @@ class CalendarScreenTest {
                 assertTrue("small target: $label ${b.height.toDp()}", b.width.toDp() >= 47.5.dp && b.height.toDp() >= 47.5.dp)
             }
         }
+    }
+
+    @Test fun agendaBuckets() {
+        assertEquals(AgendaBucket.EARLIER, bucketOf(date(2026, 11, 9), today))
+        assertEquals(AgendaBucket.TODAY, bucketOf(today, today))
+        assertEquals(AgendaBucket.THIS_WEEK, bucketOf(date(2026, 11, 11), today))
+        assertEquals(AgendaBucket.THIS_WEEK, bucketOf(date(2026, 11, 16), today))
+        assertEquals(AgendaBucket.LATER, bucketOf(date(2026, 11, 17), today))
     }
 }

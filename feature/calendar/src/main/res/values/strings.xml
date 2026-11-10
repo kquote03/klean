@@ -110,4 +110,8 @@
     </plurals>
     <string name="calendar_import_failed">That file couldn\'t be read as a calendar</string>
     <string name="calendar_export_failed">The file couldn\'t be saved</string>
+    <string name="calendar_access_allow_menu">Show phone calendars</string>
+    <string name="calendar_bucket_earlier">Earlier</string>
+    <string name="calendar_bucket_this_week">This week</string>
+    <string name="calendar_bucket_later">Later</string>
 </resources>
