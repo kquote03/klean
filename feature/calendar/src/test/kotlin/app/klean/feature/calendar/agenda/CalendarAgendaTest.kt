@@ -83,6 +83,16 @@ class CalendarAgendaTest {
         assertEquals(emptyList<String>(), agenda.items(from, to).first().map { it.title })
     }
 
+    @Test fun theEventSnapshotHasOnlyEventsAndHonoursSelection() = runBlocking {
+        repo.events.value = listOf(event("a", "Mine", dubai(2026, 11, 11, 9)))
+        deviceItems.value = listOf(
+            DeviceInstance(1, 7, "Team call", dubai(2026, 11, 11, 10), dubai(2026, 11, 11, 11), false, "Work", null),
+            DeviceInstance(2, 8, "Hidden", dubai(2026, 11, 11, 12), dubai(2026, 11, 11, 13), false, "Other", null),
+        )
+        repo.sources.value = listOf(CalendarSourceEntity("device-8", SourceKind.DEVICE, "Other", remoteId = "8", selected = false, sync = sync()))
+        assertEquals(listOf("Mine", "Team call"), agenda.eventSnapshot(from, to).map { it.title })
+    }
+
     @Test fun deviceAllDayItemsAreReadInUtc() = runBlocking {
         val utcMidnight = 1_796_169_600_000L // 2026-12-02T00:00Z
         deviceItems.value = listOf(DeviceInstance(2, 7, "National Day", utcMidnight, utcMidnight + 2 * DAY, true, "Holidays", null))

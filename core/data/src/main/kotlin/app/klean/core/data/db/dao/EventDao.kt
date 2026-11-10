@@ -16,6 +16,10 @@ interface EventDao {
     @Query("SELECT * FROM event WHERE deleted = 0 ORDER BY start_at")
     fun observeAll(): Flow<List<EventEntity>>
 
+    // M19 calendar: one-shot reads for the status line and reschedulers (no live flow).
+    @Query("SELECT * FROM event WHERE deleted = 0 ORDER BY start_at")
+    suspend fun live(): List<EventEntity>
+
     /** Events overlapping [from, to). */
     @Query("SELECT * FROM event WHERE deleted = 0 AND start_at < :to AND end_at > :from ORDER BY start_at")
     fun observeRange(from: Long, to: Long): Flow<List<EventEntity>>

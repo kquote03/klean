@@ -54,6 +54,7 @@ class FakeCalendarRepository : CalendarRepository {
     override suspend fun exportCount(): Int = liveEvents().size
 
     override fun observeSources(): Flow<List<CalendarSourceEntity>> = sources
+    override suspend fun sources(): List<CalendarSourceEntity> = sources.value
     override suspend fun setSourceSelected(id: String, selected: Boolean) {
         sources.value = sources.value.map { if (it.id == id) it.copy(selected = selected) else it }
     }

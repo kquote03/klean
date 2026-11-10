@@ -86,7 +86,12 @@ fun byDay(items: List<AgendaItem>, from: LocalDate, to: LocalDate): Map<LocalDat
 /** What the calendar shows for a range of days. An interface so screens and Today are tested with fakes. */
 interface AgendaSource {
     fun items(from: LocalDate, to: LocalDate): Flow<List<AgendaItem>>
-    suspend fun snapshot(from: LocalDate, to: LocalDate): List<AgendaItem> = items(from, to).first()
+    /**
+     * Events only (Klean's and the phone's), read once without live database flows: for the status line, which
+     * also runs where no Room flow may be held open.
+     */
+    suspend fun eventSnapshot(from: LocalDate, to: LocalDate): List<AgendaItem> =
+        items(from, to).first().filter { it.kind == AgendaKind.EVENT || it.kind == AgendaKind.DEVICE }
 }
 
 /**
@@ -131,6 +136,19 @@ class CalendarAgenda(
                 }
             }.filter { it.lastDay >= from && it.firstDay <= to }.sortedWith(AgendaOrder)
         }
+    }
+
+    override suspend fun eventSnapshot(from: LocalDate, to: LocalDate): List<AgendaItem> {
+        val tz = zone.current()
+        val fromMs = from.atStartOfDayIn(tz).toEpochMilliseconds()
+        val toMs = to.plus(1, DateTimeUnit.DAY).atStartOfDayIn(tz).toEpochMilliseconds()
+        val sources = repo.sources()
+        val hiddenSources = sources.filter { !it.selected }.map { it.id }.toSet()
+        val deviceRows = device.instances(fromMs - PAD_MS, toMs + PAD_MS).first()
+        return buildList {
+            addAll(kleanItems(repo.liveEvents(), sources, fromMs, toMs, tz))
+            for (row in deviceRows) if (device.sourceId(row.calendarId) !in hiddenSources) add(deviceItem(row, tz))
+        }.filter { it.lastDay >= from && it.firstDay <= to }.sortedWith(AgendaOrder)
     }
 
     private fun kleanItems(events: List<EventEntity>, sources: List<CalendarSourceEntity>, fromMs: Long, toMs: Long, tz: TimeZone): List<AgendaItem> {

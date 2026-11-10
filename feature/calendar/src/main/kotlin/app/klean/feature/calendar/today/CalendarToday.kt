@@ -188,7 +188,7 @@ class CalendarStatusLine @Inject constructor(
 
     internal suspend fun build(): List<StatusFragment> {
         val today = clock.now().toLocalDateTime(zone.current()).date
-        val next = nextTimed(agenda.get().snapshot(today, today), today, clock.now().toEpochMilliseconds()) ?: return emptyList()
+        val next = nextTimed(agenda.get().eventSnapshot(today, today), today, clock.now().toEpochMilliseconds()) ?: return emptyList()
         return listOf(StatusFragment(KEY_NEXT, text.statusNext(next.title, text.time(next.start)), PRIORITY))
     }
 

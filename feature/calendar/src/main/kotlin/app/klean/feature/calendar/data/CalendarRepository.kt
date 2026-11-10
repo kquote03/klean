@@ -16,7 +16,6 @@ import javax.inject.Singleton
 import kotlin.time.Clock
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
@@ -87,6 +86,7 @@ interface CalendarRepository {
     suspend fun exportCount(): Int
 
     fun observeSources(): Flow<List<CalendarSourceEntity>>
+    suspend fun sources(): List<CalendarSourceEntity>
     suspend fun setSourceSelected(id: String, selected: Boolean)
     /** One `calendar_source` row per phone calendar; rows are written only when something changed. */
     suspend fun syncDeviceSources(calendars: List<DeviceCalendar>)
@@ -108,7 +108,8 @@ class DefaultCalendarRepository @Inject constructor(
     private val sources get() = db.calendarSourceDao()
 
     override fun observeEvents(): Flow<List<EventEntity>> = events.observeAll()
-    override suspend fun liveEvents(): List<EventEntity> = events.observeAll().first()
+    override suspend fun liveEvents(): List<EventEntity> = events.live()
+    override suspend fun sources(): List<CalendarSourceEntity> = sources.all()
     override suspend fun get(id: String): EventEntity? = events.get(id)
 
     override suspend fun add(draft: EventDraft): String {
@@ -157,7 +158,7 @@ class DefaultCalendarRepository @Inject constructor(
         var added = 0
         var updated = 0
         val ids = db.transact {
-            val byUid = events.observeAll().first().associateBy { it.uid }
+            val byUid = events.live().associateBy { it.uid }
             parsed.mapNotNull { ical ->
                 val draft = EventIcs.toDraft(ical, tz).takeIf { it.title.isNotBlank() } ?: return@mapNotNull null
                 val exdates = Exdates.encode(EventIcs.exdates(ical, tz))
