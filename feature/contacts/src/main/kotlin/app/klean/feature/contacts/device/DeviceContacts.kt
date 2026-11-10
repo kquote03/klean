@@ -50,12 +50,53 @@ object DavAccounts {
     val CONTACT_TYPES = listOf(TYPE, ADDRESS_BOOK_TYPE)
 
     /**
-     * True when a DAVx5 account syncs this user's own Klean backend, so its rows can be the provider representation
-     * instead of the Klean account's mirror.
-     * TODO(M25): compare the DAVx5 account's base URL (AccountManager user data) with the paired backend URL.
+     * True when a DAVx5 account syncs this user's own paired Klean backend ([backendUrl]), so DAVx5's rows can be the
+     * provider representation instead of the Klean account's mirror. See [DavBackendMatch] for the signals.
      */
-    @Suppress("UNUSED_PARAMETER")
-    fun syncsOwnBackend(ctx: Context): Boolean = false
+    suspend fun syncsOwnBackend(ctx: Context, backendUrl: String?, kleanIds: Set<String>): Boolean = withContext(Dispatchers.IO) {
+        if (backendUrl == null) return@withContext false
+        if (ContextCompat.checkSelfPermission(ctx, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+            return@withContext false
+        }
+        val am = AccountManager.get(ctx)
+        // DAVx5 keeps the collection URL in its address-book accounts' user data. Another app may not be allowed to
+        // read it (SecurityException); then the members' file names are the signal.
+        val urls = CONTACT_TYPES.flatMap { type -> runCatching { am.getAccountsByType(type).toList() }.getOrDefault(emptyList()) }
+            .flatMap { a -> URL_KEYS.mapNotNull { k -> runCatching { am.getUserData(a, k) }.getOrNull() } }
+        val sourceIds = runCatching {
+            ctx.contentResolver.query(
+                RawContacts.CONTENT_URI, arrayOf(RawContacts.SOURCE_ID),
+                "${RawContacts.ACCOUNT_TYPE} IN (?, ?) AND ${RawContacts.DELETED} = 0", CONTACT_TYPES.toTypedArray(), null,
+            )?.use { c -> buildList { while (c.moveToNext()) c.getString(0)?.let(::add) } }
+        }.getOrNull().orEmpty()
+        DavBackendMatch.matches(backendUrl, urls, sourceIds, kleanIds)
+    }
+
+    private val URL_KEYS = listOf("url", "real_url")
+}
+
+/**
+ * Does a DAVx5 account sync the paired Klean backend? Yes when one of its collection URLs lies under the backend's
+ * `/dav/` root, or when its contacts' file names (`SOURCE_ID` = `<id>.vcf`, as the backend names members) are
+ * Klean contact ids: at least three of them, or all of them for a smaller address book.
+ */
+object DavBackendMatch {
+    fun matches(backendUrl: String, davUrls: List<String>, sourceIds: List<String>, kleanIds: Set<String>): Boolean {
+        val root = normalise(backendUrl.trimEnd('/') + "/dav/")
+        if (davUrls.any { normalise(it).startsWith(root) }) return true
+        if (kleanIds.isEmpty()) return false
+        val hits = sourceIds.map { it.removeSuffix(".vcf") }.distinct().count { it in kleanIds }
+        return hits >= minOf(3, kleanIds.size)
+    }
+
+    private fun normalise(url: String): String {
+        val u = url.trim()
+        val i = u.indexOf("://")
+        if (i < 0) return u.lowercase()
+        val rest = u.substring(i + 3)
+        val slash = rest.indexOf('/').let { if (it < 0) rest.length else it }
+        return u.substring(0, i).lowercase() + "://" + rest.substring(0, slash).lowercase() + rest.substring(slash)
+    }
 }
 
 /** The phone's other-account contacts, behind an interface so screens and merges are tested with a fake. */

@@ -147,8 +147,8 @@ class MirrorSource(val get: suspend (String) -> ContactEntity?, val all: suspend
  * Runs after every contact write and as a full resync at startup and after boot ([Reschedulable]). Needs
  * READ/WRITE_CONTACTS; without them it does nothing. With the Contacts module off, the rows are removed.
  *
- * TODO(M25): when a DAVx5 account syncs this user's own Klean backend (its URL matches the paired backend), DAVx5's
- * rows are the provider representation: stop mirroring here and remove the Klean account's rows. See
+ * When a DAVx5 account syncs this user's own Klean backend (M25: it matches the paired backend), DAVx5's rows are the
+ * provider representation: [useDavInstead] is true, mirroring stops and the Klean account's rows are removed. See
  * [app.klean.feature.contacts.device.DavAccounts.syncsOwnBackend].
  */
 class KleanContactsMirror(
@@ -271,6 +271,7 @@ class KleanContactsMirrorFactory @Inject constructor(
     private val provider: AndroidContactsProvider,
     private val repo: dagger.Lazy<ContactRepository>,
     private val gate: ModuleGate,
+    private val backend: dagger.Lazy<app.klean.core.data.sync.PairedBackend>,
 ) {
     val mirror: KleanContactsMirror by lazy {
         KleanContactsMirror(
@@ -280,6 +281,11 @@ class KleanContactsMirrorFactory @Inject constructor(
             accountName = KleanAccount.NAME,
             accountType = KleanAccount.accountType(ctx),
             ensureAccount = { KleanAccount.ensure(ctx) },
+            useDavInstead = {
+                app.klean.feature.contacts.device.DavAccounts.syncsOwnBackend(
+                    ctx, backend.get().url(), repo.get().live().mapTo(HashSet()) { it.id },
+                )
+            },
         )
     }
 
