@@ -15,11 +15,13 @@ import java.io.OutputStream
 import kotlin.io.path.createTempDirectory
 import kotlin.time.Clock
 import kotlin.time.Instant
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.job
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -86,7 +88,9 @@ class BackupViewModelTest {
     @Before fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
     @After fun tearDown() {
         store.clear() // cancels viewModelScope while Main is still the test dispatcher
-        prefsScope.cancel()
+        // Join, not just cancel: an in-flight DataStore write failing after the test ends surfaces in the next
+        // runTest as UncaughtExceptionsBeforeTest (the CI flake).
+        runBlocking { prefsScope.coroutineContext.job.cancelAndJoin() }
         Dispatchers.resetMain()
     }
 
