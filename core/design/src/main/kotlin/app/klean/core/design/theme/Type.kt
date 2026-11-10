@@ -16,7 +16,8 @@ val Cantarell = FontFamily(
 
 private val base = Typography()
 
-// Cantarell ships only 400 and 700, so the 500/600 roles map to Bold.
+// Cantarell ships only 400 and 700, so the 500/600 roles map to Bold. Roles and their uses: docs/ui/design-system.md
+// (displaySmall: Today's weekday; titleLarge: screen titles, regular; titleMedium: section and card titles).
 val KleanTypography = Typography(
     displayLarge = base.displayLarge.copy(fontFamily = Cantarell),
     displayMedium = base.displayMedium.copy(fontFamily = Cantarell),
@@ -24,13 +25,13 @@ val KleanTypography = Typography(
     headlineLarge = base.headlineLarge.copy(fontFamily = Cantarell),
     headlineMedium = base.headlineMedium.copy(fontFamily = Cantarell),
     headlineSmall = base.headlineSmall.copy(fontFamily = Cantarell),
-    titleLarge = base.titleLarge.copy(fontFamily = Cantarell, fontWeight = FontWeight.Bold),
+    titleLarge = base.titleLarge.copy(fontFamily = Cantarell, fontWeight = FontWeight.Normal),
     titleMedium = base.titleMedium.copy(fontFamily = Cantarell, fontWeight = FontWeight.Bold),
     titleSmall = base.titleSmall.copy(fontFamily = Cantarell, fontWeight = FontWeight.Bold),
     bodyLarge = base.bodyLarge.copy(fontFamily = Cantarell),
     bodyMedium = base.bodyMedium.copy(fontFamily = Cantarell),
     bodySmall = base.bodySmall.copy(fontFamily = Cantarell),
     labelLarge = base.labelLarge.copy(fontFamily = Cantarell, fontWeight = FontWeight.Bold),
-    labelMedium = base.labelMedium.copy(fontFamily = Cantarell),
+    labelMedium = base.labelMedium.copy(fontFamily = Cantarell, fontWeight = FontWeight.Bold),
     labelSmall = base.labelSmall.copy(fontFamily = Cantarell),
 )

@@ -27,6 +27,7 @@ fun KleanTheme(
     MaterialExpressiveTheme(
         colorScheme = scheme,
         typography = KleanTypography,
+        shapes = KleanShapes,
         motionScheme = MotionScheme.expressive(),
         content = content,
     )
