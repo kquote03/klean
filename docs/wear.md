@@ -19,7 +19,7 @@ The watch **never talks to the backend**. The phone sends it a snapshot, and the
 - **Colours:** the dark palette from `core/design/tokens/klean-color-tokens.json`. `WearColorsTest` fails if the tokens change and `WearColors` doesn't.
 - **Copy:** calm. When Diet is off, the food tiles say "Diet is off on your phone".
 
-## Protocol (`wear/src/main/kotlin/app/klean/wear/data/WearProtocol.kt`)
+## Protocol (`shared/src/commonMain/kotlin/app/klean/shared/wear/WearProtocol.kt`, used by both apps)
 
 - **Phone → watch:** a DataItem at `/klean/state` holding `WatchState` JSON. It has these fields:
   - `v`, `generatedAt`

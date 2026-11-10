@@ -9,7 +9,7 @@ import android.app.RemoteInput
 import androidx.wear.input.RemoteInputIntentHelper
 import app.klean.wear.R
 import app.klean.wear.data.WatchGraph
-import app.klean.wear.data.WatchMessage
+import app.klean.shared.wear.WatchMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

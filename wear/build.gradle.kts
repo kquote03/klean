@@ -32,6 +32,8 @@ android {
     }
 }
 dependencies {
+    // WearProtocol (paths, WatchState, WatchMessage, WearCodec) is shared with the phone.
+    implementation(project(":shared"))
     implementation(libs.wear.tiles)
     implementation(libs.wear.protolayout)
     implementation(libs.wear.complications.data.source.ktx)
