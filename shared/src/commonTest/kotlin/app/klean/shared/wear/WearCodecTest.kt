@@ -62,4 +62,10 @@ class WearCodecTest {
         assertEquals(listOf("tea", "toast"), back.recentFoods)
         assertEquals("Pay rent", back.next!!.title)
     }
+
+    @Test fun theEnabledModulesTravelAndAnOlderPhoneLeavesThemEmpty() {
+        val s = WatchState(generatedAt = 9, dietOn = false, modules = listOf("tasks", "workout"))
+        assertEquals(s, WearCodec.decodeState(WearCodec.encodeState(s)))
+        assertEquals(emptyList(), WearCodec.decodeState("""{"v":1,"generatedAt":5}""".encodeToByteArray())!!.modules)
+    }
 }

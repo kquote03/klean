@@ -57,6 +57,8 @@ data class WatchState(
     val active: ActiveWorkout? = null,
     /** Diet module switched off on the phone: food tiles say so instead of offering to log. */
     val dietOn: Boolean = true,
+    /** Ids of the modules switched on on the phone (`ModuleId.value`), sorted. Empty from an older phone. */
+    val modules: List<String> = emptyList(),
 )
 
 /** Watch → phone (and the phone's alarm ping back). */
