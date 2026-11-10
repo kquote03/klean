@@ -25,7 +25,7 @@ class PermissionRowsTest {
         compose.setContent { KleanTheme { PermissionRowsContent(vm.rows.value, onAction = { clicked += it.kind }, onHelp = {}) } }
 
         compose.onNodeWithText("Notifications").assertExists()
-        compose.onNodeWithText("So check-ins arrive on time instead of hours late.").assertExists()
+        compose.onNodeWithText("So reminders and check-ins arrive on time instead of hours late.").assertExists()
         compose.onAllNodesWithText("On").assertCountEquals(1)
         compose.onAllNodesWithText("Off").assertCountEquals(4)
         // Exact alarms, battery and location (M15) can be turned on; the listener row is status only.
