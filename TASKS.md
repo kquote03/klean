@@ -534,6 +534,7 @@ Verified on Waydroid (Android 13, 540×1212) on 2026-11-10 (M19 Contacts), scree
 - [x] 26.11 — Tests: Vitest 182 (capture rules + NaturalTime on the shared fixture, LWW, queue/store/sync with fake-indexeddb, device token storage, RecurrenceRule, capture execution, tokens + WCAG AA for every text/background pair in both themes, copy guard); Playwright e2e 2 against `docker compose` (`web/e2e/run.sh`: own project `klean-m26e2e` on port 18080, `down -v` at the end); Playwright visual 12 (`toHaveScreenshot` for Today, Tasks, Calendar × light/dark × laptop/phone)
 - [x] 26.12 — Visual review: every screen in light and dark at 1440×900 and 390×844 with seeded data (`e2e/review.spec.ts`, 78 screenshots + a measurements report: sideways scroll, clipping, text sizes, font), looked at one by one, issues fixed (see below)
 
+Gate (2026-11-10): BUILD SUCCESSFUL, 1010 tests, 0 failures, 1 skipped (`TasksModuleTest` and `ReminderSurfacesTest` Turbine timeouts on the first, loaded run passed on the re-run; unchanged code).
 Verified (2026-11-10): `pnpm test && pnpm build` pass (182 tests, copy check src + dist); `:shared:jvmTest` `CaptureCasesFixtureTest` 2/2;
 `:backend:jibDockerBuild -Djib.to.image=klean-backend:m26` (runs `pnpmBuild`), then `pnpm e2e`: sign in with the admin password → pairing
 QR rendered with a `klean://pair?url=…&code=…` payload → a phone claims the code with curl → a task created on the web reaches the
