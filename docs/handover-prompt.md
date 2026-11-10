@@ -29,7 +29,7 @@ You are continuing the build of **Klean**, a local-first holistic life-managemen
 ## Next steps
 
 1. ~~M18 Tasks and reminders ‖ M19 Calendar~~ — done 2026-11-10 (tags `m18`, `m19-cal`; `DayItemsProvider` already moved to `core/ui/.../module/DayItems.kt`).
-2. Run M19 Contacts and birthdays (worktree `../klean-contacts`, branch `m19-contacts`) plus M20 Workout and sleep (`../klean-body`, `m20-body`). Contacts binds birthdays into `DayItemsProvider`. After merging, tag `m19` and `m20`, and replace calendar's private recurrence expander with `RecurrenceRule` (calendar skips missing month days per RFC 5545; `RecurrenceRule` clamps — add a skip option rather than changing calendar behaviour).
+2. ~~M19 Contacts and birthdays ‖ M20 Workout and sleep~~ — done 2026-11-10 (tags `m19`, `m20`); calendar now expands repeats with `RecurrenceRule` (`MissingDay.SKIP`).
 3. Run M26 Web client against the merged backend, alongside M25 Android sync.
 4. Then: M21 Google, M22 Health Connect and GPS, M23 delegation and Hermes, M27 Wear OS, M28 capture everywhere.
 5. M29: an acceptance run with the user on the Pixel, watch, Docker backend and browser. Record it in `docs/acceptance-p1.md`, then tag `p1`.
