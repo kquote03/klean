@@ -87,8 +87,18 @@ val webDir = rootProject.layout.projectDirectory.dir("web")
 val pnpmOnPath = providers.environmentVariable("PATH").map { path ->
     path.split(File.pathSeparator).any { File(it, "pnpm").canExecute() }
 }.orElse(false)
-val webEnabled = providers.gradleProperty("klean.web").map { it != "false" }.orElse(true)
-val buildWeb = webEnabled.get() && pnpmOnPath.get() && webDir.file("package.json").asFile.exists()
+// klean.web: auto (default: build when pnpm is on PATH), require (release images: fail without pnpm), false (skip).
+val webMode = providers.gradleProperty("klean.web").orElse("auto").get()
+val buildWeb = when (webMode) {
+    "false" -> false
+    "require" -> {
+        check(pnpmOnPath.get()) { "-Pklean.web=require but pnpm is not on PATH (use nix develop .#web)" }
+        check(webDir.file("package.json").asFile.exists()) { "-Pklean.web=require but web/package.json is missing" }
+        true
+    }
+    "auto" -> pnpmOnPath.get() && webDir.file("package.json").asFile.exists()
+    else -> error("klean.web must be auto, require or false (was '$webMode')")
+}
 
 val pnpmBuild by tasks.registering(Exec::class) {
     description = "Builds the web client (web/dist) with pnpm."
