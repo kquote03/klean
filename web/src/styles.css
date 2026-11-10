@@ -135,8 +135,9 @@ main.content { min-width: 0; padding: var(--s3) var(--s4) var(--s6); }
 .item .time { flex: none; min-width: 64px; color: var(--md-sys-color-on-surface-variant); font-variant-numeric: tabular-nums; }
 .item.done .text { color: var(--md-sys-color-on-surface-variant); text-decoration: line-through; }
 /* Rows with several actions: the text keeps a readable width and the actions wrap below it on a phone. */
-.item.wrap { flex-wrap: wrap; row-gap: 0; }
+.item.wrap { flex-wrap: wrap; row-gap: var(--s1); }
 .item.wrap .text { flex: 1 1 200px; }
+.item .bday { flex: none; min-width: 80px; display: inline-flex; align-items: center; justify-content: flex-end; gap: 4px; }
 
 /* ---- forms ---- */
 form.inline { display: flex; gap: var(--s1); align-items: center; flex-wrap: wrap; }
@@ -214,3 +215,13 @@ dialog.sheet {
   width: 100%; background: var(--md-sys-color-surface-container-high); color: var(--md-sys-color-on-surface);
 }
 dialog.sheet::backdrop { background: color-mix(in srgb, var(--md-sys-color-scrim) 40%, transparent); }
+
+/* Single-column screens keep a readable line length on a laptop. */
+main.content.narrow > * { max-width: 960px; }
+.item .time.date { min-width: 112px; }
+/* On a phone, header actions keep only their icon so the header stays one row. */
+@media (max-width: 839px) {
+  .wide-only { display: none; }
+  .page-head { flex-wrap: nowrap; }
+  .page-head .status { flex: none; }
+}

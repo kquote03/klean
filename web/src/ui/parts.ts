@@ -17,7 +17,7 @@ export function card(o: { title: string; icon?: string; tone?: "primary" | "seco
  * only for fields with a hint, so inline forms line up with their button. */
 export function field(o: { label: string; name: string; type?: string; value?: string; placeholder?: string; required?: boolean; autocomplete?: string; testid?: string; hint?: string; min?: string; step?: string }) {
   const id = uid(o.name);
-  return html`<m3e-form-field variant="outlined" hide-subscript=${o.hint ? "auto" : "always"}>
+  return html`<m3e-form-field variant="outlined" hide-subscript=${o.hint ? "auto" : "always"} float-label=${o.type === "date" || o.type === "time" ? "always" : "auto"}>
     <label slot="label" for=${id}>${o.label}</label>
     <input id=${id} name=${o.name} type=${o.type ?? "text"} .value=${o.value ?? ""} placeholder=${o.placeholder ?? nothing}
       ?required=${o.required ?? false} autocomplete=${o.autocomplete ?? "off"} data-testid=${o.testid ?? nothing} min=${o.min ?? nothing} step=${o.step ?? nothing} />

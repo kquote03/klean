@@ -12,7 +12,7 @@
     "test": "pnpm gen && vitest run && node scripts/check-copy.mjs src",
     "check-copy": "node scripts/check-copy.mjs src",
     "typecheck": "tsc --noEmit",
-    "e2e": "playwright test --project=e2e",
+    "e2e": "sh e2e/run.sh",
     "visual": "playwright test --project=visual",
     "review": "playwright test --project=review"
   },

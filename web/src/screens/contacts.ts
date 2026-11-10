@@ -60,13 +60,13 @@ function contactRow(c: Row) {
     ? fmtShortDay({ year: 2000, month: c.birthday_month, day: c.birthday_day }).replace(/^\S+\s/, "") : null;
   return html`<li class="item"><span class="badge-icon" aria-hidden="true">${icon("person")}</span>
     <span class="text">${str(c.display_name)}${detail ? html`<br /><span class="meta">${detail}</span>` : nothing}</span>
-    ${bd ? html`<span class="meta">${icon("cake", { size: 16 })}</span><span class="meta">${bd}</span>` : nothing}</li>`;
+    ${bd ? html`<span class="meta bday">${icon("cake", { size: 16 })}${bd}</span>` : nothing}</li>`;
 }
 
 function birthdays(app: App) {
   const all = app.model.birthdays();
   return html`<section class="card">${all.length ? html`<ul class="list">${all.map((b) => html`<li class="item">
-    <span class="time">${fmtShortDay(b.date)}</span>
+    <span class="time date">${fmtShortDay(b.date)}</span>
     <span class="text">${str(b.contact.display_name)}${b.turns ? html`<br /><span class="meta">${t.contacts.turns(b.turns)}</span>` : nothing}</span>
     <span class="meta">${b.inDays === 0 ? t.contacts.todayLabel : b.inDays === 1 ? t.contacts.tomorrow : t.contacts.inDays(b.inDays)}</span></li>`)}</ul>`
     : html`<p class="empty">${t.contacts.noneBirthdays}</p>`}</section>`;

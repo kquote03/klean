@@ -36,7 +36,7 @@ export function todayScreen(app: App): TemplateResult {
   const slots = layout.order.filter((s) => !layout.hidden.includes(s) && (SLOT_MODULE[s] === null || m.isOn(SLOT_MODULE[s]!)));
   const cards = slots.map((s) => SLOT_VIEW[s](app)).filter((c): c is TemplateResult => c !== null);
   return html`
-    ${app.head(t.greeting(hour), html`<m3e-button variant="text" @click=${() => openArrange(app)} data-testid="arrange">${icon("tune", { slot: "icon" })}${t.today.arrange}</m3e-button>`)}
+    ${app.head(t.greeting(hour), html`<m3e-button variant="text" class="head-action" aria-label=${t.today.arrange} @click=${() => openArrange(app)} data-testid="arrange">${icon("tune", { slot: "icon" })}<span class="wide-only">${t.today.arrange}</span></m3e-button>`)}
     <p class="muted" style="margin-top:calc(-1 * var(--s2));margin-bottom:var(--s3)">${fmtDay(m.today())}</p>
     <div class="today">
       <div class="stack">

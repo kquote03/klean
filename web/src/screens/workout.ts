@@ -42,7 +42,7 @@ export function workoutScreen(app: App): TemplateResult {
         : html`<div class="actions"><m3e-button variant="filled" @click=${() => app.act(() => m.startSession())} data-testid="start-workout">${icon("workout", { slot: "icon" })}${t.workout.start}</m3e-button></div>`}
       ${card({ title: t.workout.history, icon: "calendar" }, history.length ? html`<ul class="list">${history.map((s) => {
         const sets = m.sets(str(s.id)!);
-        return html`<li class="item"><span class="time">${fmtShortDay(localDate(num(s.started_at)!))}</span>
+        return html`<li class="item"><span class="time date">${fmtShortDay(localDate(num(s.started_at)!))}</span>
           <span class="text">${str(s.notes) ?? t.workout.noteless}<br /><span class="meta">${fmtTime(num(s.started_at)!)}${sets.length ? ` · ${t.workout.sets(sets.length)}` : ""}</span></span></li>`;
       })}</ul>` : html`<p class="empty">${t.workout.none}</p>`)}
     </div>${nothing}`;

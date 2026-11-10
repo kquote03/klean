@@ -21,18 +21,18 @@ import { approvalsScreen } from "./screens/approvals";
 import { settingsScreen } from "./screens/settings";
 import { moreScreen } from "./screens/more";
 
-export interface Route { path: string; title: string; icon: string; module?: ModuleKey; render: (app: App) => TemplateResult; rail: boolean; bar: boolean }
+export interface Route { path: string; title: string; icon: string; module?: ModuleKey; render: (app: App) => TemplateResult; rail: boolean; bar: boolean; wide?: boolean }
 
 export const ROUTES: Route[] = [
-  { path: "/", title: t.nav.today, icon: "today", render: todayScreen, rail: true, bar: true },
+  { path: "/", title: t.nav.today, icon: "today", render: todayScreen, rail: true, bar: true, wide: true },
   { path: "/tasks", title: t.nav.tasks, icon: "tasks", module: "tasks", render: tasksScreen, rail: true, bar: true },
-  { path: "/calendar", title: t.nav.calendar, icon: "calendar", module: "calendar", render: calendarScreen, rail: true, bar: true },
+  { path: "/calendar", title: t.nav.calendar, icon: "calendar", module: "calendar", render: calendarScreen, rail: true, bar: true, wide: true },
   { path: "/contacts", title: t.nav.contacts, icon: "person", module: "contacts", render: contactsScreen, rail: true, bar: true },
   { path: "/workout", title: t.nav.workout, icon: "workout", module: "workout", render: workoutScreen, rail: true, bar: false },
   { path: "/sleep", title: t.nav.sleep, icon: "sleep", module: "sleep", render: sleepScreen, rail: true, bar: false },
   { path: "/diet", title: t.nav.diet, icon: "diet", module: "diet", render: dietScreen, rail: true, bar: false },
   { path: "/approvals", title: t.nav.approvals, icon: "approvals", render: approvalsScreen, rail: true, bar: false },
-  { path: "/settings", title: t.nav.settings, icon: "settings", render: settingsScreen, rail: true, bar: false },
+  { path: "/settings", title: t.nav.settings, icon: "settings", render: settingsScreen, rail: true, bar: false, wide: true },
   { path: "/more", title: t.nav.more, icon: "more", render: moreScreen, rail: false, bar: true },
 ];
 
@@ -165,7 +165,7 @@ export class App {
           <div class="rail-brand">${icon("today", { size: 32, label: t.appName })}</div>
           ${this.navItems("rail")}
         </m3e-nav-rail>
-        <main class="content" id="main">${r.render(this)}</main>
+        <main class="content ${r.wide ? "" : "narrow"}" id="main">${r.render(this)}</main>
         <m3e-nav-bar class="bar" mode="compact" aria-label="Klean">${this.navItems("bar")}</m3e-nav-bar>
       </div>
       ${this.toastView()}`;
