@@ -37,6 +37,7 @@ import app.klean.core.capture.voice.rememberVoiceInput
 import app.klean.core.capture.photo.PhotoMenu
 import app.klean.core.capture.photo.PhotoPicker
 import app.klean.core.capture.photo.rememberPhotoPicker
+import app.klean.core.design.theme.Space
 import app.klean.core.design.component.CaptureField
 import app.klean.core.design.component.PhotoThumbnail
 import app.klean.core.design.component.RepeatChips
@@ -101,7 +102,7 @@ internal fun CaptureSheetContent(
     val text = state.text
     var photoMenu by remember { mutableStateOf(false) }
     val focus = remember { FocusRequester() }
-    Column(modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 24.dp)) {
+    Column(modifier.fillMaxWidth().padding(start = Space.screenEdge, end = Space.screenEdge, bottom = Space.lg)) {
         when (val phase = state.phase) {
             is CapturePhase.Saved -> {
                 SavedLine(savedText(phase.moduleLabelRes))
@@ -139,7 +140,7 @@ internal fun CaptureSheetContent(
                     }
                 }
                 if (state.eatenAt != null) {
-                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = Space.xxs)) {
                         Text(
                             stringResource(R.string.capture_for_around, state.eatenAtLabel),
                             style = MaterialTheme.typography.bodyMedium,
@@ -157,14 +158,14 @@ internal fun CaptureSheetContent(
                         stringResource(R.string.capture_no_module),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 8.dp),
+                        modifier = Modifier.padding(top = Space.xs),
                     )
                 }
                 RepeatChips(
                     state.suggestions,
                     onRepeat = onSubmit,
                     label = stringResource(R.string.capture_repeats_label),
-                    modifier = Modifier.padding(top = 4.dp),
+                    modifier = Modifier.padding(top = Space.xxs),
                 )
             }
         }
@@ -206,7 +207,7 @@ private fun MoveToMenu(options: List<MoveOption>, onMove: (MoveOption) -> Unit, 
                 androidx.compose.material3.DropdownMenuItem(
                     text = { Text(o.labelRes?.let { stringResource(it) } ?: o.action.moduleId.value) },
                     onClick = { open = false; onMove(o) },
-                    modifier = Modifier.heightIn(min = 48.dp),
+                    modifier = Modifier.heightIn(min = Space.touchTarget),
                 )
             }
         }
@@ -215,17 +216,17 @@ private fun MoveToMenu(options: List<MoveOption>, onMove: (MoveOption) -> Unit, 
 
 @Composable
 private fun SavedLine(text: String) {
-    Row(Modifier.fillMaxWidth().padding(vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.fillMaxWidth().padding(vertical = Space.md), verticalAlignment = Alignment.CenterVertically) {
         Icon(Icons.Rounded.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
-        Text(text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(start = 12.dp))
+        Text(text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(start = Space.sm))
     }
 }
 
 @Composable
 private fun AttachedPhoto(path: String, onRemove: () -> Unit) {
-    Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.padding(top = Space.xs), verticalAlignment = Alignment.CenterVertically) {
         PhotoThumbnail(path, contentDescription = stringResource(R.string.photo_attached), size = 56.dp)
-        TextButton(onClick = onRemove, modifier = Modifier.padding(start = 8.dp)) { Text(stringResource(R.string.photo_remove)) }
+        TextButton(onClick = onRemove, modifier = Modifier.padding(start = Space.xs)) { Text(stringResource(R.string.photo_remove)) }
     }
 }
 
@@ -235,14 +236,14 @@ private fun Note(text: String) {
         text,
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(top = 8.dp),
+        modifier = Modifier.padding(top = Space.xs),
     )
 }
 
 @Composable
 private fun ChipRow(content: @Composable () -> Unit) {
     Row(
-        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(top = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(top = Space.xxs),
+        horizontalArrangement = Arrangement.spacedBy(Space.xs),
     ) { content() }
 }
