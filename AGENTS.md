@@ -58,11 +58,16 @@ flock ~/.hermes/cache/scratch/gradle.lock nix develop -c ./gradlew <tasks> --con
 ```
 The milestone gate must be BUILD SUCCESSFUL before you tag:
 ```
-flock ~/.hermes/cache/scratch/gradle.lock nix develop -c ./gradlew assembleDebug :app:assembleDebugAndroidTest :shared:jvmTest testDebugUnitTest :backend:test --console=plain -Pkotlin.compiler.execution.strategy=in-process
+flock ~/.hermes/cache/scratch/gradle.lock nix develop -c ./gradlew assembleDebug :app:assembleDebugAndroidTest :shared:jvmTest testDebugUnitTest :backend:test :wear:testDebugUnitTest verifyRoborazziDebug --console=plain -Pkotlin.compiler.execution.strategy=in-process
 ```
 - Count test results with `nix shell nixpkgs#python3 -c python3 ~/.hermes/skills/software-development/android-app-development/scripts/count-test-results.py .` (the host has no `python3`).
 - A cold build takes about 5–6 minutes. Run long builds in the background, logging under `~/.hermes/cache/scratch/`.
-- Backend image: `./gradlew :backend:jibDockerBuild` → `klean-backend:dev`, then `docker compose -f deploy/docker-compose.yml up -d` and `curl localhost:8080/api/v1/health`.
+- **Screenshot tests:** after an intended UI change, run `./gradlew :<module>:recordRoborazziDebug` and commit the images under `src/test/snapshots/`. Otherwise `verifyRoborazziDebug` fails the gate.
+- **Server image (`klean-server`, sync server + web app at `/`):**
+  - Build it with `docker build -t klean-server:dev .` (repo-root `Dockerfile`; needs only Docker). Run the build under `gradle.lock`, because it runs Gradle inside.
+  - Smoke-test it with `scripts/image-smoke.sh klean-server:dev`, and check reproducibility with `scripts/image-repro.sh`.
+  - `-Pklean.serverOnly=true` builds only `:shared` and `:backend` (no Android SDK).
+  - CI publishes `ghcr.io/kquote03/klean-server` (amd64 + arm64) on pushes to main and on `m*`/`p*` tags (`.github/workflows/docker.yml`). Compose uses that image by default.
 
 ## CI and releases
 
@@ -110,10 +115,10 @@ feature/workout      quick start, sessions ("+1 set"), per-exercise history, gen
 feature/sleep        one-tap bed/wake, nights, bedtime reminder, schedule editor (= quiet hours)
 feature/onboarding   setup wizard (holistic order: modules, sleep, main phone, permissions, widget, contacts, AI, …, diet last)
 feature/settings     global settings: modules, permissions, quiet hours, appearance, AI providers, backup, about
-app                  KleanApp, MainActivity, nav (KleanNavHost, More overflow, NewModulesSheet), today/ (dashboard,
+app                  KleanApp, MainActivity, nav (KleanNavHost, NavGroups: Today · Plan · Track · People, NewModulesSheet), today/ (dashboard,
                      Arrange Today), widget/ (Klean Today widget), setup/ (main phone step)
 backend/             Ktor server: pairing, sync, blobs, CardDAV/CalDAV, Google (fakes), web push, Hermes relay,
-                     AI proxy, backup; Jib image. API: docs/backend-api.md
+                     AI proxy, backup; packaged by the root Dockerfile. API: docs/backend-api.md
 deploy/              docker-compose.yml, Caddy/Traefik examples; docs/deploy.md
 build-logic/         convention plugins: klean.android.library / .compose / .feature / klean.hilt / klean.sqlite.jvmtest
 ```
@@ -169,7 +174,8 @@ build-logic/         convention plugins: klean.android.library / .compose / .fea
   - Hold `~/.hermes/cache/scratch/waydroid.lock` for every session.
   - Install with `adb install -r -d app/build/outputs/apk/debug/app-debug.apk`; `installDebug` can time out.
   - Then grant notifications: `adb shell pm grant app.klean.debug android.permission.POST_NOTIFICATIONS`.
-- **Waydroid has no:** camera, Play services, Health Connect, GPS, TalkBack or real microphone. Verify that those paths degrade gracefully.
+- **Waydroid has no** camera, Health Connect, GPS, TalkBack or real microphone. Verify that those paths degrade gracefully.
+- **Play services are now installed** on the Waydroid image, but the Wearable API isn't. To check the no-Play-services path, disable `com.google.android.gms` temporarily, then re-enable it.
   - **Never trigger a camera intent**: it crashes the whole container.
   - `run-as` fails on Waydroid. Use the debug broadcast `app.klean.debug.EXPORT_DB`, then pull `/sdcard/Android/data/app.klean.debug/files/klean-debug.db`.
   - Mock location: `cmd location providers add-test-provider gps`.
@@ -235,30 +241,40 @@ build-logic/         convention plugins: klean.android.library / .compose / .fea
 - **adb shell quoting:** quote the whole `adb shell "…"` command when its text contains spaces.
 - **Waydroid installs:** on the shared Waydroid, a newer schema from another agent's install means downgrading with `-d`, then running `pm clear`.
 
-## Current state (2026-11-10 afternoon)
+## Current state (2026-11-11)
 
-`main` is clean, pushed and green on CI (last code commit `3c6a855`). Gate: 1000 tests, 0 failures, 1 skipped (a fixture writer). There are no branches or worktrees besides `main`. Lane reports and per-module details: `docs/handover-2026-11-10.md`.
+`main` holds every milestone M0–M28, the server image pipeline, the phone side of Wear OS, and the first half of the UI overhaul. Lane reports: `docs/handover-2026-11-10.md`, `TASKS.md`.
 
 | Milestone | Scope | Status |
 |---|---|---|
-| M0–M15 | Foundation and the complete diet module: status notification + inline reply, tile, widget, check-ins (rotation, learning, reboot), voice, photos, history and gaps, onboarding and permissions, backup/restore, AI providers and enrichment, unlock sheet, delivery listener, polish, on-device model, places | ✅ tags `m0`–`m15` |
-| Today dashboard | Greeting, summary tiles, week overview; Waydroid close-out; CI flake fixes | ✅ (no tag) |
-| P2 foundation | Schema v2, module skeletons, More overflow, Klean account, NaturalTime, rule capture classifier | ✅ tag `p2-foundation` |
-| M16 | Holistic re-centre: day-ring icon, "Add to Klean" tile, holistic "Today" status notification ("Add something" → universal capture; plain text falls back to diet), card order APPROVALS→DIET + Arrange Today, new modules arrive on with a one-time "New in Klean" sheet, Klean Today widget, holistic wizard order | ✅ tag `m16` |
-| M17 | Schema v3: delegation, approvals, calendar sources, exercises, sleep schedule, devices, sync cursor, plus new task/contact/event/workout columns; `DeviceRepository`, `isMainPhone`, SecretStore keys, reminder snooze/done/dismiss | ✅ tag `m17` |
-| M24 | Sync backend: pairing, sync with LWW, blobs, CardDAV/CalDAV (simplified), Google (fakes), web push, Hermes relay, AI proxy, backup, Docker | ✅ tag `m24` (gaps under "## M24" in TASKS.md) |
-| M18 | Tasks and reminders: `RecurrenceRule`, tasks, review, archive, reminders, alarms | ✅ tag `m18` |
-| M19 | Calendar (tag `m19-cal`); Contacts and birthdays | ✅ tag `m19` |
-| M20 | Workout and sleep (the sleep schedule drives quiet hours; `QuietHoursService` API unchanged) | ✅ tag `m20` |
-| M21–M23 | Google Tasks and Assistant; Health Connect and GPS; AI delegation and Hermes | ⏳ |
-| M25–M28 | Android sync; web client; Wear OS; capture everywhere | ⏳ M25 ‖ M26 next |
-| M29 | Acceptance on the Pixel, watch, Docker backend and browser → tag `p1` | ⏳ |
+| M0–M15 | Foundation and the complete diet module | ✅ `m0`–`m15` |
+| M16–M20 | Holistic re-centre, schema v3, tasks and reminders, calendar, contacts and birthdays, workout and sleep | ✅ `m16`–`m20`, `m19-cal` |
+| M21 | Google Tasks overlay (fakes; no task creation, ever), Assistant shortcuts + capture deep link | ✅ `m21` |
+| M22 | Health Connect + GPS runs | ✅ `m22` |
+| M23 | Delegation + Hermes (Runs API, approvals, questions) | ✅ `m23` |
+| M24–M26 | Sync backend, Android sync, web client | ✅ `m24`–`m26` |
+| M27 | Wear OS: watch app (`m27`), plus the phone side (27.7, merged after the tag). The optional on-watch health session (27.8) is not built | ✅ |
+| M28 | Capture everywhere (rules first, "Move to…" across all module pairs) | ✅ `m28` |
+| Server image | `klean-server` Dockerfile, GHCR (amd64 + arm64), reproducible | ✅ |
+| UI overhaul | Plan `.hermes/plans/2026-11-10_222226-ui-overhaul-and-remaining-milestones.md`, direction A (grouped tabs + Soft cards). Phases 1–2 done; Phase 3: Today, Add menu, Tasks and Calendar done; Track, People, Settings, Onboarding and widgets in progress; web follows (Phase 4) | ⏳ → tag `ui1` |
+| M29 | Acceptance on the Pixel, watch, Docker server and browser (`docs/acceptance-p1.md`) → tag `p1` | ⏳ after `ui1` |
 
 ## Resume here — next steps in order
 
-1. **M25 Android sync ‖ M26 web client:** two worktree lanes (`../klean-sync` on `m25-sync`, `../klean-web` on `m26-web`). Specs: the governing plan's §M25 and §M26, plus `docs/backend-api.md`. The backend must start serving `web/dist`. M25 also owns the `DavAccounts.syncsOwnBackend` hook (`TODO(M25)` in `feature/contacts`). Merge, gate, tag `m25`, `m26`.
-2. **Then:** M21 Google, M22 Health Connect and GPS (replaces the no-op `HealthConnectBridge`/`SleepImportSource`), M23 delegation and Hermes, M27 Wear OS, M28 capture everywhere.
-3. **M29 acceptance with the user:** record it in `docs/acceptance-p1.md`, then tag `p1`.
+1. **UI overhaul Phase 3 (rest):** lane brief `~/.hermes/cache/scratch/lane-ui-p3b.md`, worktree `../klean-ui`. Then remove `@Ignore` from `NoRawDpTest`, run the gate, and tag `ui1`.
+2. **UI Phase 4, web:** lane brief `~/.hermes/cache/scratch/lane-ui-web.md`. pnpm only.
+3. **M29** with the user, then tag `p1`.
+
+**UI rules (from the overhaul; they apply to every new screen):**
+- Every screen uses `KleanScreen`, plus `ModuleCard`, `SectionHeader`, `ListRow`, `EmptyState` and `SegmentedTabs` (`core/design`).
+- Spacing comes only from `Space`, with shapes from the theme.
+- Adding happens through the Add menu, not text fields on module screens.
+- The clutter budget is a hard criterion:
+  - one primary action per screen;
+  - at most 7 tappable elements and no text inputs in the first viewport (forms excepted);
+  - secondary actions live in menus or behind long-press.
+- Every screen's test calls `assertClutterBudget()` (`:core:testing`), and the screen has Roborazzi light and dark references.
+- Any action moved off a screen is listed in `docs/ui/audit.md` with its new home.
 
 **Small follow-ups** (fold into a later lane, not urgent):
 - the status line repeats a birthday on the day (the reminder plus Birthdays' own line);
@@ -289,7 +305,7 @@ build-logic/         convention plugins: klean.android.library / .compose / .fea
 - **Renames:** `NotificationIds.STATUS` (1001); channel `Channels.STATUS` = `status_v1` (`diet_status_v2` retired).
 - **`DashboardSlot` order:** APPROVALS, TASKS, AGENDA, BIRTHDAYS, SLEEP, WORKOUT, DIET.
 - **`navOrder`:** Tasks 10, Calendar 20, Contacts 30 (Birthdays 35), Workout 40, Sleep 50, Diet 60.
-- **Bottom bar:** Today + 3 modules + More, i.e. Today, Tasks, Calendar, Contacts, More. Reminders and Birthdays set `KleanModule.inNavigation = false`: they keep their own gate and settings, and live as tabs inside Tasks and Contacts.
+- **Bottom bar (UI overhaul):** grouped tabs `NavGroup`: Today · Plan (Tasks, Calendar) · Track (Week, Workout, Sleep, Diet) · People (Contacts). There is no More; Settings opens from Today's top bar, and a group with no enabled module disappears. Reminders and Birthdays set `KleanModule.inNavigation = false`: they keep their own gate and settings, and live as tabs inside Tasks and Contacts.
 - **Today slots:** Calendar owns AGENDA (events + reminders + birthdays); its tile, activity and Today items count events only, so reminders aren't counted twice. Reminders has no card but contributes a "Next reminder" tile, activity and status line.
 - **Recurrence:** `RecurrenceRule` clamps a missing month day by default (tasks); calendar passes `MissingDay.SKIP` (RFC 5545).
 - **Reminders:**
