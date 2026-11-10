@@ -294,13 +294,18 @@ class KleanContactsMirrorFactory @Inject constructor(
 class ContactsMirrorHook @Inject constructor(
     private val factory: KleanContactsMirrorFactory,
     private val provider: AndroidContactsProvider,
-) : ContactChangeListener, Reschedulable {
+) : ContactChangeListener, Reschedulable, ProviderJoin {
     override suspend fun onContactsChanged(ids: List<String>) = factory.onIo { onContactsChanged(ids) }
     override suspend fun reschedule() = factory.onIo { reschedule() }
 
     /** Joins Klean contact [id]'s mirror row with another account's raw contact into one card. */
-    suspend fun keepTogether(id: String, otherRawId: Long) = factory.onIo {
+    override suspend fun keepTogether(id: String, otherRawId: Long) = factory.onIo {
         rawIdOf(id)?.let { runCatching { provider.keepTogether(it, otherRawId) } }
         Unit
     }
+}
+
+/** Joins a Klean contact's provider row with another account's raw contact (merges). */
+interface ProviderJoin {
+    suspend fun keepTogether(id: String, otherRawId: Long)
 }
