@@ -33,6 +33,11 @@ interface KleanModule {
      */
     val graphRoute: Any get() = startRoute
     val settingsRoute: Any?
+    /**
+     * False for a module that lives inside another one's screen (Reminders is a tab in Tasks, plan H5): it keeps
+     * its own gate and settings entry but gets no bottom-bar or More item.
+     */
+    val inNavigation: Boolean get() = true
     fun registerGraph(builder: NavGraphBuilder, nav: NavController)
     @Composable fun DashboardCard(onOpen: () -> Unit, modifier: Modifier) {}
 

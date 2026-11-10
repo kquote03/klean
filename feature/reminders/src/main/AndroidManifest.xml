@@ -1,1 +1,38 @@
-<manifest />
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Alarm reminders (M18): ring full screen over the lock screen until handled. -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- The ringing alarm plays its sound from a foreground service (type mediaPlayback; see AlarmRingService). -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <!-- Lets the alarm channels ring through Do Not Disturb once the user allows it in Reminders settings. -->
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+    <application>
+        <receiver
+            android:name=".ReminderAlarmReceiver"
+            android:exported="false" />
+        <receiver
+            android:name=".notify.ReminderActionReceiver"
+            android:exported="false" />
+        <service
+            android:name=".alarm.AlarmRingService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
+        <activity
+            android:name=".alarm.AlarmActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:launchMode="singleTask"
+            android:showWhenLocked="true"
+            android:taskAffinity="app.klean.alarm"
+            android:theme="@style/Theme.Klean"
+            android:turnScreenOn="true" />
+        <activity
+            android:name=".alarm.SnoozeActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:taskAffinity="app.klean.snooze"
+            android:theme="@style/Theme.Klean.Translucent" />
+    </application>
+</manifest>

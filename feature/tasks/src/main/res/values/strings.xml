@@ -1,2 +1,108 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources></resources>
+<resources>
+    <string name="tasks_label">Tasks</string>
+    <string name="tasks_tab_today">Today</string>
+    <string name="tasks_tab_upcoming">Upcoming</string>
+    <string name="tasks_tab_lists">Lists</string>
+    <string name="tasks_tab_reminders">Reminders</string>
+    <string name="tasks_tab_done">Done</string>
+    <string name="tasks_add">Add a task…</string>
+    <string name="tasks_add_today">Add a task for today…</string>
+    <string name="tasks_new">New task</string>
+    <string name="tasks_new_reminder">New reminder</string>
+    <string name="tasks_edit">Task</string>
+    <string name="tasks_snackbar_done">Done</string>
+    <string name="tasks_snackbar_added">Added</string>
+    <string name="tasks_undo">Undo</string>
+    <string name="tasks_section_today">Today</string>
+    <string name="tasks_section_someday">Someday</string>
+    <string name="tasks_today_empty">Nothing for today.</string>
+    <string name="tasks_upcoming_empty">Nothing coming up.</string>
+    <string name="tasks_list_empty">Nothing in this list.</string>
+    <string name="tasks_done_empty">Finished tasks show here.</string>
+    <string name="tasks_done_note">Finished tasks stay here for 30 days, then tidy themselves away.</string>
+    <plurals name="tasks_done_count">
+        <item quantity="one">Done (%d)</item>
+        <item quantity="other">Done (%d)</item>
+    </plurals>
+    <string name="tasks_expand">Show finished tasks</string>
+    <string name="tasks_collapse">Hide finished tasks</string>
+    <string name="tasks_new_list">New list</string>
+    <string name="tasks_list_options">List options</string>
+    <string name="tasks_rename_list">Rename list</string>
+    <string name="tasks_delete_list">Delete list</string>
+    <string name="tasks_delete_list_title">Delete %1$s?</string>
+    <string name="tasks_delete_list_body">Its tasks go with it.</string>
+    <string name="tasks_list_name">Name</string>
+    <string name="tasks_save">Save</string>
+    <string name="tasks_cancel">Cancel</string>
+    <string name="tasks_delete">Delete</string>
+    <string name="tasks_back">Back</string>
+    <string name="tasks_repeats">Repeats</string>
+    <string name="tasks_mark_done">Mark %1$s done</string>
+    <string name="tasks_mark_not_done">Mark %1$s not done</string>
+    <!-- Days -->
+    <string name="tasks_day_today">Today</string>
+    <string name="tasks_day_tomorrow">Tomorrow</string>
+    <string name="tasks_day_yesterday">Yesterday</string>
+    <!-- "Still want these?" -->
+    <string name="tasks_review_title">Still want these?</string>
+    <plurals name="tasks_review_body">
+        <item quantity="one">%d task from earlier days</item>
+        <item quantity="other">%d tasks from earlier days</item>
+    </plurals>
+    <string name="tasks_review_from">from %1$s</string>
+    <string name="tasks_review_keep">Keep for today</string>
+    <string name="tasks_review_pick">Pick a date</string>
+    <string name="tasks_review_someday">Someday</string>
+    <string name="tasks_review_done">Done</string>
+    <string name="tasks_review_let_go">Let it go</string>
+    <string name="tasks_channel_review">Still want these?</string>
+    <!-- Edit -->
+    <string name="tasks_field_title">Task</string>
+    <string name="tasks_field_notes">Notes</string>
+    <string name="tasks_field_list">List: %1$s</string>
+    <string name="tasks_field_no_date">No date</string>
+    <string name="tasks_field_all_day">Any time</string>
+    <string name="tasks_clear_date">Clear the date</string>
+    <string name="tasks_someday_note">Someday: it stays in its list without a date.</string>
+    <string name="tasks_field_priority">Priority</string>
+    <string name="tasks_priority_none">None</string>
+    <string name="tasks_priority_low">Low</string>
+    <string name="tasks_priority_medium">Medium</string>
+    <string name="tasks_priority_high">High</string>
+    <string name="tasks_section_steps">Steps</string>
+    <string name="tasks_save_first_steps">Save the task to add steps.</string>
+    <string name="tasks_add_step">Add a step</string>
+    <string name="tasks_add_step_button">Add</string>
+    <string name="tasks_delete_step">Remove %1$s</string>
+    <string name="tasks_section_reminders">Reminders</string>
+    <string name="tasks_save_first_reminders">Save the task to add reminders.</string>
+    <string name="tasks_reminder_ring_as_alarm">Ring as an alarm</string>
+    <string name="tasks_delete_reminder">Remove reminder</string>
+    <string name="tasks_reminder_at_due">At the due time</string>
+    <string name="tasks_reminder_hour_before">1 hour before</string>
+    <string name="tasks_reminder_custom">Pick a time</string>
+    <!-- Today -->
+    <string name="tasks_card_title">Tasks</string>
+    <string name="tasks_card_empty">Nothing for today.</string>
+    <plurals name="tasks_card_more">
+        <item quantity="one">and %d more</item>
+        <item quantity="other">and %d more</item>
+    </plurals>
+    <plurals name="tasks_status_count">
+        <item quantity="one">%d task</item>
+        <item quantity="other">%d tasks</item>
+    </plurals>
+    <plurals name="tasks_tile_value">
+        <item quantity="one">%d for today</item>
+        <item quantity="other">%d for today</item>
+    </plurals>
+    <string name="tasks_tile_none">None for today</string>
+    <!-- Settings -->
+    <string name="tasks_settings_title">Tasks</string>
+    <string name="tasks_settings_review">Daily "Still want these?"</string>
+    <string name="tasks_settings_review_hint">One quiet note when tasks from earlier days are still open</string>
+    <string name="tasks_settings_review_time">Time</string>
+    <string name="tasks_settings_default_list">New tasks go to</string>
+</resources>

@@ -408,3 +408,34 @@ Known gaps (shipped simpler, per plan risk 8):
 - No automated Postgres test in `:backend:test` (verified manually against postgres:17-alpine).
 - The image runs as root (Jib default) so the named volume is writable without an init step.
 
+
+## M18 — Tasks & reminders (branch `m18-tasks`; plan `.hermes/plans/2026-11-09_165408-klean-holistic-full-product.md` §M18–M20, module plan §S1/§S2)
+- [x] 18.1 — `RecurrenceRule` in `:shared` (S1.1 + every N days/weeks, monthly n-th weekday, last day, COUNT/UNTIL, `occurrences` for Calendar)
+- [x] 18.2 — Tasks repository: default lists (Personal, Work), subtasks, recurrence on completion, review actions, 30-day auto-archive
+- [x] 18.3 — Tasks screens: tabs Today / Upcoming / Lists / Reminders / Done, edit screen (subtasks, repeat incl. custom RRULE, reminders), in-app mic
+- [x] 18.4 — "Still want these?" review: daily alarm outside quiet hours, notification, review screen, debug `TASK_REVIEW`
+- [x] 18.5 — Tasks capture (`add_task`), Today card (slot TASKS), tile, week activity, status line, Today items, archive worker
+- [x] 18.6 — Reminder scheduler (`ReminderChangeListener` + `Reschedulable`), quiet hours for pings, format rotation (`prompt_log` trigger REMINDER)
+- [x] 18.7 — Ping notification (Done / Snooze 10 min / 1 h / Tomorrow / Pick a time), full-screen `AlarmActivity` (main phone only, 10-min auto-stop, DND bypass)
+- [x] 18.8 — Reminders tab + edit screen, capture (`add_reminder`), status line / Today items, settings for both modules
+- [x] 18.9 — `TasksDisableTest` (androidTest), gate, Waydroid walkthrough
+
+Verified (2026-11-10, branch `m18-tasks`): gate BUILD SUCCESSFUL (818 tests, 0 failures, 1 skipped);
+`connectedDebugAndroidTest --tests TasksDisableTest` 2/2 on Waydroid. Waydroid walkthrough (screenshots in
+`~/.hermes/cache/scratch/m18-tasks/`):
+- Tasks is a nav item (Today · Tasks · Diet · Settings); Reminders has none. Today shows the Tasks card and tile.
+- Universal capture "pay rent friday" → a Personal task due Friday (Upcoming, week overview "Friday · 1 thing").
+- "call the bank" moved to yesterday on its page → Today tab shows "Still want these? / 1 task from earlier days"
+  with Keep for today / Pick a date / Someday / Done / Let it go; `am broadcast -a app.klean.debug.TASK_REVIEW`
+  posts the same on channel `task_review` (low importance).
+- "water plants" set to Every week and checked off → the next one appears under "Tue, Nov 17".
+- Reminders tab: "remind me in 2 min to stretch" and "alarm in 1 min wake test" typed into its field.
+  The ping arrived on `reminder_ping` ("stretch / Set for 9:19 AM", Done / 10 min / Later…); the status line showed it.
+  The alarm rang through the foreground service (`dumpsys audio`: MediaPlayer USAGE_ALARM started); with the app
+  open it came as a heads-up; "10 min" stopped the sound and re-armed it exactly (`dumpsys alarm`: 09:30, exact by permission).
+- Screen off + an alarm 1 minute ahead → `AlarmActivity` resumed over the lock screen (time, title, Dismiss,
+  10 min, 1 hour, Tomorrow, Pick a time) with the alarm sound; Dismiss stopped it. No crashes in `logcat -b crash`.
+
+Still needs a real phone: alarm through Do Not Disturb (with DND access granted), the full-screen intent on
+Android 14+ (permission state on a Play-less install), the 10-minute auto-stop, a real reboot re-arming reminders,
+voice on the Tasks screen, TalkBack over the Tasks tabs.

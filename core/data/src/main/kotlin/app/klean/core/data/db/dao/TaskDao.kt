@@ -26,4 +26,16 @@ interface TaskDao {
     /** Open tasks due on an earlier day than [todayIso]; feeds the "Still want these?" review. */
     @Query("SELECT * FROM task WHERE deleted = 0 AND completed_at IS NULL AND due_date < :todayIso ORDER BY due_date, due_minutes, position")
     suspend fun pastDue(todayIso: String): List<TaskEntity>
+
+    // --- M18 (Tasks lane): one-shot reads for writes inside db.transact {} (no Flow there). ---
+
+    @Query("SELECT * FROM task WHERE deleted = 0 AND parent_id = :parentId ORDER BY position, created_at")
+    suspend fun children(parentId: String): List<TaskEntity>
+
+    @Query("SELECT * FROM task WHERE deleted = 0 AND list_id = :listId")
+    suspend fun inList(listId: String): List<TaskEntity>
+
+    /** Done tasks still in the Completed view that were finished before [cutoff] (auto-archive). */
+    @Query("SELECT * FROM task WHERE deleted = 0 AND archived_at IS NULL AND completed_at IS NOT NULL AND completed_at < :cutoff")
+    suspend fun completedBefore(cutoff: Long): List<TaskEntity>
 }
