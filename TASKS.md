@@ -415,7 +415,7 @@ Known gaps (shipped simpler, per plan risk 8):
 - [ ] 18.3 — Tasks screens: tabs Today / Upcoming / Lists / Reminders / Done, edit screen (subtasks, repeat incl. custom RRULE, reminders), in-app mic
 - [ ] 18.4 — "Still want these?" review: daily alarm outside quiet hours, notification, review screen, debug `TASK_REVIEW`
 - [ ] 18.5 — Tasks capture (`add_task`), Today card (slot TASKS), tile, week activity, status line, Today items, archive worker
-- [ ] 18.6 — Reminder scheduler (`ReminderChangeListener` + `Reschedulable`), quiet hours for pings, format rotation (`prompt_log` trigger REMINDER)
+- [x] 18.6 — Reminder scheduler (`ReminderChangeListener` + `Reschedulable`), quiet hours for pings, format rotation (`prompt_log` trigger REMINDER)
 - [ ] 18.7 — Ping notification (Done / Snooze 10 min / 1 h / Tomorrow / Pick a time), full-screen `AlarmActivity` (main phone only, 10-min auto-stop, DND bypass)
 - [ ] 18.8 — Reminders tab + edit screen, capture (`add_reminder`), status line / Today items, settings for both modules
 - [ ] 18.9 — `TasksDisableTest` (androidTest), gate, Waydroid walkthrough
