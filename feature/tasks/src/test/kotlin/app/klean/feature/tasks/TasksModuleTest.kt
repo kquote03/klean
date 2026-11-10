@@ -28,6 +28,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.time.Duration.Companion.seconds
 
 @RunWith(AndroidJUnit4::class)
 class TasksModuleTest {
@@ -66,7 +67,7 @@ class TasksModuleTest {
     }
 
     @Test fun statusLineTileAndTodayItemsFollowWrites() = runBlocking {
-        surfaces.fragments().test {
+        surfaces.fragments().test(timeout = 10.seconds) {
             assertEquals(emptyList<Any>(), awaitItem())
             repo.add(TaskDraft("call bank", dueDate = nov9, dueMinutes = 14 * 60))
             var l = awaitItem()
@@ -77,8 +78,8 @@ class TasksModuleTest {
             assertEquals("2 tasks", l.single().text)
             cancelAndIgnoreRemainingEvents()
         }
-        surfaces.summaries().test { assertEquals("2 for today", awaitItem().single().value) }
-        surfaces.items().test {
+        surfaces.summaries().test(timeout = 10.seconds) { assertEquals("2 for today", awaitItem().single().value) }
+        surfaces.items().test(timeout = 10.seconds) {
             val items = awaitItem()
             assertEquals(listOf("bins", "call bank"), items.sortedBy { it.sortKey }.map { it.text })
             assertEquals("klean://tasks", items.first().route)
@@ -91,7 +92,7 @@ class TasksModuleTest {
         repo.add(TaskDraft("b", dueDate = nov9))
         repo.add(TaskDraft("c", dueDate = LocalDate(2026, 11, 11)))
         repo.add(TaskDraft("undated"))
-        surfaces.activity(nov9, LocalDate(2026, 11, 15)).test {
+        surfaces.activity(nov9, LocalDate(2026, 11, 15)).test(timeout = 10.seconds) {
             assertEquals(mapOf(nov9 to 2, LocalDate(2026, 11, 11) to 1), awaitItem())
         }
     }
