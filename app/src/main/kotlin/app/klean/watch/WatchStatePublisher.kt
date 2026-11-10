@@ -102,6 +102,7 @@ class WatchStatePublisher(
 
     /** Puts the snapshot unless it's the one the watch already has. True when something was put. */
     suspend fun publishNow(): Boolean = mutex.withLock {
+        if (!layer.available) return@withLock false // e.g. Play services turned out to lack the Wearable API
         val s = source.snapshot().copy(generatedAt = 0)
         if (s == last) return@withLock false
         val ok = layer.putState(WearCodec.encodeState(s.copy(generatedAt = clock.now().toEpochMilliseconds())))

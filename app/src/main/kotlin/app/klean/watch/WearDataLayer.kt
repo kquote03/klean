@@ -5,6 +5,8 @@ import android.util.Log
 import app.klean.shared.wear.WearPaths
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
+import com.google.android.gms.common.api.ApiException
+import com.google.android.gms.common.api.CommonStatusCodes
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.wearable.PutDataRequest
 import com.google.android.gms.wearable.Wearable
@@ -42,23 +44,42 @@ object NoWearDataLayer : WearDataLayer {
     override suspend fun sendToWatches(path: String, bytes: ByteArray): Int = 0
 }
 
-/** [WearDataLayer] over Play services' `DataClient` / `NodeClient` / `MessageClient`, every call timed out. */
+/**
+ * [WearDataLayer] over Play services' `DataClient` / `NodeClient` / `MessageClient`, every call timed out.
+ * Play services can be there without the Wearable API (no Wear OS app on the phone, e.g. Waydroid's GApps):
+ * the first API_UNAVAILABLE (status 17) switches this layer off for the rest of the process.
+ */
 class PlayWearDataLayer(context: Context) : WearDataLayer {
     private val ctx = context.applicationContext
+    @Volatile private var apiMissing = false
 
-    override suspend fun putState(bytes: ByteArray): Boolean = withTimeout(TIMEOUT_MS) {
+    override val available: Boolean get() = !apiMissing
+
+    override suspend fun putState(bytes: ByteArray): Boolean = guard(false) {
         val request = PutDataRequest.create(WearPaths.STATE).setData(bytes).setUrgent()
         Wearable.getDataClient(ctx).putDataItem(request).await()
         true
     }
 
-    override suspend fun sendToWatches(path: String, bytes: ByteArray): Int = withTimeout(TIMEOUT_MS) {
+    override suspend fun sendToWatches(path: String, bytes: ByteArray): Int = guard(0) {
         val nodes = Wearable.getNodeClient(ctx).connectedNodes.await()
         val messages = Wearable.getMessageClient(ctx)
         nodes.count { node ->
             runCatching { messages.sendMessage(node.id, path, bytes).await() }
                 .onFailure { Log.w("Klean", "watch message to ${node.displayName} failed", it) }
                 .isSuccess
+        }
+    }
+
+    private suspend fun <T> guard(none: T, block: suspend () -> T): T {
+        if (apiMissing) return none
+        return try {
+            withTimeout(TIMEOUT_MS) { block() }
+        } catch (e: ApiException) {
+            if (e.statusCode != CommonStatusCodes.API_NOT_CONNECTED) throw e
+            apiMissing = true
+            Log.i("Klean", "no Wearable API on this phone; the watch path is off")
+            none
         }
     }
 

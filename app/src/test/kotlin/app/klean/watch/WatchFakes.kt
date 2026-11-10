@@ -11,6 +11,8 @@ import kotlin.time.Instant
 
 /** A Data Layer that records what the phone would have sent (stands in for DataClient / MessageClient). */
 class FakeWearDataLayer(var works: Boolean = true) : WearDataLayer {
+    /** Flip to false to act like Play services without the Wearable API (PlayWearDataLayer after API_UNAVAILABLE). */
+    override var available: Boolean = true
     val puts = mutableListOf<ByteArray>()
     val messages = mutableListOf<Pair<String, ByteArray>>()
     override suspend fun putState(bytes: ByteArray): Boolean {

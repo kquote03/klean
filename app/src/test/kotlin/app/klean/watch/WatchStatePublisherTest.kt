@@ -103,4 +103,16 @@ class WatchStatePublisherTest {
         advanceTimeBy(10_000)
         assertEquals(0, reads)
     }
+
+    @Test fun onceTheDataLayerSaysItHasNoWearableApiNothingIsReadAnyMore() = runTest {
+        val p = publisher()
+        advanceTimeBy(2_001)
+        assertEquals(1, reads)
+        layer.available = false
+        snapshot = snapshot.copy(dietOn = false)
+        p.refresh()
+        advanceTimeBy(5_000)
+        assertEquals(1, reads)
+        assertEquals(1, layer.puts.size)
+    }
 }
