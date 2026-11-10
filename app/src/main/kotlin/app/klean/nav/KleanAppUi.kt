@@ -54,7 +54,7 @@ fun KleanAppUi(vm: ShellViewModel = hiltViewModel(), deepLinks: Flow<Intent> = e
                 icon = { Icon(Icons.Rounded.Today, contentDescription = null) },
                 label = { Text(stringResource(R.string.nav_today)) },
             )
-            val layout = navLayout(enabled)
+            val layout = navLayout(enabled.filter { it.inNavigation })
             layout.primary.forEach { module ->
                 item(
                     selected = current.isOn(module.graphRoute),

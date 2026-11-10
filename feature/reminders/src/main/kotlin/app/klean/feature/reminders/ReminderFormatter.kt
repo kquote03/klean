@@ -18,8 +18,17 @@ class ReminderFormatter @Inject constructor(
     private val zone: ZoneProvider,
     private val clock: Clock,
 ) {
+    fun string(res: Int, vararg args: Any): String = ctx.getString(res, *args)
+
     fun time(ms: Long): String {
         val f = DateFormat.getTimeFormat(ctx)
+        f.timeZone = TimeZone.getTimeZone(zone.current().id)
+        return f.format(Date(ms))
+    }
+
+    /** "Wed 11 Nov". */
+    fun day(ms: Long): String {
+        val f = java.text.SimpleDateFormat(DateFormat.getBestDateTimePattern(java.util.Locale.getDefault(), "EEEdMMM"), java.util.Locale.getDefault())
         f.timeZone = TimeZone.getTimeZone(zone.current().id)
         return f.format(Date(ms))
     }

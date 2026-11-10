@@ -23,4 +23,60 @@
     <string name="reminders_ok">OK</string>
     <string name="reminders_cancel">Cancel</string>
     <string name="reminders_tomorrow_at">Tomorrow %1$s</string>
+    <!-- Reminders tab -->
+    <string name="reminders_add_placeholder">Remind me…</string>
+    <string name="reminders_empty">No reminders coming up.</string>
+    <string name="reminders_group_earlier">Earlier</string>
+    <string name="reminders_group_today">Today</string>
+    <string name="reminders_group_tomorrow">Tomorrow</string>
+    <string name="reminders_group_later">Later</string>
+    <string name="reminders_kind_alarm">Alarm</string>
+    <string name="reminders_kind_ping">Reminder</string>
+    <string name="reminders_snoozed_until">Snoozed until %1$s</string>
+    <string name="reminders_repeats">Repeats</string>
+    <string name="reminders_more_actions">More actions</string>
+    <string name="reminders_snooze_10_long">Snooze 10 minutes</string>
+    <string name="reminders_snooze_hour_long">Snooze 1 hour</string>
+    <string name="reminders_delete">Delete</string>
+    <string name="reminders_back">Back</string>
+    <!-- Edit -->
+    <string name="reminders_new">New reminder</string>
+    <string name="reminders_edit">Reminder</string>
+    <string name="reminders_save">Save</string>
+    <string name="reminders_field_title">What</string>
+    <string name="reminders_pick_day">Pick a day</string>
+    <string name="reminders_field_alarm">Ring as an alarm</string>
+    <string name="reminders_field_alarm_hint">Full screen with sound until you answer, even in quiet hours</string>
+    <string name="repeat_label">Repeat</string>
+    <string name="repeat_none">Doesn\'t repeat</string>
+    <string name="repeat_daily">Every day</string>
+    <string name="repeat_weekdays">Weekdays</string>
+    <string name="repeat_weekly">Every week</string>
+    <string name="repeat_monthly">Every month</string>
+    <string name="repeat_yearly">Every year</string>
+    <string name="repeat_every_n_days">Every few days</string>
+    <string name="repeat_every_n_weeks">Every few weeks</string>
+    <string name="repeat_custom">Custom rule</string>
+    <string name="repeat_n_label">How many</string>
+    <string name="repeat_custom_label">RRULE</string>
+    <string name="repeat_custom_hint">For example FREQ=WEEKLY;BYDAY=MO,TH</string>
+    <string name="repeat_custom_ok">Looks good</string>
+    <!-- Settings -->
+    <string name="reminders_settings_title">Reminders</string>
+    <string name="reminders_main_phone">Ring alarms on this phone</string>
+    <string name="reminders_main_phone_hint">Other devices show a quiet note instead</string>
+    <string name="reminders_exact_title">Exact times</string>
+    <string name="reminders_exact_hint">Reminders may arrive a few minutes late. Tap to allow exact alarms.</string>
+    <string name="reminders_full_screen_title">Full-screen alarms</string>
+    <string name="reminders_full_screen_hint">Alarms show as a notification for now. Tap to let them fill the screen.</string>
+    <string name="reminders_dnd_title">Ring during Do Not Disturb</string>
+    <string name="reminders_dnd_hint">Tap to let alarms through Do Not Disturb</string>
+    <string name="reminders_dnd_on">Alarms can ring through Do Not Disturb</string>
+    <string name="reminders_sound_title">Alarm sound</string>
+    <string name="reminders_sound_hint">Uses your phone\'s alarm sound and alarm volume</string>
+    <string name="reminders_open_title">All reminders</string>
+    <string name="reminders_open_hint">Open the list of reminders</string>
+    <!-- Today and the status line -->
+    <string name="reminders_tile_label">Next reminder</string>
+    <string name="reminders_status_next">%1$s %2$s</string>
 </resources>
