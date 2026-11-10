@@ -39,7 +39,7 @@
   "dark": {
     "primary": "#CDBDFF",
     "onPrimary": "#35297A",
-    "primaryContainer": "#4C3F8B",
+    "primaryContainer": "#463D6E",
     "onPrimaryContainer": "#E6DEFF",
     "secondary": "#B8D3C6",
     "onSecondary": "#213F34",
@@ -47,7 +47,7 @@
     "onSecondaryContainer": "#D4EFE3",
     "tertiary": "#F5B9A4",
     "onTertiary": "#55281A",
-    "tertiaryContainer": "#723E2E",
+    "tertiaryContainer": "#5C4540",
     "onTertiaryContainer": "#FFDCCF",
     "background": "#141318",
     "onBackground": "#E6E1E9",

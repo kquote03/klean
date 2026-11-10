@@ -51,7 +51,7 @@ object KleanColors {
     val dark: Map<String, Color> = mapOf(
         "primary" to Color(0xFFCDBDFF),
         "onPrimary" to Color(0xFF35297A),
-        "primaryContainer" to Color(0xFF4C3F8B),
+        "primaryContainer" to Color(0xFF463D6E),
         "onPrimaryContainer" to Color(0xFFE6DEFF),
         "secondary" to Color(0xFFB8D3C6),
         "onSecondary" to Color(0xFF213F34),
@@ -59,7 +59,7 @@ object KleanColors {
         "onSecondaryContainer" to Color(0xFFD4EFE3),
         "tertiary" to Color(0xFFF5B9A4),
         "onTertiary" to Color(0xFF55281A),
-        "tertiaryContainer" to Color(0xFF723E2E),
+        "tertiaryContainer" to Color(0xFF5C4540),
         "onTertiaryContainer" to Color(0xFFFFDCCF),
         "background" to Color(0xFF141318),
         "onBackground" to Color(0xFFE6E1E9),
