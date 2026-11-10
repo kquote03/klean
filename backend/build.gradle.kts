@@ -54,12 +54,25 @@ tasks.test {
     systemProperty("klean.test.tmp", layout.buildDirectory.dir("tmp/backend-tests").get().asFile.absolutePath)
 }
 
+// Release images build for amd64+arm64 (-Pklean.image.platforms=linux/amd64,linux/arm64, registry push only);
+// local jibDockerBuild/jibBuildTar keep one platform because Jib can't load a multi-platform image into Docker.
+val imagePlatforms = providers.gradleProperty("klean.image.platforms").orElse("linux/amd64").get()
+    .split(",").map { it.trim() }.filter { it.isNotEmpty() }
+val imageRevision = providers.gradleProperty("klean.image.revision").orElse("dev").get()
+
 jib {
     from {
-        image = "eclipse-temurin:21-jre"
+        // Pinned by digest so the same sources always give the same image. Bump: crane digest eclipse-temurin:21-jre
+        image = "eclipse-temurin:21-jre@sha256:0b99b3376fbb50dbf9c0af8535fdd5b8eb0d3fdfc8b1e4967f383b6919f6901a"
+        platforms {
+            imagePlatforms.forEach { p ->
+                val (os, arch) = p.split("/")
+                platform { this.os = os; architecture = arch }
+            }
+        }
     }
     to {
-        // Override for CI publishing: -Djib.to.image=ghcr.io/kquote03/klean-backend:<tag>
+        // CI overrides with -Djib.to.image=ghcr.io/kquote03/klean-backend:<version> and -Djib.to.tags=…
         image = "klean-backend:dev"
     }
     container {
@@ -71,7 +84,15 @@ jib {
             "KLEAN_PORT" to "8080",
         )
         jvmFlags = listOf("-XX:MaxRAMPercentage=75")
-        creationTime = "USE_CURRENT_TIMESTAMP"
+        // creationTime left at Jib's default (epoch) so builds are reproducible.
+        labels.set(
+            mapOf(
+                "org.opencontainers.image.source" to "https://github.com/kquote03/klean",
+                "org.opencontainers.image.title" to "klean-backend",
+                "org.opencontainers.image.description" to "Klean sync server with the Klean web app at /",
+                "org.opencontainers.image.revision" to imageRevision,
+            ),
+        )
     }
 }
 
