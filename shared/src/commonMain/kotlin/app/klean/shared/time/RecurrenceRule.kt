@@ -36,6 +36,13 @@ data class RecurrenceRule(
 ) {
     enum class Freq { DAILY, WEEKLY, MONTHLY, YEARLY }
 
+    /**
+     * What a month day that doesn't exist in a month (the 31st in April, Feb 29 in a common year) becomes:
+     * [CLAMP] moves it to the last day (tasks, "end of each month"); [SKIP] leaves that month out (RFC 5545,
+     * calendars).
+     */
+    enum class MissingDay { CLAMP, SKIP }
+
     /** A BYDAY entry: [ordinal] is the n-th (1..5) or n-th last (-1..-5) such day of the month, or null for every one. */
     data class WeekdayNum(val day: DayOfWeek, val ordinal: Int? = null)
 
@@ -66,8 +73,14 @@ data class RecurrenceRule(
         sequence(start ?: after).firstOrNull { it > after }
 
     /** Every occurrence of the series starting at [start] that falls in [from]..[to], both inclusive. */
-    fun occurrences(start: LocalDate, from: LocalDate, to: LocalDate, limit: Int = 1000): List<LocalDate> =
-        sequence(start).dropWhile { it < from }.takeWhile { it <= to }.take(limit).toList()
+    fun occurrences(
+        start: LocalDate,
+        from: LocalDate,
+        to: LocalDate,
+        limit: Int = 1000,
+        missingDay: MissingDay = MissingDay.CLAMP,
+    ): List<LocalDate> =
+        sequence(start, missingDay).dropWhile { it < from }.takeWhile { it <= to }.take(limit).toList()
 
     /**
      * The rule for the rest of a series after one occurrence is used up: COUNT goes down by one, and null
@@ -80,7 +93,7 @@ data class RecurrenceRule(
     }
 
     /** Occurrences on or after [start], in order, honouring COUNT and UNTIL. */
-    fun sequence(start: LocalDate): Sequence<LocalDate> {
+    fun sequence(start: LocalDate, missingDay: MissingDay = MissingDay.CLAMP): Sequence<LocalDate> {
         val base = when (freq) {
             Freq.DAILY -> periods(MAX_PERIODS * 7) { k -> listOf(start.plus(DatePeriod(days = k * interval))) }
                 .filter { d -> byDay.isEmpty() || byDay.any { it.day == d.dayOfWeek } }
@@ -94,11 +107,11 @@ data class RecurrenceRule(
             }
             Freq.MONTHLY -> periods(MAX_PERIODS) { k ->
                 val first = LocalDate(start.year, start.month.number, 1).plus(DatePeriod(months = k * interval))
-                inMonth(first.year, first.month.number, start)
+                inMonth(first.year, first.month.number, start, missingDay)
             }
             Freq.YEARLY -> periods(MAX_PERIODS / 4) { k ->
                 val y = start.year + k * interval
-                inMonth(y, byMonth ?: start.month.number, start)
+                inMonth(y, byMonth ?: start.month.number, start, missingDay)
             }
         }.filter { it >= start }
         val bounded = until?.let { u -> base.takeWhile { it <= u } } ?: base
@@ -106,7 +119,7 @@ data class RecurrenceRule(
     }
 
     /** The rule's dates in one month, ascending. */
-    private fun inMonth(year: Int, month: Int, start: LocalDate): List<LocalDate> {
+    private fun inMonth(year: Int, month: Int, start: LocalDate, missingDay: MissingDay): List<LocalDate> {
         val len = monthLength(year, month)
         if (byDay.isNotEmpty() && freq == Freq.MONTHLY) {
             val first = LocalDate(year, month, 1)
@@ -120,6 +133,7 @@ data class RecurrenceRule(
             }.sorted()
         }
         val wanted = byMonthDay ?: start.day
+        if (missingDay == MissingDay.SKIP && wanted > len) return emptyList()
         val day = if (wanted < 0) len + 1 + wanted else minOf(wanted, len)
         return listOf(LocalDate(year, month, day.coerceIn(1, len)))
     }

@@ -177,4 +177,21 @@ class RecurrenceRuleTest {
         assertEquals("FREQ=YEARLY;BYMONTH=11;BYMONTHDAY=11", RecurrenceRule.yearly(d(2026, 11, 11)).format())
         assertEquals("FREQ=DAILY", RecurrenceRule.daily().format())
     }
+
+    @Test fun skipPolicyLeavesOutMonthsWithoutTheDay() {
+        val r = RecurrenceRule.parse("FREQ=MONTHLY")!!
+        val got = r.occurrences(d(2026, 1, 31), d(2026, 1, 1), d(2026, 5, 31), missingDay = RecurrenceRule.MissingDay.SKIP)
+        assertEquals(listOf(d(2026, 1, 31), d(2026, 3, 31), d(2026, 5, 31)), got)
+    }
+
+    @Test fun skipPolicyYearlyFeb29OnlyInLeapYears() {
+        val r = RecurrenceRule.parse("FREQ=YEARLY")!!
+        val got = r.sequence(d(2028, 2, 29), RecurrenceRule.MissingDay.SKIP).take(2).toList()
+        assertEquals(listOf(d(2028, 2, 29), d(2032, 2, 29)), got)
+    }
+
+    @Test fun skipPolicyKeepsCountOverRealOccurrences() {
+        val r = RecurrenceRule.parse("FREQ=MONTHLY;COUNT=2")!!
+        assertEquals(listOf(d(2026, 1, 31), d(2026, 3, 31)), r.sequence(d(2026, 1, 31), RecurrenceRule.MissingDay.SKIP).toList())
+    }
 }
