@@ -10,7 +10,7 @@ rootProject.name = "klean"
 include(
     ":app", ":shared",
     ":core:common", ":core:design", ":core:data", ":core:ui",
-    ":core:notifications", ":core:ai", ":core:capture",
+    ":core:notifications", ":core:ai", ":core:capture", ":core:sync",
     ":feature:diet", ":feature:onboarding", ":feature:settings",
     ":feature:tasks", ":feature:reminders", ":feature:calendar", ":feature:contacts", ":feature:workout", ":feature:sleep",
 )

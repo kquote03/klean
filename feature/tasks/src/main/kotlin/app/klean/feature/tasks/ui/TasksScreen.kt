@@ -159,7 +159,7 @@ private fun TaskTabContent(tab: TasksTab, state: TasksUiState, vm: TasksViewMode
     val onMic = rememberVoiceInput(vm.voice)
     val today = state.today ?: return
     val v = state.views
-    LazyColumn(Modifier.fillMaxSize()) {
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = app.klean.core.design.component.FabClearance) {
         if (tab != TasksTab.DONE) {
             item(key = "add") {
                 Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {

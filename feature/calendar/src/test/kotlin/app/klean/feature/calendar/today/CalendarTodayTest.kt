@@ -1,5 +1,7 @@
 package app.klean.feature.calendar.today
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Event
 import app.klean.core.ui.module.StatusFragment
 import app.klean.core.ui.module.StatusRefresh
 import app.klean.core.ui.module.SummaryItem
@@ -40,12 +42,12 @@ class CalendarTodayTest {
 
     @Test fun theTileShowsTheNextTimedThingToday() = runBlocking {
         today()
-        assertEquals(listOf(SummaryItem("calendar.next", "Next", "14:00 Dentist", route = CalendarRoute)), providers.summaries().first())
+        assertEquals(listOf(SummaryItem("calendar.next", "Next", "14:00 Dentist", icon = Icons.Rounded.Event, route = CalendarRoute)), providers.summaries().first())
     }
 
     @Test fun theTileIsCalmWhenNothingIsLeft() = runBlocking {
         agenda.all.value = listOf(item("past", "Breakfast", dubai(2026, 11, 10, 8)))
-        assertEquals(listOf(SummaryItem("calendar.next", "Today", "Nothing else today", route = CalendarRoute)), providers.summaries().first())
+        assertEquals(listOf(SummaryItem("calendar.next", "Today", "Nothing else today", icon = Icons.Rounded.Event, route = CalendarRoute)), providers.summaries().first())
     }
 
     @Test fun activityCountsEventsPerDayAcrossSources() = runBlocking {

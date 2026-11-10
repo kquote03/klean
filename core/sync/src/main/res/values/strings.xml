@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sync_title">Sync</string>
+    <string name="sync_setup_title">Sync with your server</string>
+    <string name="sync_back">Back</string>
+    <string name="sync_intro">Pair this phone with your own Klean server to keep your phone, watch and browser in step.</string>
+    <string name="sync_intro_web">Optional. Klean works fully on this phone without it. On the web, open Settings, choose Pair a device, then scan the code or paste its link here.</string>
+    <string name="sync_scan">Scan the code</string>
+    <string name="sync_scan_prompt">Point the camera at the code on the web</string>
+    <string name="sync_link_label">Pairing link</string>
+    <string name="sync_pair">Pair</string>
+    <string name="sync_paired_with">Paired with</string>
+    <string name="sync_last">Last sync</string>
+    <string name="sync_last_never">Not yet</string>
+    <string name="sync_last_just_now">Just now</string>
+    <string name="sync_now">Sync now</string>
+    <string name="sync_unpair">Unpair</string>
+    <string name="sync_cancel">Cancel</string>
+    <string name="sync_unpair_title">Unpair this phone?</string>
+    <string name="sync_unpair_body">Everything stays on this phone. It just stops syncing with %1$s.</string>
+    <string name="sync_devices">Devices</string>
+    <string name="sync_device_this">This phone</string>
+    <string name="sync_device_main">Main phone</string>
+    <string name="sync_error_link">That doesn\'t look like a pairing link. Copy it from Klean on the web.</string>
+    <string name="sync_error_code">That code has run out or was already used. Make a new one on the web.</string>
+    <string name="sync_error_unreachable">Couldn\'t reach the server. Check the address and that this phone is online.</string>
+    <string name="sync_error_server">The server couldn\'t pair right now. Try again in a moment.</string>
+    <string name="sync_problem_offline">Can\'t reach the server right now. Klean keeps working and tries again on its own.</string>
+    <string name="sync_problem_server">The server had a problem. Klean tries again later on its own.</string>
+    <string name="sync_problem_unauthorized">This phone was removed on the server. Pair it again to keep syncing.</string>
+    <string name="sync_channel">Sync</string>
+    <string name="sync_running">Syncing</string>
+</resources>

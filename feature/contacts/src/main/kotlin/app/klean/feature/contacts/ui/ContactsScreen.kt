@@ -141,7 +141,7 @@ private fun PeopleTab(
     onKeepApart: (DuplicatePair) -> Unit,
     onNotNow: () -> Unit,
 ) {
-    LazyColumn(Modifier.fillMaxSize()) {
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = app.klean.core.design.component.FabClearance) {
         item {
             OutlinedTextField(
                 value = state.query, onValueChange = onQuery, singleLine = true,
@@ -225,7 +225,7 @@ private fun MergeCard(pairs: List<DuplicatePair>, onMerge: (DuplicatePair) -> Un
 @Composable
 private fun BirthdaysTab(state: ContactsUiState, onOpen: (String?, Long?) -> Unit) {
     val b = state.birthdays
-    LazyColumn(Modifier.fillMaxSize()) {
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = app.klean.core.design.component.FabClearance) {
         if (state.loaded && b.isEmpty) item { NeutralEmpty(stringResource(R.string.birthdays_empty)) }
         if (b.comingUp.isNotEmpty()) {
             item(key = "soon") { Header(stringResource(R.string.birthdays_coming_up)) }

@@ -1,5 +1,7 @@
 package app.klean.core.data.sync
 
+import app.klean.core.data.db.entity.SyncColumns
+
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.klean.core.data.FakeClock
 import app.klean.core.data.db.transact
@@ -46,5 +48,14 @@ class SyncStamperTest {
         assertTrue(gone.deleted)
         assertTrue(db.transact { stamper.stamp(gone) }.deleted)
         assertFalse(db.transact { stamper.stamp(gone, deleted = false) }.deleted)
+    }
+
+    @Test fun anEditOnAnotherDevicesNewerVersionStillWinsLww() = runBlocking {
+        val theirs = SyncColumns(createdAt = 1L, updatedAt = 2_000_000L, deviceId = "other-phone", changeSeq = 0)
+        val mine = db.transact { stamper.stamp(theirs) }
+        assertEquals(2_000_001L, mine.updatedAt) // this phone's clock (1_000_000) is behind
+        assertEquals(prefs.deviceId(), mine.deviceId)
+        clock.nowMs = 3_000_000L
+        assertEquals(3_000_000L, db.transact { stamper.stamp(theirs) }.updatedAt)
     }
 }

@@ -43,6 +43,7 @@ class PromptNotifier @Inject constructor(
     private val prefs: DevicePrefs,
     private val status: DietStatusLine,
     private val widget: DietWidgetUpdater,
+    private val audience: app.klean.core.notifications.PromptAudience,
 ) : PromptPresenter {
     override suspend fun present(logId: String, format: PromptFormat, phrasingId: String, trigger: PromptTrigger, placeLabel: String?) {
         if (format == PromptFormat.WIDGET_HIGHLIGHT) {
@@ -83,6 +84,8 @@ class PromptNotifier @Inject constructor(
             .setDeleteIntent(dismissIntent(logId))
             .addAction(DietStatusActions.logFood(ctx, replySource, replyCode))
             .addAction(DietStatusActions.capture(ctx))
+            // Several synced phones (M25): only the one used last makes a sound; the others show it silently.
+            .setSilent(!audience.isLoudHere())
         post(nm, notificationId, builder)
     }
 

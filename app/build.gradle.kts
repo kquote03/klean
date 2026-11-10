@@ -39,7 +39,7 @@ android {
 }
 dependencies {
     implementation(project(":shared"))
-    listOf("common", "design", "data", "ui", "notifications", "ai", "capture").forEach { implementation(project(":core:$it")) }
+    listOf("common", "design", "data", "ui", "notifications", "ai", "capture", "sync").forEach { implementation(project(":core:$it")) }
     listOf("diet", "onboarding", "settings", "tasks", "reminders", "calendar", "contacts", "workout", "sleep").forEach { implementation(project(":feature:$it")) }
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
@@ -83,6 +83,13 @@ tasks.withType<Test>().configureEach {
             exclude("**/build/**", ".gradle/**")
         },
     ).withPathSensitivity(PathSensitivity.RELATIVE).withPropertyName("userFacingResources")
+    // NoRawColorsTest reads every module's Kotlin sources.
+    inputs.files(
+        fileTree(rootDir) {
+            include("**/src/main/**/*.kt")
+            exclude("**/build/**", ".gradle/**", "web/**")
+        },
+    ).withPathSensitivity(PathSensitivity.RELATIVE).withPropertyName("mainKotlinSources")
 }
 
 fun gitOutput(vararg args: String): String? = providers.exec {

@@ -33,6 +33,8 @@ import app.klean.feature.settings.appearance.AppearanceSettingsScreen
 import app.klean.feature.settings.backup.BackupSettingsScreen
 import app.klean.feature.settings.permissions.PermissionsSettingsScreen
 import app.klean.feature.settings.quiet.QuietHoursSettingsScreen
+import app.klean.core.sync.ui.SyncSettingsRoute
+import app.klean.core.sync.ui.SyncSettingsScreen
 
 private data class GeneralRow(@StringRes val label: Int, val route: Any)
 
@@ -41,6 +43,7 @@ private val generalRows = listOf(
     GeneralRow(R.string.settings_appearance, AppearanceSettingsRoute),
     GeneralRow(R.string.settings_ai_providers, AiProvidersSettingsRoute),
     GeneralRow(R.string.settings_backup, BackupSettingsRoute),
+    GeneralRow(R.string.settings_sync, SyncSettingsRoute),
     GeneralRow(R.string.settings_permissions, PermissionsSettingsRoute),
     GeneralRow(R.string.settings_about, AboutSettingsRoute),
 )
@@ -103,6 +106,7 @@ fun NavGraphBuilder.settingsGraph(nav: NavController, registry: ModuleRegistry, 
     composable<OnDeviceSettingsRoute> { OnDeviceScreen(onBack = back) }
     composable<AiProviderSettingsRoute> { AiProviderScreen(onBack = back) }
     composable<BackupSettingsRoute> { BackupSettingsScreen(onBack = back) }
+    composable<SyncSettingsRoute>(deepLinks = listOf(navDeepLink { uriPattern = "klean://settings/sync" })) { SyncSettingsScreen(onBack = back) }
     composable<PermissionsSettingsRoute>(deepLinks = listOf(navDeepLink { uriPattern = "klean://settings/permissions" })) {
         PermissionsSettingsScreen(checker = permissions, onBack = back)
     }

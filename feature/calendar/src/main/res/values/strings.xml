@@ -43,6 +43,7 @@
         <item quantity="other">%1$s, %2$d things</item>
     </plurals>
     <string name="calendar_time_range">%1$s – %2$s</string>
+    <string name="calendar_time_range_stacked">%1$s\n%2$s</string>
 
     <!-- Event editor -->
     <string name="calendar_edit_new">New event</string>

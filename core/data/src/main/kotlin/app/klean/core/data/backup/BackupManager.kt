@@ -116,6 +116,9 @@ class BackupManager @Inject constructor(
                 }
                 devicePrefs += pairs(c, DEVICE_PREF)
                 if (SECRET in tableNames(c)) secretMap = pairs(c, SECRET)
+                // Sync (M25): the backup's cursor describes an older state. Start over: push every row, pull
+                // everything; LWW on both sides keeps the newest version of each row.
+                if ("sync_cursor" in tableNames(c)) c.execSQL("DELETE FROM sync_cursor")
                 BACKUP_TABLES.forEach { c.execSQL("DROP TABLE IF EXISTS $it") }
                 c.execSQL("VACUUM") // drop the photo blobs' pages from the restored database
             }

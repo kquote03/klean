@@ -66,7 +66,7 @@ class PromptNotifierTest {
     private val repo = DefaultDietRepository(db, stamper, clock, DubaiZone, settings, DietChangeDispatcher(emptySet()), noAi, scope)
     private val stack = StatusStack(ctx, repo, gate, settings, DefaultPromptHighlight(prefs, db))
     private val status = stack.line
-    private val notifier = PromptNotifier(ctx, prefs, status, DietWidgetUpdater(ctx))
+    private val notifier = PromptNotifier(ctx, prefs, status, DietWidgetUpdater(ctx), app.klean.core.notifications.PromptAudience(db, prefs))
     private val writer = PromptLogWriter(db, stamper, clock)
 
     @Before fun setUp() {

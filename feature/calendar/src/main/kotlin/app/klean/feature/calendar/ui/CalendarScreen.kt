@@ -227,8 +227,10 @@ private fun AccessCard(onAllow: () -> Unit, onLater: () -> Unit) {
 
 /** "All day", "14:00" or "14:00 – 15:00"; reminders and tasks show their time only. */
 @Composable
-internal fun timeLabel(item: AgendaItem, fmt: CalendarFormat): String = when {
+internal fun timeLabel(item: AgendaItem, fmt: CalendarFormat, stacked: Boolean = false): String = when {
     item.allDay -> stringResource(R.string.calendar_all_day)
+    // In a list's time column, start and end sit on two lines instead of breaking mid-range.
+    item.end > item.start && stacked -> stringResource(R.string.calendar_time_range_stacked, fmt.time(item.start), fmt.time(item.end))
     item.end > item.start -> stringResource(R.string.calendar_time_range, fmt.time(item.start), fmt.time(item.end))
     else -> fmt.time(item.start)
 }
@@ -270,7 +272,7 @@ private fun AgendaList(state: CalendarUiState, fmt: CalendarFormat, onItem: (Age
             items(items, key = { "$day/${it.key}" }) { item ->
                 val meta = metaLabel(item)
                 EntryRow(
-                    time = timeLabel(item, fmt),
+                    time = timeLabel(item, fmt, stacked = true),
                     text = item.title,
                     meta = meta?.let { m -> { Text(m, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) } },
                     onClick = { onItem(item) },
