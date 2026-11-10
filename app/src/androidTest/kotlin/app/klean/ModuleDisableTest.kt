@@ -137,6 +137,23 @@ class ModuleDisableTest {
     private fun dietNotifications() =
         nm.activeNotifications.filter { it.id in DefaultDietEnablement.DIET_NOTIFICATIONS + NotificationIds.STATUS }.map { it.id }
 
+    private fun statusText(n: android.app.Notification) =
+        "${n.extras.getCharSequence(android.app.Notification.EXTRA_TITLE)} / ${n.extras.getCharSequence(android.app.Notification.EXTRA_TEXT)}"
+
+    /**
+     * Diet's own notifications are gone. The holistic status stays while other modules are on (since M18–M20 it is
+     * no longer diet's alone), but it no longer carries diet's line.
+     */
+    private suspend fun assertNoDietNotifications() {
+        val left = awaitDietNotifications { ids -> ids.all { it == NotificationIds.STATUS } && !statusMentionsDiet() }
+        val texts = nm.activeNotifications.filter { it.id in left }.map { "${it.id}: ${statusText(it.notification)}" }
+        assertTrue("still showing: $texts", left.all { it == NotificationIds.STATUS } && !statusMentionsDiet())
+    }
+
+    /** The status line still shows the diet entry logged in the test ("tea", "1 entry"). */
+    private fun statusMentionsDiet() = nm.activeNotifications.filter { it.id == NotificationIds.STATUS }
+        .any { statusText(it.notification).let { t -> "tea" in t || "entr" in t } }
+
     /** notify()/cancel() are queued in system_server, so the active list catches up a moment later. */
     private suspend fun awaitDietNotifications(expect: (List<Int>) -> Boolean): List<Int> {
         var ids = dietNotifications()
@@ -176,7 +193,7 @@ class ModuleDisableTest {
         registry.setEnabled(ModuleId.DIET, false)
 
         assertTrue(registry.enabled.first().none { it.id == ModuleId.DIET })
-        assertEquals(emptyList<Int>(), awaitDietNotifications { it.isEmpty() })
+        assertNoDietNotifications()
         assertNull("check-in alarm", pending(PromptAlarms.REQUEST_CODE, PromptAlarmReceiver::class.java))
         assertNull("day-rollover alarm", pending(DayRollover.REQUEST_CODE, DayRolloverReceiver::class.java))
 
@@ -192,7 +209,7 @@ class ModuleDisableTest {
 
         // M12: an accepted delivery listener asks nothing.
         assertFalse("delivery prompt", delivery.onDelivered("com.talabat"))
-        assertEquals(emptyList<Int>(), awaitDietNotifications { it.isEmpty() })
+        assertNoDietNotifications()
 
         // M15: no place is watched, and leaving one asks nothing.
         assertNull("place alert", ProximityAlertBackend.intent(ctx, place, create = false))
@@ -207,8 +224,10 @@ class ModuleDisableTest {
         // Widget and tile render their disabled states.
         val widget = dietWidgetStates(repo, gate.disabledIds, prefs.highlightPromptId, timeLabel = { "" }).first()
         assertFalse(widget.dietEnabled)
-        val tile = CaptureTileModel.from(capture.availableHandlers.first().map { it.moduleId })
-        assertFalse(tile.available)
+        // The "Add to Klean" tile is holistic (M16): it stays while other modules capture, without diet's handler.
+        val handlers = capture.availableHandlers.first().map { it.moduleId }
+        assertTrue(handlers.none { it == ModuleId.DIET })
+        assertEquals(handlers.isNotEmpty(), CaptureTileModel.from(handlers).available)
     }
 
     @Test fun reEnablingBringsDietBack() = runBlocking {
