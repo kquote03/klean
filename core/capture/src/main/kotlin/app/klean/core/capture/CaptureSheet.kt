@@ -41,6 +41,7 @@ import app.klean.core.design.component.CaptureField
 import app.klean.core.design.component.PhotoThumbnail
 import app.klean.core.design.component.RepeatChips
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TimePicker
@@ -74,6 +75,7 @@ fun CaptureSheet(vm: CaptureViewModel, onDismiss: () -> Unit) {
             photoPicker = photoPicker,
             onRemovePhoto = vm::removePhoto,
             onEatenTimePicked = vm::onEatenTimePicked,
+            onMoveMenu = vm::holdOpen,
             modifier = Modifier.navigationBarsPadding().imePadding(),
         )
     }
@@ -92,6 +94,8 @@ internal fun CaptureSheetContent(
     onRemovePhoto: () -> Unit,
     onEatenTimePicked: (Int, Int) -> Unit,
     modifier: Modifier = Modifier,
+    /** The "Move to…" menu opened (true) or closed without a choice (false). */
+    onMoveMenu: (Boolean) -> Unit = {},
 ) {
     var pickTime by remember { mutableStateOf(false) }
     val text = state.text
@@ -111,6 +115,7 @@ internal fun CaptureSheetContent(
                         val label = o.labelRes?.let { stringResource(it) } ?: o.action.moduleId.value
                         SuggestionChip(onClick = { onMove(o) }, label = { Text(stringResource(R.string.capture_move_to, label)) })
                     }
+                    if (phase.more.isNotEmpty()) MoveToMenu(phase.more, onMove, onMoveMenu)
                 }
             }
             CapturePhase.Editing, CapturePhase.Saving, CapturePhase.NoModule -> {
@@ -189,6 +194,24 @@ private fun EatenTimeDialog(hour: Int, minute: Int, onPicked: (Int, Int) -> Unit
 @Composable
 private fun savedText(labelRes: Int?): String =
     labelRes?.let { stringResource(R.string.capture_saved_to, stringResource(it)) } ?: stringResource(R.string.capture_saved)
+
+/** One "Move to…" chip; its menu lists every other module (bounded: one chip, however many modules). */
+@Composable
+private fun MoveToMenu(options: List<MoveOption>, onMove: (MoveOption) -> Unit, onMenu: (Boolean) -> Unit) {
+    var open by remember { mutableStateOf(false) }
+    Box {
+        SuggestionChip(onClick = { open = true; onMenu(true) }, label = { Text(stringResource(R.string.capture_move_to_menu)) })
+        androidx.compose.material3.DropdownMenu(expanded = open, onDismissRequest = { open = false; onMenu(false) }) {
+            options.forEach { o ->
+                androidx.compose.material3.DropdownMenuItem(
+                    text = { Text(o.labelRes?.let { stringResource(it) } ?: o.action.moduleId.value) },
+                    onClick = { open = false; onMove(o) },
+                    modifier = Modifier.heightIn(min = 48.dp),
+                )
+            }
+        }
+    }
+}
 
 @Composable
 private fun SavedLine(text: String) {

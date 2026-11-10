@@ -28,6 +28,8 @@
     <string name="setup_main_phone_switch">This is my main phone</string>
     <string name="today_empty">Nothing here yet. Turn on a module in Settings.</string>
     <string name="today_capture_saved">Saved</string>
+    <string name="today_capture_saved_to">Saved to %1$s</string>
+    <string name="today_capture_move">Move to…</string>
     <string name="today_greeting_morning">Good morning</string>
     <string name="today_greeting_afternoon">Good afternoon</string>
     <string name="today_greeting_evening">Good evening</string>

@@ -26,12 +26,17 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 sealed interface CaptureResult {
-    /** Saved to [moduleId]. [alternatives] are other plausible targets the user can move it to. */
+    /**
+     * Saved to [moduleId]. [alternatives] are other plausible targets the user can move it to. [others] is set
+     * when nothing recognised the text and it went to the default module (H7): every other enabled module,
+     * offered behind one "Move to…" so a wrong guess is one tap to fix.
+     */
     data class Saved(
         val moduleId: ModuleId,
         val recordId: String,
         val alternatives: List<CandidateAction>,
         val input: CaptureInput,
+        val others: List<CandidateAction> = emptyList(),
     ) : CaptureResult
 
     /** Every module that could take the text is switched off. Nothing was saved. */
@@ -61,7 +66,22 @@ class UniversalCaptureService @Inject constructor(
         val top = ranked.firstOrNull() ?: return CaptureResult.NoModule
         val handler = hs.firstOrNull { it.moduleId == top.moduleId } ?: return CaptureResult.NoModule
         val id = handler.execute(input, top)
-        return CaptureResult.Saved(top.moduleId, id, ranked.drop(1).filter { it.moduleId != top.moduleId }, input)
+        val alternatives = ranked.drop(1).filter { it.moduleId != top.moduleId }
+        // The router's fallback is the handler's own default action; rule and AI hits carry their own confidence.
+        val fallback = input.targetModule == null && hs.size > 1 && top == handler.defaultAction(input)
+        val others = if (!fallback) emptyList() else hs
+            .filter { h -> h.moduleId != top.moduleId && alternatives.none { it.moduleId == h.moduleId } }
+            .sortedBy { MOVE_ORDER.indexOf(it.moduleId).let { i -> if (i < 0) Int.MAX_VALUE else i } }
+            .map { it.defaultAction(input) }
+        return CaptureResult.Saved(top.moduleId, id, alternatives, input, others)
+    }
+
+    companion object {
+        /** "Move to…" lists modules in this order (most common corrections first). */
+        val MOVE_ORDER = listOf(
+            ModuleId.TASKS, ModuleId.REMINDERS, ModuleId.CALENDAR, ModuleId.DIET, ModuleId.WORKOUT,
+            ModuleId.SLEEP, ModuleId.CONTACTS, ModuleId.BIRTHDAYS, ModuleId.DELEGATION,
+        )
     }
 
     /**

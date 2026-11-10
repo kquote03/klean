@@ -174,4 +174,30 @@ class CaptureViewModelTest {
         assertEquals(CapturePhase.NoModule, vm.state.value.phase)
         assertFalse(vm.state.value.finished)
     }
+
+    @Test fun aGuessOffersMoveToEveryOtherModuleAndMovesIt() = runTest(dispatcher) {
+        val tasks = FakeHandler(ModuleId.TASKS)
+        val vm = CaptureViewModel(
+            UniversalCaptureService(setOf(diet, tasks), gate, DefaultCaptureRouter(null)),
+            ModuleRegistry(emptySet(), gate), clock, rec, FakePhotoStorage(), DubaiZone, SavedStateHandle(),
+        )
+        vm.submit("oats")
+        runCurrent()
+        val phase = vm.state.value.phase as CapturePhase.SavedWithAlternatives
+        // Opening the menu keeps the sheet open past the usual wait.
+        vm.holdOpen(true)
+        advanceTimeBy(CaptureViewModel.ALTERNATIVES_MS + 1_000)
+        assertFalse(vm.state.value.finished)
+        assertEquals(emptyList<MoveOption>(), phase.options)
+        assertEquals(listOf(ModuleId.TASKS), phase.more.map { it.action.moduleId })
+        vm.moveTo(phase.more.single())
+        runCurrent()
+        assertEquals("oats", tasks.executed.single().text)
+        assertEquals(listOf("diet-1"), diet.undone)
+        assertTrue(vm.state.value.phase is CapturePhase.Saved)
+    }
+
+    @Test fun aPrefilledSheetShowsTheText() = runTest(dispatcher) {
+        assertEquals("call the bank", vm(CaptureActivity.EXTRA_TEXT to "call the bank").state.value.text)
+    }
 }

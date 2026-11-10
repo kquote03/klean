@@ -81,4 +81,35 @@ class TodayViewModelTest {
         assertEquals(false, done)
         assertTrue(executed.isEmpty())
     }
+
+    @Test fun aGuessCanBeMovedToAnyOtherModule() = runTest(dispatcher) {
+        val undone = mutableListOf<String>()
+        val tasksDone = mutableListOf<CaptureInput>()
+        val dietUndo = object : CaptureHandler by diet {
+            override suspend fun undo(recordId: String) { undone += recordId }
+        }
+        val tasks = object : CaptureHandler {
+            override val moduleId = ModuleId.TASKS
+            override val actionSpecs = listOf(ActionSpec("add_task", "task"))
+            override fun defaultAction(input: CaptureInput) = CandidateAction(moduleId, "add_task", 1f)
+            override suspend fun execute(input: CaptureInput, action: CandidateAction): String { tasksDone += input; return "t1" }
+            override suspend fun undo(recordId: String) = Unit
+        }
+        val vm = TodayViewModel(UniversalCaptureService(setOf(dietUndo, tasks), gate, DefaultCaptureRouter(null)), clock)
+        vm.submit("oats")
+        runCurrent()
+        val saved = vm.saved.value!!
+        assertEquals(ModuleId.DIET, saved.module)
+        assertEquals(listOf(ModuleId.TASKS), saved.options.map { it.moduleId })
+        // The line with "Move to…" stays longer than a plain "Saved".
+        advanceTimeBy(TodayViewModel.SAVED_MS + 1)
+        assertTrue(vm.justSaved.value)
+        vm.moveTo(saved.options.single())
+        runCurrent()
+        assertEquals("oats", tasksDone.single().text)
+        assertEquals(listOf("id"), undone)
+        assertEquals(TodaySaved(ModuleId.TASKS, emptyList()), vm.saved.value)
+        advanceTimeBy(TodayViewModel.SAVED_MS + 1)
+        assertEquals(null, vm.saved.value)
+    }
 }
