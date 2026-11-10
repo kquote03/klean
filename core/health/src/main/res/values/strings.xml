@@ -4,6 +4,8 @@
     <string name="health_unavailable">Health Connect isn\'t on this phone. Klean keeps its own log either way.</string>
     <string name="health_needs_update">Health Connect needs an update before Klean can use it.</string>
     <string name="health_update">Update</string>
+    <string name="health_not_installed">Health Connect isn\'t on this phone yet. It\'s free on the Play Store, and Klean keeps its own log either way.</string>
+    <string name="health_get">Get it</string>
     <string name="health_offer">Share sleep and workouts with Health Connect, and bring in nights and workouts from your other apps.</string>
     <string name="health_connect">Connect</string>
     <string name="health_connected">Connected. Nights and workouts from other apps show up here, and Klean\'s workouts go to Health Connect.</string>

@@ -8,6 +8,8 @@ enum class HealthAvailability {
     AVAILABLE,
     /** The provider app is there but too old. */
     NEEDS_UPDATE,
+    /** Not installed, but the Play Store is there to get it (Android 13 and older). */
+    NOT_INSTALLED,
     /** Not on this phone (no Play services, older Android without the app, Waydroid). */
     UNAVAILABLE,
 }

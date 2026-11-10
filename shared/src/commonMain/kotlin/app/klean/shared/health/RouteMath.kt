@@ -31,24 +31,26 @@ object RouteMath {
         return 2 * EARTH_RADIUS_M * asin(sqrt(h.coerceIn(0.0, 1.0)))
     }
 
-    /** The fixes that count: accurate ones, each a plausible step from the last kept one. */
+    /** The fixes that count: accurate ones, each a plausible step from the last kept one (see [RouteFilter]). */
     fun clean(points: List<GeoPoint>): List<GeoPoint> {
+        val f = RouteFilter()
         val out = ArrayList<GeoPoint>(points.size)
         for (p in points) {
-            if (p.accuracyM > MAX_ACCURACY_M) continue
-            val last = out.lastOrNull()
-            if (last == null) { out += p; continue }
-            val d = haversineM(last, p)
-            if (d < MIN_STEP_M) continue
-            val dt = (p.timeMs - last.timeMs) / 1000.0
-            if (dt > 0 && d / dt > MAX_SPEED_MPS) continue
-            out += p
+            if (f.accept(p) != null) out += p
+            else if (f.last === p) {
+                // Re-anchored after a bad fix: a lone bad start is dropped; later ones leave a gap.
+                if (out.size == 1) out.clear()
+                out += p
+            }
         }
         return out
     }
 
-    /** Total distance in metres over the [clean]ed track. */
-    fun distanceM(points: List<GeoPoint>): Double = clean(points).zipWithNext { a, b -> haversineM(a, b) }.sum()
+    /** Total distance in metres: the sum of the steps [RouteFilter] accepts. */
+    fun distanceM(points: List<GeoPoint>): Double {
+        val f = RouteFilter()
+        return points.sumOf { f.accept(it) ?: 0.0 }
+    }
 
     /** Seconds per kilometre, or null under 50 m (too short to mean anything). */
     fun paceSecPerKm(distanceM: Double, durationMs: Long): Int? =
@@ -128,4 +130,41 @@ object RouteMath {
     }
 
     private fun rad(deg: Double) = deg * PI / 180.0
+}
+
+/**
+ * Incremental form of [RouteMath.clean]: [accept] returns the metres a fix adds (0 for the first kept fix), or
+ * null when the fix is dropped. Three implausible jumps in a row that agree with each other mean the anchor
+ * was the bad fix (a coarse first fix, say), so the filter re-anchors on the newest one without counting it.
+ */
+class RouteFilter {
+    var last: GeoPoint? = null
+        private set
+    private val jumps = ArrayList<GeoPoint>(3)
+
+    fun accept(p: GeoPoint): Double? {
+        if (p.accuracyM > RouteMath.MAX_ACCURACY_M) return null
+        val prev = last ?: run { last = p; return 0.0 }
+        val d = RouteMath.haversineM(prev, p)
+        if (d < RouteMath.MIN_STEP_M) return null
+        val dt = (p.timeMs - prev.timeMs) / 1000.0
+        if (dt > 0 && d / dt > RouteMath.MAX_SPEED_MPS) {
+            jumps += p
+            if (jumps.size >= 3 && jumps.zipWithNext().all { (a, b) -> plausible(a, b) }) {
+                last = p
+                jumps.clear()
+            } else if (jumps.size >= 3) {
+                jumps.removeAt(0)
+            }
+            return null
+        }
+        jumps.clear()
+        last = p
+        return d
+    }
+
+    private fun plausible(a: GeoPoint, b: GeoPoint): Boolean {
+        val dt = (b.timeMs - a.timeMs) / 1000.0
+        return dt <= 0 || RouteMath.haversineM(a, b) / dt <= RouteMath.MAX_SPEED_MPS
+    }
 }

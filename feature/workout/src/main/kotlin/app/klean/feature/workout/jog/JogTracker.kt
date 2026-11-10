@@ -59,27 +59,25 @@ class JogTracker @Inject constructor(
 ) {
     private val _state = MutableStateFlow(JogState())
     val state: StateFlow<JogState> = _state.asStateFlow()
-    private var lastKept: GeoPoint? = null
+    private var filter = app.klean.shared.health.RouteFilter()
 
     private fun now() = clock.now().toEpochMilliseconds()
 
     fun start() {
         if (_state.value.running) return
-        lastKept = null
+        filter = app.klean.shared.health.RouteFilter()
         _state.value = JogState(running = true, startedAt = now())
     }
 
     fun onFix(p: GeoPoint) {
         val s = _state.value
         if (!s.running) return
-        val kept = RouteMath.clean(listOfNotNull(lastKept, p))
-        val added = if (lastKept == null) kept.isNotEmpty() else kept.size == 2
-        if (!added) {
-            _state.value = s.copy(lastFixAt = p.timeMs)
+        val step = filter.accept(p)
+        if (step == null) {
+            // Dropped, unless it became the new anchor after a bad one (kept on the route, not counted).
+            _state.value = if (filter.last === p) s.copy(points = s.points + p, lastFixAt = p.timeMs) else s.copy(lastFixAt = p.timeMs)
             return
         }
-        val step = lastKept?.let { RouteMath.haversineM(it, p) } ?: 0.0
-        lastKept = p
         _state.value = s.copy(points = s.points + p, distanceM = s.distanceM + step, lastFixAt = p.timeMs)
     }
 
@@ -88,7 +86,7 @@ class JogTracker @Inject constructor(
         val s = _state.value
         if (!s.running) return null
         _state.value = JogState()
-        lastKept = null
+        filter = app.klean.shared.health.RouteFilter()
         val end = now()
         val route = if (s.points.size >= 2) routes.write("run-${s.startedAt}.route", s.points) else null
         val id = repo.logRun(s.startedAt, end, s.distanceM.roundToInt(), route)
@@ -99,6 +97,6 @@ class JogTracker @Inject constructor(
     /** Stops without saving. */
     fun discard() {
         _state.value = JogState()
-        lastKept = null
+        filter = app.klean.shared.health.RouteFilter()
     }
 }

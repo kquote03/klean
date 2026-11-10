@@ -52,16 +52,28 @@ class AndroidLocationFeed @Inject constructor(@ApplicationContext private val ct
     @SuppressLint("MissingPermission")
     override fun fixes(): Flow<GeoPoint> = callbackFlow {
         val lm = ctx.getSystemService(LocationManager::class.java)
-        val providers = lm.allProviders
-        val provider = when {
-            LocationManager.GPS_PROVIDER in providers -> LocationManager.GPS_PROVIDER
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && LocationManager.FUSED_PROVIDER in providers -> LocationManager.FUSED_PROVIDER
-            else -> LocationManager.NETWORK_PROVIDER
+        // Listen to GPS and to the platform's fused (Android 12+) or network provider at once: phones without GPS
+        // (or with it off) still get fixes, and while GPS fixes flow the coarser ones are ignored.
+        val providers = buildList {
+            add(LocationManager.GPS_PROVIDER)
+            add(if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) LocationManager.FUSED_PROVIDER else LocationManager.NETWORK_PROVIDER)
         }
-        val listener = LocationListener { l: Location -> trySend(GeoPoint(l.latitude, l.longitude, l.time, if (l.hasAccuracy()) l.accuracy else 0f)) }
-        runCatching { lm.requestLocationUpdates(provider, 1000L, 0f, listener, Looper.getMainLooper()) }
-            .onFailure { close(it) }
+        var lastGpsAt = 0L
+        val listener = LocationListener { l: Location ->
+            val now = android.os.SystemClock.elapsedRealtime()
+            if (l.provider == LocationManager.GPS_PROVIDER) lastGpsAt = now
+            else if (lastGpsAt != 0L && now - lastGpsAt < GPS_PREFERRED_MS) return@LocationListener
+            trySend(GeoPoint(l.latitude, l.longitude, l.time, if (l.hasAccuracy()) l.accuracy else 0f))
+        }
+        val registered = providers.count { p ->
+            runCatching { lm.requestLocationUpdates(p, 1000L, 0f, listener, Looper.getMainLooper()) }.isSuccess
+        }
+        if (registered == 0) close()
         awaitClose { lm.removeUpdates(listener) }
+    }
+
+    private companion object {
+        const val GPS_PREFERRED_MS = 10_000L
     }
 }
 

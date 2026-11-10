@@ -37,6 +37,14 @@ class RouteMathTest {
         assertTrue(abs(d - 100.0) < 2, "got $d")
     }
 
+    /** A coarse first fix 5 km away must not swallow the whole run. */
+    @Test fun aBadFirstFixIsLeftBehind() {
+        val track = listOf(p(25.25, 55.27, 0)) + (0..10).map { p(25.2 + it * 0.000899322, 55.27, 10 + it * 30) }
+        val d = RouteMath.distanceM(track)
+        // The first three good fixes re-anchor the run (not counted); the remaining 7 legs are.
+        assertTrue(abs(d - 800.0) < 5, "got $d")
+    }
+
     @Test fun paceIsSecondsPerKilometre() {
         assertEquals(330, RouteMath.paceSecPerKm(distanceM = 5000.0, durationMs = 27 * 60_000L + 30_000L))
         assertEquals(null, RouteMath.paceSecPerKm(distanceM = 5.0, durationMs = 60_000L))

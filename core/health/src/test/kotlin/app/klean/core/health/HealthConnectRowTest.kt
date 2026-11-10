@@ -36,6 +36,11 @@ class HealthConnectRowTest {
         assertEquals(1, asked)
     }
 
+    @Test fun notInstalledOffersTheStore() {
+        show(HealthRowState(HealthAvailability.NOT_INSTALLED, emptySet()))
+        rule.onNodeWithText("Get it").assertIsDisplayed()
+    }
+
     @Test fun grantedShowsConnected() {
         show(HealthRowState(HealthAvailability.AVAILABLE, sleep))
         rule.onNodeWithText("Connected", substring = true).assertIsDisplayed()

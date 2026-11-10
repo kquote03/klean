@@ -96,6 +96,7 @@ fun HealthConnectRowContent(
         val (body, action) = when {
             state.availability == HealthAvailability.UNAVAILABLE -> R.string.health_unavailable to null
             state.availability == HealthAvailability.NEEDS_UPDATE -> R.string.health_needs_update to (R.string.health_update to onUpdate)
+            state.availability == HealthAvailability.NOT_INSTALLED -> R.string.health_not_installed to (R.string.health_get to onUpdate)
             state.connected(needed) -> R.string.health_connected to (R.string.health_manage to onManage)
             else -> R.string.health_offer to (R.string.health_connect to onConnect)
         }
@@ -112,7 +113,7 @@ fun HealthConnectRowContent(
     }
 }
 
-private const val PROVIDER = "com.google.android.apps.healthdata"
+private const val PROVIDER = AndroidHealthConnectGateway.PROVIDER
 
 private fun openStore(ctx: Context) {
     val uri = Uri.parse("market://details?id=$PROVIDER&url=healthconnect%3A%2F%2Fonboarding")

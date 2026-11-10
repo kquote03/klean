@@ -40,10 +40,18 @@ class AndroidHealthConnectGateway @Inject constructor(
     override fun availability(): HealthAvailability = runCatching {
         when (HealthConnectClient.getSdkStatus(context)) {
             HealthConnectClient.SDK_AVAILABLE -> HealthAvailability.AVAILABLE
-            HealthConnectClient.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED -> HealthAvailability.NEEDS_UPDATE
+            // Up to Android 13 "update required" also means "not installed"; tell the two apart, and only offer the
+            // store when there is one (Waydroid and phones without Play have none).
+            HealthConnectClient.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED -> when {
+                installed(PROVIDER) -> HealthAvailability.NEEDS_UPDATE
+                installed(STORE) -> HealthAvailability.NOT_INSTALLED
+                else -> HealthAvailability.UNAVAILABLE
+            }
             else -> HealthAvailability.UNAVAILABLE
         }
     }.getOrDefault(HealthAvailability.UNAVAILABLE)
+
+    private fun installed(pkg: String) = runCatching { context.packageManager.getPackageInfo(pkg, 0) }.isSuccess
 
     override suspend fun refresh() {
         val c = client ?: run { _granted.value = emptySet(); return }
@@ -106,6 +114,8 @@ class AndroidHealthConnectGateway @Inject constructor(
 
     companion object {
         private const val TAG = "KleanHealth"
+        const val PROVIDER = "com.google.android.apps.healthdata"
+        private const val STORE = "com.android.vending"
 
         fun permission(access: HealthAccess): String = when (access) {
             HealthAccess.READ_SLEEP -> HealthPermission.getReadPermission(SleepSessionRecord::class)
