@@ -7,191 +7,300 @@ The handover guide for anyone, human or agent, picking up this repo. Read it in 
 | File | What it is | When to update it |
 |---|---|---|
 | `AGENTS.md` (this file) | How to work here: toolchain, conventions, gotchas, current state, deviations, what to do next | Every milestone merge, and whenever you deviate from the plan |
-| `PLAN.md` | The full Prototype 1 plan: architecture, Room schema, screens/nav, background work, platform decisions, and every task with code and verification commands. Canonical copy of `.hermes/plans/2026-11-08_153740-klean-prototype-1.md` | Only when scope or a decision changes. Record known code-vs-plan differences under "Deviations" below |
-| `TASKS.md` | One checkbox per plan task, with where it lives (main or branch) | In the same commit that finishes a task |
+| `.hermes/plans/2026-11-09_165408-klean-holistic-full-product.md` | **Governing plan**: the holistic re-centre (decisions H1–H9), repository layout, sync protocol and API, milestones M16–M29 | Only when scope or a decision changes |
+| `.hermes/plans/2026-11-09_170500-parallel-life-modules.md` | Per-module "Common checklist" and module specs S1–S6, used by M18–M20 with the governing plan's amendments | — |
+| `PLAN.md` | The original plan, now the record of the foundation and diet build (M0–M15). Canonical copy of `.hermes/plans/2026-11-08_153740-klean-prototype-1.md` | Historical |
+| `TASKS.md` | One checkbox per task, device-check records, and the remaining hands-on checks | In the same commit that finishes a task |
+| `docs/handover-prompt.md` | A prompt to paste into a fresh agent session to resume the work | When the next steps change |
+| `docs/backend-api.md` | The backend's real API reference | With backend changes |
+| `~/.hermes/cache/scratch/klean-subagent-brief.md` | The rules handed to every subagent; its "State update" sections are the latest contracts | Before dispatching a new wave |
 
-Precedence when they disagree: user instructions > AGENTS.md "Deviations" > PLAN.md.
-Decisions marked **Decided** in PLAN.md need user approval before you change them.
+Precedence when they disagree: user instructions > AGENTS.md "Deviations" > governing plan > PLAN.md.
+Decisions marked **Decided** in the brief or a plan need the user's approval before you change them.
+Source brief: `~/Downloads/Klean — Prototype 1 Build Prompt (1).md`. In this revised brief, Prototype 1 is the whole product.
 
 ## What this is
 
-Klean is a local-first personal life-management Android app. Prototype 1 = the app foundation (module registry, Today dashboard, settings, onboarding, backup, AI layer, design system) plus a complete, daily-usable **diet-awareness** module. Later prototypes add tasks, reminders, calendar, contacts, workout, sleep, a Ktor sync backend and a web client. The architecture must leave room for these, but they must not be built now (see PLAN.md "Future modules" context and §2).
+Klean is a local-first **holistic life-management** system for one person.
+- **Modules:** diet, tasks and reminders, calendar, contacts and birthdays, workout, sleep, and AI delegation (Hermes).
+- **Parts:** the Android app (the source of truth; works fully offline with no account), a Wear OS app, an optional self-hosted Ktor sync backend (Docker), and a web client served by that backend.
 
-- Internal design context: the user has AuDHD-like traits. This may appear in code comments and internal docs only. It must **never** appear in user-facing strings. `ForbiddenCopyTest` (in `app/src/test`) enforces this.
-- Product principles that every feature must follow:
-  - never rely on notifications alone; there is always a passive surface too
-  - logging is a single action and never blocked by AI or network
-  - zero guilt: no streaks, scores or red badges, and no "missed" wording
+**User direction (2026-11-09):** diet is the feature they need most, but it is **not** the app's focus.
+- Prioritise the other modules.
+- Keep the app's identity holistic: no food icon, no diet-first copy on shared surfaces.
+- Diet is finished and feature-frozen. Its remaining brief items (watch tile, Health Connect, web parity) arrive with the platform milestones.
+
+Design context:
+- **Internal only:** the user has AuDHD-like traits. This may appear in code comments and internal docs. It must **never** appear in user-facing strings. `ForbiddenCopyTest` (`app/src/test`) enforces this, together with `scripts/check-copy.sh`.
+- **Product principles every feature follows:**
+  - never rely on notifications alone; there is always a passive surface too (widget, status line, Today)
+  - logging is a single action and is never blocked by AI or the network
+  - zero guilt: no streaks, scores or red badges; past-due tasks are "Still want these?", never "overdue"
   - zero upkeep for the user
-  - when a prompt is ignored, change its format rather than its frequency
-  - works offline with no account
-  - modules can be switched off completely
+  - when a prompt is ignored, change its format, not its frequency
+  - works offline with no account; cloud features are opt-in
+  - every module can be switched off and disappears completely
 
 ## Toolchain (NixOS — everything comes from the flake)
 
 - Never install tools globally. Run everything as `nix develop -c <cmd>`. One-off tools: `nix develop -c nix shell nixpkgs#<pkg> -c <cmd>`.
-- Flakes only see git-tracked files, so `git add` new files before `nix develop`.
-- Versions: Gradle 9.9.0 (wrapper), AGP 9.5.1 (built-in Kotlin, so don't apply `kotlin-android`), Kotlin 2.4.21, KSP 2.3.13, Hilt 2.60.1, Room 2.8.5 + `sqlite-bundled` 2.6.2, Compose BOM 2026.09.00, material3 1.5.0-rc01 (Expressive APIs), Glance 1.2.0, WorkManager 2.12.0, kotlinx-datetime 0.8.0 (uses `kotlin.time.Instant/Clock`). All are pinned in `gradle/libs.versions.toml`.
-- SDK: platform `android-37.0` (+36) and build-tools 36.0.0, which is AGP 9.5's default. compileSdk/targetSdk 37, minSdk 28 (`build-logic/.../KleanSdk.kt`).
-- The SDK lives read-only in the Nix store. If AGP tries to download a component, add it to `flake.nix`; don't hack around it.
+- Flakes only see git-tracked files, so `git add` new files before `nix develop`. This applies in worktrees too.
+- **Versions** (all pinned in `gradle/libs.versions.toml`): Gradle 9.9.0 (wrapper), AGP 9.5.1 (built-in Kotlin, so don't apply `kotlin-android`), Kotlin 2.4.21, KSP 2.3.13, Hilt 2.60.1, Room 2.8.5 + `sqlite-bundled` 2.6.2, Compose BOM 2026.09.00, material3 1.5.0-rc01 (Expressive APIs), Glance 1.2.0, WorkManager 2.12.0, kotlinx-datetime 0.8.0 (uses `kotlin.time.Instant/Clock`), Ktor 3.6.1, Exposed 1.x, LiteRT-LM 0.19.1.
+- **SDK:** platform `android-37.0` (+36), build-tools 36.0.0. compileSdk/targetSdk 37, minSdk 28 (`build-logic/.../KleanSdk.kt`). The SDK is read-only in the Nix store; add missing components to `flake.nix`.
 - aapt2 is overridden through `GRADLE_OPTS` in the flake, because aapt2 from Maven doesn't run on NixOS.
-- `scripts/latest-versions.sh` checks library versions against Maven. `<release>` is often an alpha/beta, so choose stable unless you need otherwise.
+- `scripts/latest-versions.sh` checks Maven versions. Choose stable releases.
+- Docker 29 and podman are available on the host without sudo.
 
-Common commands (run from the repo root):
+**Every Gradle call goes through the shared lock.** The machine has 14 GB of RAM, and several agents may be working in worktrees at once:
 ```
-nix develop -c ./gradlew assembleDebug                                   # build
-nix develop -c ./gradlew :shared:jvmTest testDebugUnitTest               # unit tests (JVM + Robolectric)
-nix develop -c ./gradlew :app:assembleDebugAndroidTest                   # compile instrumented tests
-nix develop -c ./gradlew connectedDebugAndroidTest                       # instrumented (phone connected)
-nix develop -c ./gradlew :app:installDebug                               # debug appId: app.klean.debug
+flock ~/.hermes/cache/scratch/gradle.lock nix develop -c ./gradlew <tasks> --console=plain -Pkotlin.compiler.execution.strategy=in-process
 ```
-The milestone gate (must be BUILD SUCCESSFUL before tagging):
+The milestone gate must be BUILD SUCCESSFUL before you tag:
 ```
-nix develop -c ./gradlew assembleDebug :app:assembleDebugAndroidTest :shared:jvmTest testDebugUnitTest --console=plain
+flock ~/.hermes/cache/scratch/gradle.lock nix develop -c ./gradlew assembleDebug :app:assembleDebugAndroidTest :shared:jvmTest testDebugUnitTest :backend:test --console=plain -Pkotlin.compiler.execution.strategy=in-process
 ```
-A cold build takes about 5 minutes and a warm one about 30 s. Run long builds in the background, writing to a log under `~/.hermes/cache/scratch/`, because foreground tool timeouts are shorter than a cold build.
+- Count test results with `python3 ~/.hermes/skills/software-development/android-app-development/scripts/count-test-results.py .`.
+- A cold build takes about 5–6 minutes. Run long builds in the background, logging under `~/.hermes/cache/scratch/`.
+- Backend image: `./gradlew :backend:jibDockerBuild` → `klean-backend:dev`, then `docker compose -f deploy/docker-compose.yml up -d` and `curl localhost:8080/api/v1/health`.
+
+## CI and releases
+
+- **Repo:** `github.com/kquote03/klean` (public). `gh` is logged in.
+- **`.github/workflows/build.yml`:** the Android gate job, plus a separate backend job.
+- **Every push to `main`:** builds and refreshes the rolling `nightly` pre-release. The latest APK is always at `releases/download/nightly/klean-debug.apk`.
+- **`nightly.yml`:** a dated `nightly-YYYY-MM-DD` release at 00:00 Dubai time when there are new commits.
+- **Signing and versioning:** APKs are debug builds signed with the user's debug key (secret `DEBUG_KEYSTORE_B64`, passed via `KLEAN_DEBUG_KEYSTORE`; CI checks the certificate SHA-256 `105be221…`). versionCode is the commit count, so each APK upgrades over the last.
+- **Check CI:** `gh run list -R kquote03/klean`.
 
 ## Layout
 
 ```
-shared/              KMP (jvm + android): models, UUIDv7, nameUuid, QuietHours, DayWindows, PromptPlanner,
-                     FormatRotator, MealTimeLearner, PromptOutcomeResolver, GapDetector, QuickRepeatRanker,
-                     DeliveryMatcher, capture contracts + DefaultCaptureRouter, AI DTOs, UnlockSheetPolicy, ModuleId
+shared/              KMP (jvm + android): models, UUIDv7, QuietHours, DayWindows, PromptPlanner, FormatRotator,
+                     MealTimeLearner, GapDetector, QuickRepeatRanker, DeliveryMatcher, UnlockSheetPolicy, ModuleId,
+                     capture contracts + DefaultCaptureRouter + RuleCaptureClassifier/CompositeCaptureClassifier,
+                     time/NaturalTime, sync/ (SyncRecord, Push/Pull DTOs, lww), vcard/, ical/, AI DTOs
 core/common          ApplicationScope, Clock, ZoneProvider
 core/design          tokens (tokens/klean-color-tokens.json = source of truth for web too), KleanTheme, Cantarell,
-                     components (CaptureField, EntryRow, GapMarker, ProviderChip, KleanCard, NeutralEmpty)
-core/data            Room DB (KleanDatabase v1, schema JSON in core/data/schemas), entities, DAOs, SyncStamper,
-                     SettingsRepository + SyncedKeys, SettingsModuleGate, DevicePrefs, PhotoStore, backup (M9 branch)
-core/ui              KleanModule + ModuleRegistry (drives nav, dashboard slots, settings)
-core/notifications   channels/IDs (M4 branch); quiet-hours service, alarms, reschedule (M5)
-core/ai              EnrichmentPolicy + NoAiPolicy; AiProvider/AiGateway (M10)
-core/capture         UniversalCaptureService, CaptureActivity/CaptureSheet, QS tile (M4 branch)
-feature/diet         everything diet: repository, screens, dashboard card, notification, widget (M4 branch), prompts (M5) …
-feature/onboarding   setup wizard (M8), still empty
-feature/settings     global settings screens (stubs for Quiet hours/Appearance/AI/Permissions/About); backup screen (M9 branch)
-app                  KleanApp, MainActivity, KleanNavHost, ShellViewModel, TodayScreen
+                     components (CaptureField, EntryRow, GapMarker, ProviderChip, KleanCard, NeutralEmpty,
+                     SummaryTile, WeekOverview, RepeatChips, PhotoThumbnail, SwitchListItem)
+core/data            Room KleanDatabase v3 (schemas 1–3.json; fixtures backup-v1/-v2.sqlite), entities + DAOs for every
+                     module, SyncStamper, SettingsRepository/SyncedKeys, SettingsModuleGate + module seeding,
+                     DevicePrefs, DeviceRepository, PhotoStore, SecretStore, ReminderRepository, PlaceRepository,
+                     account/ (Klean Android account, stub authenticator + calendar/contacts sync adapters), backup/
+core/ui              KleanModule + ModuleRegistry; Dashboard.kt (summary tiles, day activity, status line,
+                     Today items, StatusRefresh); CardLayout; OnboardingStepProvider
+core/notifications   channels/IDs, QuietHoursService, Alarms (Reschedulable, AlarmScheduler), RescheduleReceiver,
+                     permission model
+core/ai              AiProvider/AiGateway/AiService, Gemini, OpenAI-compatible, ondevice/ (LiteRT-LM), AiCaptureClassifier
+core/capture         UniversalCaptureService, CaptureActivity/Sheet, QS tile ("Add to Klean"), voice/, photo/,
+                     status/ (KleanStatusNotifier "Today" line, StatusReplyReceiver)
+feature/diet         the complete diet module (frozen)
+feature/{tasks,reminders,calendar,contacts,workout,sleep}   skeletons only (Placeholder.kt) — next to build
+feature/onboarding   setup wizard (holistic order: modules, sleep, main phone, permissions, widget, contacts, AI, …, diet last)
+feature/settings     global settings: modules, permissions, quiet hours, appearance, AI providers, backup, about
+app                  KleanApp, MainActivity, nav (KleanNavHost, More overflow, NewModulesSheet), today/ (dashboard,
+                     Arrange Today), widget/ (Klean Today widget), setup/ (main phone step)
+backend/             Ktor server: pairing, sync, blobs, CardDAV/CalDAV, Google (fakes), web push, Hermes relay,
+                     AI proxy, backup; Jib image. API: docs/backend-api.md
+deploy/              docker-compose.yml, Caddy/Traefik examples; docs/deploy.md
 build-logic/         convention plugins: klean.android.library / .compose / .feature / klean.hilt / klean.sqlite.jvmtest
 ```
 
 ## Conventions
 
-- **Commit after every task.** The user asked for this explicitly. Use Conventional Commits (`feat(diet): …`, `test(shared): …`, `build: …`, `docs: …`). Tag each milestone `mN` on `main` after it passes the gate, and tick the task in `TASKS.md` in the same commit.
-- **TDD** for logic: write the test, watch it fail (a compile failure counts), implement, watch it pass, commit. UI: view-model tests with fakes + Turbine, plus Robolectric/Compose tests where useful.
-- **Sync rules** for every syncable table:
-  - UUIDv7 string primary key; settings use `nameUuid(key)`
-  - embedded `SyncColumns` (created/updated UTC ms, deviceId, `deleted` tombstone, `change_seq`)
+- **Commit after every task, then push.** The user asked for this explicitly.
+  - Use Conventional Commits.
+  - Tag each milestone `mN` on `main` after the gate passes, and tick its tasks in `TASKS.md` in the same commit.
+- **TDD for logic:** write the test, watch it fail (a compile failure counts), implement, watch it pass, commit.
+- **UI tests:** view-model tests with fakes and Turbine, plus Robolectric/Compose tests.
+- **Sync rules for every syncable table:**
+  - UUIDv7 string primary key
+  - embedded `SyncColumns`
   - no hard deletes, no SQL foreign keys
   - every write goes through a repository that calls `SyncStamper` inside `db.transact {}`
-- Settings that follow the user across devices go in the `setting` table (`SettingsRepository` / `SyncedKeys`). Device-local settings go in DataStore (`DevicePrefs`). Secrets go in the Keystore (`SecretStore`, M10).
-- After a diet write, `DietChangeDispatcher` fans out to every `DietChangeListener`, each bound with `@IntoSet`: widget, status notification, prompt engine, enrichment. Add new reactions as listeners; don't call them directly from the repository.
-- New life modules plug in through a `KleanModule` (`@IntoSet`), a `CaptureHandler` (`@IntoSet`) and `Reschedulable`s. Never hard-code a module into nav or the dashboard.
-- All user-facing copy lives in the owning module's `strings.xml`: calm tone, no exclamation marks, no "missed/streak/behind/forgot", no red except for real errors.
-- Inject `Clock`/`ZoneProvider`; never call `System.currentTimeMillis()` in logic. Store UTC and display in the device zone (the user is in Asia/Dubai).
+  - schema changes use Room `AutoMigration` (only additive), plus an exported schema JSON and a migration test from the previous version's fixture
+- **Where settings live:**
+  - synced settings: the `setting` table (`SettingsRepository`)
+  - device-local settings: `DevicePrefs` (card layout, `isMainPhone`, …)
+  - secrets: `SecretStore` (Keystore), excluded from backups unless the user opts in
+- **How a module plugs in** (never hard-code a module into nav, the dashboard or surfaces): every life module contributes, with `@IntoSet`:
+  - `KleanModule`
+  - `CaptureHandler`, using the `RuleCaptureClassifier` action constants
+  - `DashboardSummaryProvider`, `DayActivityProvider`, `TodayItemsProvider`
+  - `StatusLineProvider`, which takes repositories through `dagger.Lazy`
+  - `Reschedulable` for alarms, and optionally an `OnboardingStepProvider`
+
+  It must also call `StatusRefresh` after writes.
+- **Copy:** user-facing text lives in the owning module's `strings.xml`. Calm tone, no `!`, no missed/streak/behind/forgot/overdue, no red except for real errors.
+- **Time:** inject `Clock`/`ZoneProvider`; never call `System.currentTimeMillis()` in logic. Store UTC and display in the device zone (the user is in Asia/Dubai).
+
+## Working with parallel agents
+
+- **One lane per worktree:** each lane works in `../klean-<lane>` on its own branch, and the parent merges the branches one at a time, running the gate after each.
+- **Commit only your own paths** (`git commit -- <paths>`), never `git add -A`/`-a`. `git stash` is shared across all worktrees, so don't use it.
+- **Lanes never change the Room schema.** If a lane needs a column, it reports it, and the parent adds one AutoMigration after merging.
+- **Expected merge conflicts:**
+  - `TASKS.md`: keep both sides
+  - `KleanApp.kt`: union of startup steps
+  - `Channels.kt` and the debug manifests: union
+- **The 5-hour usage limit is the main constraint.**
+  - A five-lane wave hit it within two minutes, so run at most 2–3 lanes at once.
+  - Agents should commit early, because only commits survive an interruption.
+- **`pgrep -f`/`pkill -f`:** never use a pattern that also appears in the calling shell's command line. It matches, or kills, itself. Use the flock lock files instead of process polling.
+
+## Devices
+
+- **Waydroid is the test device** (`adb -s 192.168.240.112:5555`, Android 13, x86_64, 540×1212). It holds no real data, so `pm clear` is fine.
+  - Hold `~/.hermes/cache/scratch/waydroid.lock` for every session.
+  - Install with `adb install -r -d app/build/outputs/apk/debug/app-debug.apk`; `installDebug` can time out.
+  - Then grant notifications: `adb shell pm grant app.klean.debug android.permission.POST_NOTIFICATIONS`.
+- **Waydroid has no:** camera, Play services, Health Connect, GPS, TalkBack or real microphone. Verify that those paths degrade gracefully.
+  - **Never trigger a camera intent**: it crashes the whole container.
+  - `run-as` fails on Waydroid. Use the debug broadcast `app.klean.debug.EXPORT_DB`, then pull `/sdcard/Android/data/app.klean.debug/files/klean-debug.db`.
+  - Mock location: `cmd location providers add-test-provider gps`.
+  - Restart with `waydroid session stop` then `start` (as a persistent background process). If the container is FROZEN, run `waydroid show-full-ui`.
+- **Debug helpers:**
+  - `~/.hermes/cache/scratch/bin/ui.py dump|tap "<text>"|has "<text>"` reads and taps the UI by text.
+  - `~/.hermes/cache/scratch/bin/wshot <png>` takes a screenshot (it strips Waydroid's amdgpu warning).
+  - Debug broadcasts:
+    - `app.klean.debug.RESCHEDULE`
+    - `ENSURE_ACCOUNT`
+    - `EXPORT_DB`
+    - `NEW_MODULES`
+- **The user's Pixel 9a** holds real entries and is used only in testing sessions the user starts.
+  - Never reboot it, toggle airplane mode while adb is wireless, uninstall the app, or clear its data.
+  - Don't drive its UI while the user is using it.
+  - Delete any test entries you create.
 
 ## Gotchas learned so far
 
-- In convention-plugin code the version-catalog accessor is `catalog.lib("alias")`. Naming it `libs` shadows Gradle's generated accessors in every build script.
-- Robolectric: put `robolectric.properties` with `sdk=36` in each module's test resources (Robolectric doesn't support 37 yet). The JDK 21 `--add-opens/--add-exports java.base/jdk.internal.access` args come from the library convention plugin. `:app` sets them itself.
-- `failOnNoDiscoveredTests=false` is set in the library convention, because Hilt generates test sources even in modules with no tests, and Gradle 9 then fails.
-- Room in tests uses the real `BundledSQLiteDriver`. Apply the `klean.sqlite.jvmtest` plugin to any module whose unit tests open a database: it extracts the linux-x64 JNI library from `sqlite-bundled-jvm` onto `java.library.path`.
-- Room driver mode: DAOs must be suspend or Flow. Transactions go through `db.transact {}` (`useWriterConnection { immediateTransaction { } }`), not `withTransaction`.
-- `ForbiddenCopyTest` declares all `res/` XML and manifests as test-task inputs, so it can't return a stale cached pass after a copy change.
-- When parallelising milestones with git worktrees, any file both branches create (e.g. `app/src/androidTest/.../HiltTestRunner.kt`, `shared/.../ModuleId.kt`) must have byte-identical content specified in both prompts. Don't run two Gradle builds in the same checkout at once.
+- **Convention plugins:** the version-catalog accessor in convention-plugin code is `catalog.lib("alias")`. Naming it `libs` shadows Gradle's generated accessors.
+- **KSP:**
+  - KSP tasks share one classloader per daemon, so they are serialised by `KspSerialService` (`maxParallelUsages = 1`) in `HiltConventionPlugin`. Keep it, or parallel builds produce partial Hilt output. Reproduce with `./gradlew kspDebugKotlin --rerun`.
+  - KSP outputs are never build-cached.
+  - Gradle compiles untracked files in the working tree, so don't write the implementation while the red-step build is still running.
+- **Robolectric:**
+  - `robolectric.properties` must have `sdk=36` in each module's test resources.
+  - The JDK 21 add-opens come from the library convention.
+  - Lazy items below the fold aren't composed; use `@Config(qualifiers = "w411dp-h891dp")`.
+- **Room:**
+  - Tests use the real `BundledSQLiteDriver`, so apply `klean.sqlite.jvmtest` to modules whose unit tests open a database.
+  - DAOs must be suspend or Flow, and transactions go through `db.transact {}`.
+  - `:app` Robolectric tests have no SQLite JNI. That's why startup work in `KleanApp` is wrapped in `runCatching`, and why `StatusLineProvider`s take repositories through `dagger.Lazy`: a live Room flow there fails in a scope no catch can reach.
+- **Test teardown:**
+  - VM tests on a real Room/DataStore must keep their view models in a `ViewModelStore` and `clear()` it in `@After`, before `resetMain()` and `db.close()`.
+  - DataStore tests that reopen a file must use `scope.coroutineContext.job.cancelAndJoin()`.
+  - Both were CI flakes. `BackupViewModelTest` and `AppearanceViewModelTest` still flake occasionally.
+- **DataStore:** use one DataStore per file per process, via the top-level `preferencesDataStore` delegate.
+- **Notifications:**
+  - A channel's importance can't be raised after creation, so use a new id and retire the old one in `ChannelRegistrar`.
+  - Pixel hides IMPORTANCE_LOW notifications from the lock screen.
+  - The status line uses `status_v1` at DEFAULT importance, silenced at the channel level.
+- **Nav:** register every module's graph always and hide only the entry points when a module is off. Rebuilding the graph reset the back stack, and dropped routes crashed.
+- **Glance:** `colors.widgetBackground` maps to `secondaryContainer` (green), so use token `surfaceContainer`.
+- **M3 Expressive sizes:**
+  - `IconButton` measures 40 dp, so set `Modifier.size(48.dp)` where a 48 dp target is required.
+  - `SuggestionChip` is 36 dp tall.
+- **Speech:** a speech recogniser may never connect, so always time it out.
+- **Backend:**
+  - Exposed 1.x imports come from `org.jetbrains.exposed.v1.core` and `org.jetbrains.exposed.v1.jdbc`.
+  - SQLite `VACUUM INTO` needs an autocommit connection outside a transaction.
+  - A Ktor 3 streaming proxy must keep the upstream response open until the body writer finishes (`proxy/StreamingProxy.kt`).
+- **adb shell quoting:** quote the whole `adb shell "…"` command when its text contains spaces.
+- **Waydroid installs:** on the shared Waydroid, a newer schema from another agent's install means downgrading with `-d`, then running `pm clear`.
 
-## Current state (2026-11-08)
+## Current state (2026-11-09 night)
 
-`main` is at tag `m3` plus docs commits. It builds and all unit tests pass.
+`main` @ `a0258f1` is clean, pushed and green on CI. Gate: 715 tests, 0 failures, 1 skipped (a fixture writer). There are no branches or worktrees besides `main`.
 
 | Milestone | Scope | Status |
 |---|---|---|
-| M0 | Nix shell, wrapper, version catalog, convention plugins, module skeletons, empty app | ✅ tag `m0` |
-| M1 | Design system, module registry, registry-driven shell, settings skeleton, copy guard | ✅ tag `m1` |
-| M2 | `:shared` domain logic, 78 JVM tests | ✅ tag `m2` |
-| M3 | Room data layer, sync stamping, settings repo, module gate, photo store, DietRepository, diet screens, dashboard card | ✅ tag `m3` |
-| M4 | Status notification + inline reply, capture sheet, universal capture, QS tile, Glance widget, module-disable plumbing | 🚧 4.1–4.7 committed on `m4-work`; 4.8 WIP (`adce112`), unverified, **not merged** |
-| M5 | Prompt engine: quiet hours, exact alarms, rotation, meal-time learning, reboot | ⏳ |
-| M6 | Voice, photo attach, quick-repeat chips | ⏳ |
-| M7 | Day history, gap affordance | ⏳ |
-| M8 | Onboarding + permissions | ⏳ |
-| M9 | Single-file SQLite backup/restore, auto backup | 🚧 9.1/9.2/9.3/9.5 committed on `m9-work`; 9.4 (backup screen) WIP (`cf04d02`), unverified, **not merged** |
-| M10 | AI providers, enrichment queue, AI items UI, capture classifier | ⏳ |
-| M11 | Unlock sheet (pure `UnlockSheetPolicy` already in `:shared`) | ⏳ |
-| M12 | Delivery-app listener | ⏳ |
-| M13 | Disable audit, accessibility, copy audit | ⏳ |
-| M14 | On-device model | ⏳ |
-| M15 | Geofence prompts | ⏳ |
-| M16 | Acceptance run on a real phone | ⏳ |
+| M0–M15 | Foundation and the complete diet module: status notification + inline reply, tile, widget, check-ins (rotation, learning, reboot), voice, photos, history and gaps, onboarding and permissions, backup/restore, AI providers and enrichment, unlock sheet, delivery listener, polish, on-device model, places | ✅ tags `m0`–`m15` |
+| Today dashboard | Greeting, summary tiles, week overview; Waydroid close-out; CI flake fixes | ✅ (no tag) |
+| P2 foundation | Schema v2, module skeletons, More overflow, Klean account, NaturalTime, rule capture classifier | ✅ tag `p2-foundation` |
+| M16 | Holistic re-centre: day-ring icon, "Add to Klean" tile, holistic "Today" status notification ("Add something" → universal capture; plain text falls back to diet), card order APPROVALS→DIET + Arrange Today, new modules arrive on with a one-time "New in Klean" sheet, Klean Today widget, holistic wizard order | ✅ tag `m16` |
+| M17 | Schema v3: delegation, approvals, calendar sources, exercises, sleep schedule, devices, sync cursor, plus new task/contact/event/workout columns; `DeviceRepository`, `isMainPhone`, SecretStore keys, reminder snooze/done/dismiss | ✅ tag `m17` |
+| M24 | Sync backend: pairing, sync with LWW, blobs, CardDAV/CalDAV (simplified), Google (fakes), web push, Hermes relay, AI proxy, backup, Docker | ✅ tag `m24` (gaps under "## M24" in TASKS.md) |
+| M18 | Tasks and reminders (owns `shared/.../time/RecurrenceRule.kt`) | ⏳ next |
+| M19 | Calendar; Contacts and birthdays | ⏳ |
+| M20 | Workout and sleep (the sleep schedule drives quiet hours; `QuietHoursService` API unchanged) | ⏳ |
+| M21–M23 | Google Tasks and Assistant; Health Connect and GPS; AI delegation and Hermes | ⏳ |
+| M25–M28 | Android sync; web client; Wear OS; capture everywhere | ⏳ |
+| M29 | Acceptance on the Pixel, watch, Docker backend and browser → tag `p1` | ⏳ |
 
-Work paused because the previous agent hit its API usage limit (resets 2026-12-01). See `TASKS.md` for per-task status.
-
-### What's on the unmerged branches
-
-- **`m4-work`** (worktree `../klean-m4`, about 62 files):
-  - `core/notifications`: `Channels.kt` (channels, IDs, registrar) and its test.
-  - `feature/diet/notification`: `DietStatusNotifier`, `DietStatusActions`, `DietReplyReceiver`, `StatusRepostReceiver`, `DietNotificationModule`.
-  - `core/capture`: `UniversalCaptureService`, `CaptureActivity`/sheet and view model, QS tile and tile model.
-  - `feature/diet`: `DietCaptureHandler`, and the Glance widget `widget/DietWidget*` (preview layout, `diet_widget_info.xml`).
-  - The universal capture bar on Today.
-  - Tests: `DietReplyReceiverTest` (Robolectric), `DietStatusNotifierTest`, `UniversalCaptureServiceTest`, `CaptureViewModelTest`, `DietWidgetStateTest`, `ChannelRegistrarTest`, plus `TestHiltModules`.
-  - WIP for 4.8: `DietEnablement.kt` with its test, `DietModule` changes, a stub `prompt/DietPromptEngine.kt`, and a `ShellSmokeTest` edit.
-- **`m9-work`** (worktree `../klean-m9`, about 25 files):
-  - `core/data/backup`: `BackupContracts`, `BackupManager` (VACUUM INTO + `backup_*` tables, inspect/restore with files split from restart), and `auto/AutoBackup*` (worker + rotation through a target abstraction).
-  - `DevicePrefs` export/import.
-  - Tests: Robolectric `BackupExportTest`, `BackupRestoreTest`, `AutoBackupWorkerTest`, and the fixture `core/data/src/test/resources/backup-v1.sqlite`.
-  - `:app` changes: `AppBindings.kt`, `KleanApp` as WorkManager `Configuration.Provider` with `HiltWorkerFactory`, the WorkManager initializer removed from the manifest, `HiltTestRunner`, and the instrumented `BackupRoundTripTest`.
-  - WIP for 9.4: `feature/settings/backup/BackupSettingsScreen`, `BackupViewModel` with its test.
-  - Secrets backup goes through a `SecretBackup` interface with a no-op binding until M10's `SecretStore` implements it.
+The last attempted wave (M18, M19 ×2, M20, M26) hit the 5-hour usage limit within two minutes and committed nothing; its empty worktrees were removed.
 
 ## Resume here — next steps in order
 
-1. **Finish M4** in `../klean-m4`:
-   - Review the WIP commit `adce112` and complete Task 4.8 (PLAN.md §8 M4). When diet is disabled: cancel the diet notifications, update the widget to its disabled state, and set the QS tile unavailable; re-enable reverses this.
-   - Run the milestone gate, reword or squash the wip commit, and tick 4.8 in `TASKS.md`.
-2. **Finish M9** in `../klean-m9`:
-   - Review `cf04d02` and complete Task 9.4: export/restore pickers, a confirmation dialog with the exact copy from the plan, the include-keys toggle, and the auto-backup folder and keep-N setting.
-   - Run the gate and tick 9.4.
-3. **Merge into `main`:**
-   - `git merge m4-work`, then `git merge m9-work`.
-   - Expect conflicts in `app/build.gradle.kts`, `app/src/main/AndroidManifest.xml`, `KleanApp.kt` (M9's `Configuration.Provider` plus any M4 startup work like `ChannelRegistrar.ensure`/status refresh), `ShellSmokeTest`, and possibly `HiltTestRunner.kt`.
-   - Run the gate on `main` and tag `m4` and `m9`.
-   - Clean up with `git worktree remove ../klean-m4 && git worktree remove ../klean-m9`, then delete the branches.
-   - Update the table above and `TASKS.md`.
-4. **M5 (prompt engine)** is next on the critical path. Start from the M4 `DietPromptEngine` stub and PLAN.md Tasks 5.1–5.7. After M5, these can run in parallel worktrees with little overlap: M6+M7 (diet UI), M8 (onboarding), M10 (AI).
-5. **Device checks:** once the user connects a phone (`adb devices`), run `connectedDebugAndroidTest` and the manual checks listed at the bottom of `TASKS.md`.
+1. **M18 Tasks and reminders ‖ M19 Calendar:** two worktree lanes. Specs: the governing plan's §M18–M20 plus the module plan's S1/S2/S3. Merge, gate, tag.
+2. **M19 Contacts and birthdays ‖ M20 Workout and sleep.** After merging:
+   - move the calendar and contacts `DayItemsProvider` definitions into `core/ui/module/Dashboard.kt`;
+   - replace calendar's private recurrence expander with `RecurrenceRule`.
+3. **M25 Android sync ‖ M26 web client** (the backend must start serving `web/dist`).
+4. **Then:** M21 Google, M22 Health Connect and GPS, M23 delegation and Hermes, M27 Wear OS, M28 capture everywhere.
+5. **M29 acceptance with the user:** record it in `docs/acceptance-p1.md`, then tag `p1`.
 
-## Deviations from the plan
+**Open decisions** (defaults in use; the user hasn't overridden them):
+- the holistic status notification replaces the diet-only one;
+- Hermes is tested against a local stub (no URL or token supplied);
+- Google is tested with fakes (the user's own OAuth client IDs are needed for real use);
+- a birthday phrase while Contacts is off becomes a dated task (never AI).
 
-- `ForbiddenCopyTest` matches only uppercase `ADD`, so the button text "Add something" passes. A second test confirms that "Add something"/"Address" pass and ADHD/ADD/autistic fail.
-- Screens get `ModuleRegistry` through `ShellViewModel` instead of calling `hiltViewModel()` themselves, so the shell can be tested without Hilt. `hiltViewModel` comes from `androidx.hilt.lifecycle.viewmodel.compose`.
-- `CaptureField` has an extra `enabled` parameter.
-- `ModuleGate` lives in `:core:data` (`SettingsModuleGate`, stored in the synced `core.modules.disabled` set). `:core:ui` exposes `:core:data` as `api`. The temporary in-memory gate has been removed.
-- `DietRepository` is an interface with `DefaultDietRepository` bound through Hilt, so view models are tested with `FakeDietRepository`.
-  - Extra methods: `observeViewPrefs()`, `observeItems()`, `windowFor()`, and `restore()`, the undo for delete.
-  - `restore` un-tombstones the items that `delete` tombstoned (those stamped at or after the entry's tombstone).
-- `SettingsRepository.update(key) { … }` does read-modify-write in one transaction. The synced key `diet.deliveryMatchWords` from plan §3 was added.
-- `DevicePrefs` exposes `Flow`s plus suspend setters; its DataStore is provided with the `@DevicePrefsStore` qualifier.
-- Time/gap labels go through an injected `DietFormatter` (`AndroidDietFormatter`), and the minute ticker is an injectable `MinuteTicker`, so view-model tests are deterministic.
-- Diet today screen:
-  - The history icon is left out until `DietHistoryRoute` exists (M7).
-  - "Add something" on a gap focuses the capture field; M7 adds the `eatenAt` preset.
-  - Mic buttons do nothing until M6.
-  - `DietSettingsRoute` is a placeholder until M5.
-- Entry edit: the time picker is an `AlertDialog` hosting `TimePicker`. Photo replace uses the system photo picker and `PhotoStore.import`; the camera capture path isn't wired in the UI yet.
-- Backup (M9 branch): secrets go through a `SecretBackup` interface with a no-op binding until M10. Restore is split into a testable "replace files" step and a separate process restart.
-- Unlock-sheet eligibility (`UnlockSheetPolicy`) was implemented early in `:shared` (M2), with 8 tests.
-- Open questions from the plan use their defaults; the user hasn't overridden them yet:
-  - applicationId `app.klean`
-  - sleep window 00:00–08:00
-  - gap threshold 4 h
-  - Gemini model `gemini-2.5-flash`
-  - immediate silent re-post of the swiped status notification
+## Deviations from the plans
 
-## Not yet verified on a device
+- **Copy guard:** `ForbiddenCopyTest` matches only uppercase `ADD`, so "Add something" passes. It also rejects `!` and guilt words.
+- **Shell:** screens get registry and services through `ShellViewModel`, so the shell can be tested without Hilt.
+- **Module gate:** `ModuleGate` lives in `:core:data` (`SettingsModuleGate`, synced `core.modules.disabled`).
+  - `seedNew` keeps new modules **on** and records them in `core.modules.known`.
+  - Existing installs get them through `DevicePrefs.pendingNewModules` and the "New in Klean" sheet.
+- **Diet:**
+  - `DietRepository` is an interface (`DefaultDietRepository`), tested with `FakeDietRepository`.
+  - Diet's status notification was replaced by `KleanStatusNotifier` (`core/capture/status`); diet now contributes `DietStatusLine`.
+  - `DietReplyReceiver` handles check-in replies only.
+  - The status line still follows the `diet.statusNotification` setting, and is removed when no module contributes a line.
+- **Renames:** `NotificationIds.STATUS` (1001); channel `Channels.STATUS` = `status_v1` (`diet_status_v2` retired).
+- **`DashboardSlot` order:** APPROVALS, TASKS, AGENDA, BIRTHDAYS, SLEEP, WORKOUT, DIET.
+- **`navOrder`:** Tasks 10, Calendar 20, Contacts 30, Workout 40, Sleep 50, Diet 60.
+- **Bottom bar:** Today + 3 modules + More.
+- **Schema v3 naming:**
+  - `task.origin` (KLEAN/GOOGLE), because `task.source` already means MANUAL/CAPTURE.
+  - `photo_blob` / `route_blob` hold file-name keys.
+  - Reminders have a `DISMISSED` state.
+  - `DevicePrefs.isMainPhone` keeps the stored key `mainPhone`.
+- **Capture routing:** the `RuleCaptureClassifier` runs before AI. Birthday text never reaches AI. With no rule match, capture falls back to diet with "Move to…" chips.
+- **Backend:**
+  - The `records` column is `table_name`.
+  - Web push uses JDK crypto; argon2id comes from BouncyCastle.
+  - `POST /auth/login` gives the web's admin token.
+  - DAV query filters are ignored, and recurring-event exceptions sent over DAV are dropped.
+- **Places:** geofencing uses `LocationManager` proximity alerts only (no Play services).
+- **Unlock sheet:** uses a full-screen intent, with a heads-up fallback; never `SYSTEM_ALERT_WINDOW`.
+- **Plan defaults still in effect:** applicationId `app.klean`, sleep window 00:00–08:00, gap threshold 4 h, Gemini `gemini-2.5-flash`.
 
-No phone has been connected so far. Everything is verified by builds and JVM/Robolectric tests only. Stand-ins:
-- `ShellSmokeTest` covers the Today / Diet / Settings bar.
-- `DietDashboardViewModelTest.loggingFromDashboardAppearsOnDietScreen` covers a dashboard log reaching the Diet screen.
-- `DietReplyReceiverTest` covers the inline-reply save path.
-- `BackupRestoreTest` covers the backup round trip.
+## Verification status
 
-The instrumented tests (`InlineReplySaveTest`, `BackupRoundTripTest`) compile but have never run. The list of pending manual checks is at the bottom of `TASKS.md`.
+- **Waydroid:** verified for:
+  - the diet loop
+  - check-in rotation and reboot rescheduling
+  - quiet hours
+  - backup/restore, including a fresh install
+  - airplane-mode inline reply (251 ms)
+  - the Today dashboard and holistic surfaces
+  - the schema upgrades
+  - the Klean account
+  - the delivery listener (simulated)
+  - places (mock GPS)
+  - the AI enrichment path (fake local server)
+
+  `connectedDebugAndroidTest` passes 6/6. Evidence is in TASKS.md.
+- **Pixel 9a** (2026-11-08): verified for the inline reply, lock-screen visibility, the QS tile, the widget, module on/off, and check-in rotation.
+- **Still needs the user's devices** (full list in TASKS.md):
+  - lock-screen inline reply in airplane mode
+  - a real reboot
+  - a real delivery notification
+  - voice and camera
+  - walking out of a real place
+  - TalkBack
+  - a real on-device model
+  - Gemini with a key
+  - the holistic surfaces on the user's existing install

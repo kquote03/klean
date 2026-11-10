@@ -4,8 +4,8 @@ You are continuing the build of **Klean**, a local-first holistic life-managemen
 
 ## Read first, in this order
 
-1. `docs/handover-2026-11-09.md`: the current state, what's done and what's next. It overrides the stale "Current state" and "Resume here" sections of `AGENTS.md`.
-2. `AGENTS.md`: toolchain, conventions and gotchas. It is protected; edit it only with the user's approval.
+1. `docs/handover-2026-11-09.md`: the current state, what's done and what's next. (dated snapshot).
+2. `AGENTS.md`: toolchain, conventions, gotchas, current state and next steps. It is protected; edit it only with the user's approval.
 3. `.hermes/plans/2026-11-09_165408-klean-holistic-full-product.md`: the governing plan, decisions H1–H9 and milestones M16–M29.
 4. `.hermes/plans/2026-11-09_170500-parallel-life-modules.md`: the per-module "Common checklist" and specs S1–S6, used by M18–M20 with the amendments in the governing plan.
 5. `~/.hermes/cache/scratch/klean-subagent-brief.md`: the rules to hand every subagent, including the "State update" sections at the end.
