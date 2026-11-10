@@ -4,7 +4,7 @@ You are continuing the build of **Klean**, a local-first holistic life-managemen
 
 ## Read first, in this order
 
-1. `docs/handover-2026-11-09.md`: the current state, what's done and what's next. (dated snapshot).
+1. `docs/handover-2026-11-10.md` (latest dated snapshot), then `docs/handover-2026-11-09.md` for the background.
 2. `AGENTS.md`: toolchain, conventions, gotchas, current state and next steps. It is protected; edit it only with the user's approval.
 3. `.hermes/plans/2026-11-09_165408-klean-holistic-full-product.md`: the governing plan, decisions H1–H9 and milestones M16–M29.
 4. `.hermes/plans/2026-11-09_170500-parallel-life-modules.md`: the per-module "Common checklist" and specs S1–S6, used by M18–M20 with the amendments in the governing plan.
@@ -28,8 +28,8 @@ You are continuing the build of **Klean**, a local-first holistic life-managemen
 
 ## Next steps
 
-1. Run M18 Tasks and reminders, plus M19 Calendar, as two parallel worktree lanes. M18 owns `shared/.../time/RecurrenceRule.kt`. Merge them, gate, tag `m18` and `m19` (calendar part).
-2. Run M19 Contacts and birthdays, plus M20 Workout and sleep. After merging, move the calendar and contacts `DayItemsProvider` definitions into `core/ui/module/Dashboard.kt`, and replace calendar's private recurrence expander with `RecurrenceRule`.
+1. ~~M18 Tasks and reminders ‖ M19 Calendar~~ — done 2026-11-10 (tags `m18`, `m19-cal`; `DayItemsProvider` already moved to `core/ui/.../module/DayItems.kt`).
+2. Run M19 Contacts and birthdays (worktree `../klean-contacts`, branch `m19-contacts`) plus M20 Workout and sleep (`../klean-body`, `m20-body`). Contacts binds birthdays into `DayItemsProvider`. After merging, tag `m19` and `m20`, and replace calendar's private recurrence expander with `RecurrenceRule` (calendar skips missing month days per RFC 5545; `RecurrenceRule` clamps — add a skip option rather than changing calendar behaviour).
 3. Run M26 Web client against the merged backend, alongside M25 Android sync.
 4. Then: M21 Google, M22 Health Connect and GPS, M23 delegation and Hermes, M27 Wear OS, M28 capture everywhere.
 5. M29: an acceptance run with the user on the Pixel, watch, Docker backend and browser. Record it in `docs/acceptance-p1.md`, then tag `p1`.
