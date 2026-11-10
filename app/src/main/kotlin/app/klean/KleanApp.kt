@@ -12,6 +12,7 @@ import app.klean.core.notifications.Rescheduler
 import app.klean.core.sync.SyncStartup
 import app.klean.core.ui.module.ModuleRegistry
 import app.klean.nav.NewModulesStore
+import app.klean.watch.AppWatchStatePublisher
 import app.klean.feature.diet.unlock.ScreenStateMonitor
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
@@ -29,6 +30,7 @@ class KleanApp : Application(), Configuration.Provider {
     @Inject lateinit var newModules: NewModulesStore
     @Inject lateinit var devices: DeviceRepository
     @Inject lateinit var sync: SyncStartup
+    @Inject lateinit var watchState: AppWatchStatePublisher
 
     /** WorkManager is initialised on demand with Hilt's factory; the default initializer is removed in the manifest. */
     override val workManagerConfiguration: Configuration
@@ -41,6 +43,8 @@ class KleanApp : Application(), Configuration.Provider {
         runCatching { screenState.start() }.onFailure { Log.w("Klean", "screen monitor failed", it) }
         // Sync (M25): periodic work while paired, a run 10 s after local changes, last-seen on foreground.
         runCatching { sync.start(this, appScope) }.onFailure { Log.w("Klean", "sync startup failed", it) }
+        // Wear OS (M27): keep the watch's snapshot current. Does nothing on a phone without Play services.
+        runCatching { watchState.start() }.onFailure { Log.w("Klean", "watch state startup failed", it) }
         appScope.launch {
             // Modules added by an update arrive on; an existing install lists them once ("New in Klean").
             // Runs first, so the reschedule below already sees every module.
