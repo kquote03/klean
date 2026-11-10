@@ -1,2 +1,147 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources></resources>
+<resources>
+    <string name="contacts_label">Contacts</string>
+    <string name="birthdays_label">Birthdays</string>
+    <string name="contacts_tab_people">People</string>
+    <string name="contacts_capture_placeholder">Sara\'s birthday is March 3</string>
+    <string name="contacts_new">New contact</string>
+    <string name="contacts_edit">Edit contact</string>
+    <string name="contacts_back">Back</string>
+    <string name="contacts_save">Save</string>
+    <string name="contacts_delete">Delete</string>
+    <string name="contacts_keep">Keep</string>
+    <string name="contacts_delete_title">Delete %1$s?</string>
+    <string name="contacts_delete_body">They also leave the phone\'s contacts and their birthday reminders stop.</string>
+    <string name="contacts_search">Search names, numbers, emails</string>
+    <string name="contacts_empty">No contacts yet. Add someone with the button below, or bring in a contacts file from Settings.</string>
+    <string name="contacts_no_match">Nobody matches that.</string>
+    <string name="contacts_gone">This contact isn\'t here any more.</string>
+    <string name="contacts_in_account">In %1$s</string>
+    <string name="contacts_access_title">Show contacts from this phone</string>
+    <string name="contacts_access_body">Lets Klean put its contacts in the phone\'s contacts and dialer, and show contacts from DAVx5 here.</string>
+
+    <!-- Fields -->
+    <string name="contacts_field_name">Name</string>
+    <string name="contacts_name_needed">A name is needed</string>
+    <string name="contacts_field_org">Company</string>
+    <string name="contacts_field_phones">Phone numbers</string>
+    <string name="contacts_field_phone">Phone number</string>
+    <string name="contacts_field_emails">Emails</string>
+    <string name="contacts_field_email">Email</string>
+    <string name="contacts_field_addresses">Addresses</string>
+    <string name="contacts_field_address">Address</string>
+    <string name="contacts_field_birthday">Birthday</string>
+    <string name="contacts_field_anniversary">Anniversary</string>
+    <string name="contacts_field_notes">Notes</string>
+    <string name="contacts_field_more">More</string>
+    <string name="contacts_add_phone">Add a number</string>
+    <string name="contacts_add_email">Add an email</string>
+    <string name="contacts_add_address">Add an address</string>
+    <string name="contacts_remove_value">Remove %1$s</string>
+    <string name="contacts_label_kind">Label</string>
+    <string name="contacts_label_mobile">Mobile</string>
+    <string name="contacts_label_home">Home</string>
+    <string name="contacts_label_work">Work</string>
+    <string name="contacts_label_other">Other</string>
+    <string name="contacts_address_street">Street</string>
+    <string name="contacts_address_city">City</string>
+    <string name="contacts_address_region">Region</string>
+    <string name="contacts_address_postcode">Postcode</string>
+    <string name="contacts_address_country">Country</string>
+    <string name="contacts_no_birthday">No birthday</string>
+    <string name="contacts_birthday_month">Birthday month</string>
+    <string name="contacts_birthday_day">Birthday day</string>
+    <string name="contacts_birthday_year">Year (optional)</string>
+    <string name="contacts_birthday_invalid">That date doesn\'t exist in that year.</string>
+
+    <!-- Merge offer -->
+    <string name="contacts_merge_title">These look like the same people</string>
+    <string name="contacts_merge_body">Same name and a shared number or email. Merge a pair to keep one card with everything from both.</string>
+    <string name="contacts_merge_pair">%1$s and %2$s</string>
+    <string name="contacts_merge_pair_account">%1$s, also in %2$s</string>
+    <string name="contacts_merge_one">Merge</string>
+    <string name="contacts_merge_keep">Keep apart</string>
+    <string name="contacts_merge_not_now">Not now</string>
+    <plurals name="contacts_merge_more">
+        <item quantity="one">and 1 more pair</item>
+        <item quantity="other">and %d more pairs</item>
+    </plurals>
+
+    <!-- Settings -->
+    <string name="contacts_settings_title">Contacts settings</string>
+    <string name="contacts_settings_phone">This phone</string>
+    <string name="contacts_settings_phone_on">Contacts access is on</string>
+    <string name="contacts_settings_phone_on_body">Klean\'s contacts show in the phone\'s contacts and dialer under the Klean account.</string>
+    <string name="contacts_settings_dav">DAVx5</string>
+    <string name="contacts_settings_dav_none">No DAVx5 accounts on this phone</string>
+    <string name="contacts_settings_dav_body">Contacts in DAVx5 accounts show in Klean and can be edited here. DAVx5 keeps syncing them.</string>
+    <string name="contacts_settings_files">Files</string>
+    <string name="contacts_settings_import">Bring in a contacts file</string>
+    <string name="contacts_settings_import_body">A .vcf file (vCard 3 or 4), one person or many. People already here are updated.</string>
+    <string name="contacts_settings_export_v3">Save as a contacts file (vCard 3)</string>
+    <string name="contacts_settings_export_v3_body">Works with most apps and phones</string>
+    <string name="contacts_settings_export_v4">Save as a contacts file (vCard 4)</string>
+    <string name="contacts_settings_export_v4_body">The newer format, for apps that read it</string>
+    <string name="contacts_export_file_name">klean-contacts.vcf</string>
+    <string name="contacts_import_failed">That file couldn\'t be read as contacts.</string>
+    <string name="contacts_export_failed">The file couldn\'t be saved there.</string>
+    <plurals name="contacts_imported">
+        <item quantity="one">Added %1$d contact, updated %2$d</item>
+        <item quantity="other">Added %1$d contacts, updated %2$d</item>
+    </plurals>
+    <plurals name="contacts_exported">
+        <item quantity="one">Saved %d contact</item>
+        <item quantity="other">Saved %d contacts</item>
+    </plurals>
+
+    <!-- Setup page -->
+    <string name="contacts_setup_title">Contacts</string>
+    <string name="contacts_setup_body">With contacts access, people you add in Klean also show in the phone\'s contacts and dialer, and contacts from DAVx5 show in Klean. You can do this later in Settings.</string>
+    <string name="contacts_setup_allow">Allow contacts access</string>
+
+    <!-- Birthdays -->
+    <string name="birthdays_coming_up">Coming up</string>
+    <string name="birthdays_empty">No birthdays yet. Add one to a contact, or type something like \"Sara\'s birthday is March 3\".</string>
+    <string name="birthdays_today">Today</string>
+    <string name="birthdays_tomorrow">Tomorrow</string>
+    <string name="birthdays_turns">Turns %1$d</string>
+    <string name="birthdays_turns_on">Turns %1$d on %2$s</string>
+    <string name="birthdays_reminders">Reminders</string>
+    <string name="birthdays_no_reminders">No reminders</string>
+    <string name="birthdays_reminder_on_day">On the day</string>
+    <plurals name="birthdays_reminder_days_before">
+        <item quantity="one">%d day before</item>
+        <item quantity="other">%d days before</item>
+    </plurals>
+    <string name="birthdays_card_title">Birthdays</string>
+    <string name="birthdays_card_empty">No birthdays in the next 30 days.</string>
+    <string name="birthdays_item">%1$s\'s birthday</string>
+    <string name="birthdays_item_age">%1$s turns %2$d</string>
+    <string name="birthdays_status_one">%1$s\'s birthday</string>
+    <plurals name="birthdays_status_many">
+        <item quantity="one">%d birthday today</item>
+        <item quantity="other">%d birthdays today</item>
+    </plurals>
+    <string name="birthdays_tile_label">Next birthday</string>
+    <string name="birthdays_tile_today">%1$s, today</string>
+    <string name="birthdays_tile_tomorrow">%1$s, tomorrow</string>
+    <string name="birthdays_tile_value">%1$s, %2$s</string>
+    <string name="birthdays_settings_title">Birthday settings</string>
+    <string name="birthdays_settings_age">Show age</string>
+    <string name="birthdays_settings_age_body">When the birth year is known</string>
+    <string name="birthdays_settings_defaults">Reminders for new contacts</string>
+    <string name="birthdays_settings_defaults_body">Each contact can change these or turn them off.</string>
+    <string name="birthdays_settings_time">Reminder time</string>
+
+    <!-- Birthday reminders (BirthdayReminderSync) -->
+    <string name="birthdays_reminder_today">It\'s %1$s\'s birthday today</string>
+    <string name="birthdays_reminder_today_age">%1$s turns %2$d today</string>
+    <plurals name="birthdays_reminder_in_days">
+        <item quantity="one">%1$s\'s birthday is tomorrow</item>
+        <item quantity="other">%1$s\'s birthday is in %2$d days</item>
+    </plurals>
+    <plurals name="birthdays_reminder_in_days_age">
+        <item quantity="one">%1$s turns %3$d tomorrow</item>
+        <item quantity="other">%1$s turns %3$d in %2$d days</item>
+    </plurals>
+</resources>
