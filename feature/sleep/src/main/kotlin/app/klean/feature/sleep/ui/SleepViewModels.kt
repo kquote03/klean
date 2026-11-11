@@ -68,7 +68,8 @@ class SleepFormatter @Inject constructor(@ApplicationContext private val ctx: Co
         0 -> ctx.getString(R.string.sleep_day_today)
         1 -> ctx.getString(R.string.sleep_day_yesterday)
         else -> {
-            val f = SimpleDateFormat(DateFormat.getBestDateTimePattern(Locale.getDefault(), "EEEdMMM"), Locale.getDefault())
+            // Stand-alone letters (c, L) aren't java.text letters (the JVM, Robolectric); E and M read the same.
+            val f = SimpleDateFormat(DateFormat.getBestDateTimePattern(Locale.getDefault(), "EEEdMMM").replace('c', 'E').replace('L', 'M'), Locale.getDefault())
             f.timeZone = TimeZone.getTimeZone(zone.current().id)
             f.format(Date(atMinute(date, 12 * 60, zone.current())))
         }

@@ -64,6 +64,22 @@ import app.klean.feature.sleep.R
 import app.klean.feature.sleep.data.Night
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
+import androidx.compose.material.icons.rounded.Bedtime
+import androidx.compose.ui.platform.testTag
+import app.klean.core.design.component.CLUTTER_EXEMPT
+import app.klean.core.design.component.CardTone
+import app.klean.core.design.component.EmptyState
+import app.klean.core.design.component.KleanScreen
+import app.klean.core.design.component.ListRow
+import app.klean.core.design.component.MenuAction
+import app.klean.core.design.component.ModuleCard
+import app.klean.core.design.component.SectionHeader
+import app.klean.core.design.component.WeekBars
+import app.klean.core.design.component.listGroup
+import app.klean.core.design.theme.Space
+import java.time.format.TextStyle
+import java.util.Locale
+import kotlinx.datetime.isoDayNumber
 
 internal object SystemZone : ZoneProvider {
     override fun current(): TimeZone = TimeZone.currentSystemDefault()
@@ -99,87 +115,74 @@ fun SleepToggleButton(asleep: Boolean, onClick: () -> Unit, modifier: Modifier =
     }
 }
 
-/** Sleep: one tap, then the last 14 nights as plain bars of their length. No targets, no labels on length. */
+/** Track › Sleep: last night (or the night in progress) with a bar a night, one tap to go to bed or get up, recent nights. */
 @Composable
 fun SleepScreen(onEdit: (String?) -> Unit, onSettings: () -> Unit, vm: SleepViewModel = hiltViewModel()) {
     val s by vm.state.collectAsStateWithLifecycle()
-    val fmt = rememberSleepFormatter()
-    Scaffold(
-        topBar = {
-            SleepTopBar(stringResource(R.string.sleep_label), onBack = null) {
-                IconButton(onClick = onSettings, modifier = Modifier.size(48.dp)) {
-                    Icon(Icons.Rounded.Settings, contentDescription = stringResource(R.string.sleep_settings))
-                }
-            }
-        },
-    ) { pad ->
-        LazyColumn(Modifier.padding(pad).fillMaxSize()) {
-            item {
-                Column(Modifier.padding(16.dp)) {
-                    val open = s.open
-                    val last = s.lastNight
-                    Text(
-                        when {
-                            open != null -> stringResource(R.string.sleep_since, fmt.time(open.bedAt))
-                            last != null -> stringResource(R.string.sleep_last_night, fmt.duration(last.wakeAt!! - last.bedAt))
-                            else -> stringResource(R.string.sleep_card_empty)
-                        },
-                        style = MaterialTheme.typography.titleMedium,
-                    )
-                    if (s.loaded) SleepToggleButton(open != null, vm::toggle, Modifier.padding(top = 12.dp))
-                }
-            }
-            item {
-                Text(
-                    stringResource(R.string.sleep_nights), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(start = 16.dp, top = 8.dp, bottom = 4.dp),
-                )
-            }
-            if (s.loaded && s.nights.all { it.session == null }) item { NeutralEmpty(stringResource(R.string.sleep_nights_empty)) }
-            val longest = s.nights.maxOfOrNull { it.durationMs ?: 0 }?.coerceAtLeast(1) ?: 1
-            items(s.nights, key = { it.date.toString() }) { n ->
-                val today = s.today
-                NightRow(n, if (today != null) fmt.day(n.date, today) else "", longest, fmt) { n.session?.let { onEdit(it.id) } }
-            }
-            item {
-                TextButton(onClick = { onEdit(null) }, modifier = Modifier.padding(8.dp).heightIn(min = 48.dp)) {
-                    Icon(Icons.Rounded.Add, contentDescription = null)
-                    Text(stringResource(R.string.sleep_add_night), Modifier.padding(start = 8.dp))
-                }
-            }
-        }
-    }
+    SleepContent(s, rememberSleepFormatter(), onToggle = vm::toggle, onEdit = onEdit, onSettings = onSettings)
 }
 
+/**
+ * The hero holds the one primary action ("Going to bed" / "I'm up"); nights with nothing logged collapse, never
+ * listed. Adding a night by hand and Sleep settings sit in the overflow. With no nights at all, one empty state
+ * whose action is the same one tap.
+ */
 @Composable
-private fun NightRow(n: Night, day: String, longest: Long, fmt: SleepFormatter, onClick: () -> Unit) {
-    val s = n.session
-    Row(
-        Modifier.fillMaxWidth().heightIn(min = 48.dp).clickable(enabled = s != null, onClick = onClick).padding(horizontal = 16.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(day, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.width(96.dp))
-        Box(Modifier.weight(1f).height(20.dp)) {
-            val ms = n.durationMs
-            if (ms != null && ms > 0) {
-                Box(
-                    Modifier.fillMaxHeight().fillMaxWidth((ms.toFloat() / longest).coerceIn(0.04f, 1f))
-                        .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(6.dp)),
-                )
-            } else {
-                // An empty night reads on one line where the bar would be, not squeezed into the duration column.
-                Text(
-                    stringResource(R.string.sleep_no_night),
-                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1, modifier = Modifier.align(Alignment.CenterStart),
+fun SleepContent(state: SleepState, fmt: SleepFormatter, onToggle: () -> Unit, onEdit: (String?) -> Unit, onSettings: () -> Unit) {
+    val ctx = LocalContext.current
+    val text = remember(fmt) { SleepWeekText(ctx.applicationContext, fmt) }
+    val menu = listOf(
+        MenuAction(stringResource(R.string.sleep_add_night)) { onEdit(null) },
+        MenuAction(stringResource(R.string.sleep_settings), onClick = onSettings),
+    )
+    KleanScreen(title = stringResource(R.string.sleep_label), menu = menu) { pad ->
+        val today = state.today
+        if (!state.loaded || today == null) return@KleanScreen
+        val logged = state.nights.filter { it.session != null && (it.durationMs ?: 0) > 0 }
+        // Last night leads in the hero; the list holds the nights before it.
+        val earlier = logged.filter { it.session?.id != state.lastNight?.id || state.open != null }
+        val open = state.open
+        val toggle = MenuAction(stringResource(if (open != null) R.string.sleep_im_up else R.string.sleep_go_to_bed), onClick = onToggle)
+        LazyColumn(Modifier.fillMaxSize().testTag(CLUTTER_EXEMPT), contentPadding = pad) {
+            if (logged.isEmpty() && open == null) {
+                item(key = "empty") { EmptyState(stringResource(R.string.sleep_nights_empty), icon = Icons.Rounded.Bedtime, action = toggle) }
+                return@LazyColumn
+            }
+            item(key = "hero") {
+                val week = SleepWeek.of(state.nights)
+                val last = state.lastNight
+                val (label, fact, supporting) = when {
+                    open != null -> Triple(stringResource(R.string.sleep_hero_asleep), stringResource(R.string.sleep_hero_since, fmt.time(open.bedAt)), null)
+                    last != null -> Triple(stringResource(R.string.sleep_hero_last_night), fmt.duration(last.wakeAt!! - last.bedAt), fmt.range(last))
+                    else -> Triple(stringResource(R.string.sleep_hero_week), text.average(week) ?: stringResource(R.string.sleep_hero_none), text.average(week)?.let { text.over(week) })
+                }
+                ModuleCard(
+                    label = label,
+                    fact = fact,
+                    supporting = supporting,
+                    tone = CardTone.SECONDARY,
+                    action = toggle,
+                    hero = {
+                        WeekBars(
+                            values = week.bars,
+                            labels = week.days.map { java.time.DayOfWeek.of(it.dayOfWeek.isoDayNumber).getDisplayName(TextStyle.NARROW, Locale.getDefault()) },
+                            today = week.bars.lastIndex,
+                            description = text.description(week),
+                        )
+                    },
                 )
             }
+            if (earlier.isNotEmpty()) {
+                item(key = "h_nights") { SectionHeader(stringResource(R.string.sleep_nights)) }
+                listGroup("nights", earlier, { it.date.toString() }) { n ->
+                    ListRow(
+                        title = text.night(n.date, today),
+                        meta = fmt.duration(n.durationMs ?: 0),
+                        onClick = { n.session?.let { onEdit(it.id) } },
+                    )
+                }
+            }
         }
-        Text(
-            n.durationMs?.takeIf { it > 0 }?.let { fmt.duration(it) }.orEmpty(),
-            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(start = 12.dp).width(72.dp),
-        )
     }
 }
 

@@ -63,4 +63,17 @@
     <string name="sleep_bedtime_body">Bedtime is at %1$s.</string>
     <string name="sleep_channel_bedtime">Bedtime reminder</string>
     <string name="sleep_channel_session">While asleep</string>
+    <!-- Track › Sleep and Track › Week (UI Phase 3) -->
+    <string name="sleep_night_into">%1$s into %2$s</string>
+    <string name="sleep_week_fact">%1$s of sleep</string>
+    <plurals name="sleep_week_over">
+        <item quantity="one">over 1 night</item>
+        <item quantity="other">on average, over %1$d nights</item>
+    </plurals>
+    <string name="sleep_week_bars">Sleep over the last 7 nights, %1$s</string>
+    <string name="sleep_hero_last_night">Last night</string>
+    <string name="sleep_hero_asleep">Asleep</string>
+    <string name="sleep_hero_since">Since %1$s</string>
+    <string name="sleep_hero_week">This week</string>
+    <string name="sleep_hero_none">No nights this week</string>
 </resources>

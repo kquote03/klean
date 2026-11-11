@@ -107,6 +107,7 @@ class SleepKleanModule @Inject constructor(
     override val startRoute: Any = SleepRoute
     override val graphRoute: Any = SleepGraph
     override val settingsRoute: Any = SleepSettingsRoute
+    override val drawsGroupChrome: Boolean = true
     override val capturePlaceholderRes: Int = R.string.sleep_capture_placeholder
 
     override fun registerGraph(builder: NavGraphBuilder, nav: NavController) = with(builder) {
@@ -310,5 +311,6 @@ abstract class SleepModuleBindings {
     @Binds @IntoSet abstract fun summary(s: SleepSurfaces): DashboardSummaryProvider
     @Binds @IntoSet abstract fun activity(s: SleepSurfaces): DayActivityProvider
     @Binds @IntoSet abstract fun listener(s: SleepSurfaces): SleepChangeListener
+    @Binds @IntoSet abstract fun week(s: app.klean.feature.sleep.ui.SleepWeekSummary): app.klean.core.ui.module.WeekSummaryProvider
     @Binds abstract fun importSource(s: app.klean.feature.sleep.data.HealthConnectSleepImport): SleepImportSource
 }

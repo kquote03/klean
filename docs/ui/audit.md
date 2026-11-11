@@ -262,3 +262,7 @@ Only 4 of 20 screens meet the budget outright. The common causes, in order of we
 | Workout: settings gear | top bar | Workout overflow → Workout settings (and Settings › Workout) |
 | Workout: "Exercises" row | bottom of the list | Workout overflow → Exercises |
 | Workout: two grey empty sentences | Saved workouts, Recent | one `EmptyState` ("Your workouts will show up here.", action "Start a workout") |
+| Sleep: "Going to bed" / "I'm up" filled button over a grey sentence | top of Sleep | the hero card's one tonal action (Last night or Asleep, with a bar a night); the empty state's action when nothing is logged |
+| Sleep: 14 rows with bars, empty nights as "Nothing logged" | Sleep | "Recent nights" list group, "Sunday into Monday · 6 h 50 m"; empty nights collapse; last night is the hero |
+| Sleep: "Add a night" text button | bottom of the list | Sleep overflow → Add a night |
+| Sleep: settings gear | top bar | Sleep overflow → Sleep settings |
