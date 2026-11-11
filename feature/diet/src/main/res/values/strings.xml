@@ -178,4 +178,7 @@
     <string name="diet_section_earlier">Earlier this week</string>
     <string name="diet_week_label">Food today</string>
     <string name="diet_week_latest">%1$s at %2$s</string>
+    <!-- Today at a glance -->
+    <string name="diet_glance_food">Food</string>
+    <string name="diet_glance_checkin">Check-in around %1$s</string>
 </resources>
