@@ -9,7 +9,9 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.sp
 import app.klean.core.design.theme.Space
 
 /**
@@ -32,8 +34,18 @@ fun SegmentedTabs(labels: List<String>, selected: Int, onSelect: (Int) -> Unit, 
                 ),
                 modifier = Modifier.heightIn(min = Space.touchTarget),
             ) {
-                Text(label, style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                // Four segments at font scale 1.5 don't fit: the label shrinks to fit (down to 10 sp) before it
+                // ends in "…", so "Workout" never reads as "Wo…" (seen on Waydroid in Track).
+                Text(
+                    label,
+                    style = MaterialTheme.typography.labelLarge,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    autoSize = TextAutoSize.StepBased(minFontSize = MIN_LABEL, maxFontSize = MaterialTheme.typography.labelLarge.fontSize),
+                )
             }
         }
     }
 }
+
+private val MIN_LABEL = 10.sp
