@@ -85,6 +85,9 @@ class CaptureViewModel @Inject constructor(
     private var target: ModuleId? = null
     private var source: CaptureSource = CaptureActivity.DEFAULT_SOURCE
 
+    /** The module this sheet is aimed at, for the voice screen its mic opens. */
+    val targetModule: ModuleId? get() = target
+
     private val _state = MutableStateFlow(CaptureUiState())
     val state: StateFlow<CaptureUiState> = _state.asStateFlow()
 

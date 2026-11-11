@@ -162,9 +162,10 @@ fun KleanAppUi(
         onCapture = { sheets.capture = CaptureRequest(target = null) },
     )
 
-    // The wizard and the account menu are full screen: no bar while they show, or while the start screen is
+    // The wizard, the account menu and the voice screen are full screen: no bar while they show, or while the start screen is
     // still being decided.
-    val inSetup = startWithSetup == null || current.isOn(OnboardingRoute) || current.isOn(AccountRoute)
+    val inSetup = startWithSetup == null || current.isOn(OnboardingRoute) || current.isOn(AccountRoute) ||
+        current.isOn(app.klean.core.capture.voice.VoiceRoute())
     val layoutType = if (inSetup) {
         NavigationSuiteType.None
     } else {

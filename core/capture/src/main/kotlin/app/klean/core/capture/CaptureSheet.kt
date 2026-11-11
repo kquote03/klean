@@ -33,7 +33,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.klean.core.capture.voice.VoiceStatus
 import app.klean.core.capture.voice.VoiceUiState
-import app.klean.core.capture.voice.rememberVoiceInput
+import app.klean.core.capture.voice.VoiceCaptureOverlay
+import androidx.compose.runtime.saveable.rememberSaveable
+import app.klean.shared.module.ModuleId
 import app.klean.core.capture.photo.PhotoMenu
 import app.klean.core.capture.photo.PhotoPicker
 import app.klean.core.capture.photo.rememberPhotoPicker
@@ -53,12 +55,24 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CaptureSheet(vm: CaptureViewModel, onDismiss: () -> Unit) {
+fun CaptureSheet(
+    vm: CaptureViewModel,
+    onDismiss: () -> Unit,
+    /** Opens the voice screen in the host's navigation (in-app); null shows it over this sheet (CaptureActivity). */
+    onVoice: ((target: ModuleId?) -> Unit)? = null,
+) {
     val state by vm.state.collectAsStateWithLifecycle()
     val voice by vm.voice.state.collectAsStateWithLifecycle()
-    val onMic = rememberVoiceInput(vm.voice)
+    // The mic opens the dedicated voice screen (plan 2026-11-11 V3) instead of dictating into the field.
+    var voiceOpen by rememberSaveable { mutableStateOf(false) }
+    val onMic: () -> Unit = {
+        if (onVoice != null) onVoice(vm.targetModule) else voiceOpen = true
+    }
     val photoPicker = rememberPhotoPicker(vm::newCaptureUri, vm::onPhotoTaken, vm::onPhotoPicked)
     LaunchedEffect(Unit) { if (vm.consumeStartVoice()) onMic() }
+    if (voiceOpen) {
+        VoiceCaptureOverlay(vm.targetModule, onClose = { voiceOpen = false }, onSaved = { voiceOpen = false; onDismiss() })
+    }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
     LaunchedEffect(state.finished) {

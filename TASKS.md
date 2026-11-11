@@ -731,3 +731,9 @@ Plan `.hermes/plans/2026-11-11_090844-today-at-a-glance-voice-back.md`.
 - [x] C2/C3 Today whiteboard screen
 - [x] C4 Track › Week independent of `TodayCards` (it only reads `WeekSummaryProvider`s; nothing to change)
 - [x] C5 Today widget: mini whiteboard (Speak, Food, Task, Sleep; next 2; last 3 done). Unverified on a placed widget: Waydroid can't place widgets
+
+### Lane VOICE (branch `voice`)
+- [x] V1 — `VoiceEngineTest`: engine order and error mapping (red first; 10 cases)
+- [x] V2 — `VoiceEngine` (system → on-device → system dialog), real error reasons, language-pack download
+- [x] V3 — `VoiceCaptureScreen` + `VoiceRoute` (`klean://voice`, shortcut `voice`); the capture sheet's mic opens it
+- [x] V4 — Waydroid voice check (shots in `~/.hermes/cache/scratch/voice-shots/`); acceptance row V5

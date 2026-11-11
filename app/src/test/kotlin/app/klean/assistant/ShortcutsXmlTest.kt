@@ -30,8 +30,11 @@ class ShortcutsXmlTest {
         assertEquals(main.readText().replace("\"app.klean\"", "\"app.klean.debug\""), debug.readText())
     }
 
+    /** Every entry but the voice shortcut; that one opens the in-app voice screen (plan 2026-11-11 V3). */
+    private fun captureIntents() = intents().filter { it.getAttributeNS(android, "data") != "klean://voice" }
+
     @Test fun everyEntryOpensTheCaptureSheet() {
-        val all = intents()
+        val all = captureIntents()
         assertEquals(7, all.size)
         all.forEach {
             assertEquals("app.klean.core.capture.CaptureActivity", it.getAttributeNS(android, "targetClass"))
@@ -39,8 +42,15 @@ class ShortcutsXmlTest {
         }
     }
 
+    @Test fun voiceShortcutOpensTheVoiceScreenInTheApp() {
+        val voice = intents().single { it.getAttributeNS(android, "data") == "klean://voice" }
+        assertEquals("app.klean.MainActivity", voice.getAttributeNS(android, "targetClass"))
+        assertEquals("app.klean", voice.getAttributeNS(android, "targetPackage"))
+        assertEquals(8, intents().size)
+    }
+
     @Test fun shortcutsAndCapabilitiesMapToModules() {
-        val modules = intents().map { i ->
+        val modules = captureIntents().map { i ->
             val data = i.getAttributeNS(android, "data").ifEmpty { null }
             val extras = i.getElementsByTagName("extra")
             val extraModule = (0 until extras.length).map { extras.item(it) as Element }
