@@ -107,7 +107,7 @@ class TodayShotsTest {
 
     @Test fun largeText() {
         render("today-font150", fontScale = 1.5f)
-        compose.onNodeWithText("Going to bed").assertExists()
+        compose.onNodeWithText("Bedtime").assertExists()
         compose.assertClutterBudget()
     }
 

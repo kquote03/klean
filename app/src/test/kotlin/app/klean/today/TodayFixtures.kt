@@ -28,7 +28,7 @@ object TodayFixtures {
     var instantRuns = 0
     var undone = 0
 
-    fun quickActions(sleepLabel: String = "Going to bed"): List<QuickAction> = listOf(
+    fun quickActions(sleepLabel: String = "Bedtime"): List<QuickAction> = listOf(
         QuickAction.Capture(ModuleId.DIET, "Food", Icons.Rounded.Restaurant),
         QuickAction.Capture(ModuleId.TASKS, "Task", Icons.Rounded.CheckCircleOutline),
         QuickAction.Instant(ModuleId.SLEEP, sleepLabel, Icons.Rounded.Bedtime) {

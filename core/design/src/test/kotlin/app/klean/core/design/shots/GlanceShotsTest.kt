@@ -50,7 +50,7 @@ class GlanceShotsTest {
     private fun tile(label: String, icon: androidx.compose.ui.graphics.vector.ImageVector) = QuickActionUi(label, icon) { tapped += label }
     private val eight = listOf(
         tile("Speak", Icons.Rounded.Mic), tile("Type", Icons.Rounded.Keyboard), tile("Food", Icons.Rounded.Restaurant),
-        tile("Task", Icons.Rounded.CheckCircleOutline), tile("Going to bed", Icons.Rounded.Bedtime), tile("Workout", Icons.Rounded.FitnessCenter),
+        tile("Task", Icons.Rounded.CheckCircleOutline), tile("Bedtime", Icons.Rounded.Bedtime), tile("Workout", Icons.Rounded.FitnessCenter),
         tile("Event", Icons.Rounded.EventAvailable), tile("Reminder", Icons.Rounded.NotificationsNone),
     )
 
@@ -70,7 +70,7 @@ class GlanceShotsTest {
 
     @Test fun gridAtLargeFont() {
         compose.shot("glance-grid-font150") { Scaled(1.5f) { QuickActionGrid(eight) } }
-        compose.onNodeWithText("Going to bed").assertExists()
+        compose.onNodeWithText("Bedtime").assertExists()
     }
 
     @Test fun shortGridKeepsTileWidths() {

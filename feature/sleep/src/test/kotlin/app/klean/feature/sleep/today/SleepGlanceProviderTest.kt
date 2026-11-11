@@ -59,7 +59,7 @@ class SleepGlanceProviderTest {
 
     @Test fun whileAsleepNothingIsDoneAndTheButtonSaysImUp() = runBlocking {
         clock.nowMs = at(nov9, 23, 40)
-        assertEquals("Going to bed", provider.glance().first().quickAction!!.label)
+        assertEquals("Bedtime", provider.glance().first().quickAction!!.label)
         repo.goToBed(clock.nowMs)
         clock.nowMs = at(nov10, 0, 30)
         val g = provider.glance().first()

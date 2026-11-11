@@ -61,7 +61,7 @@ class SleepGlanceProvider @Inject constructor(
                 ),
                 quickAction = QuickAction.Instant(
                     moduleId,
-                    ctx.getString(if (open != null) R.string.sleep_im_up else R.string.sleep_go_to_bed),
+                    ctx.getString(if (open != null) R.string.sleep_im_up else R.string.sleep_quick_bed),
                     Icons.Rounded.Bedtime,
                     run = ::toggle,
                 ),

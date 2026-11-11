@@ -65,19 +65,35 @@ val QuickActionHeight = 72.dp
 @Composable
 fun QuickActionGrid(actions: List<QuickActionUi>, modifier: Modifier = Modifier) {
     val shown = actions.take(QUICK_ACTION_MAX)
-    Column(modifier.fillMaxWidth().testTag(CLUTTER_EXEMPT), verticalArrangement = Arrangement.spacedBy(Space.xs)) {
+    val base = MaterialTheme.typography.labelLarge
+    val measurer = androidx.compose.ui.text.rememberTextMeasurer()
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    androidx.compose.foundation.layout.BoxWithConstraints(modifier.fillMaxWidth().testTag(CLUTTER_EXEMPT)) {
+        // Every label gets the same size: the largest at which the widest one fits its tile. Shrinking each label on
+        // its own left the grid in mixed sizes ("Going to bed" tiny beside "Food").
+        val tileText = with(density) {
+            ((maxWidth - Space.xs * (QUICK_ACTION_COLUMNS - 1)) / QUICK_ACTION_COLUMNS - Space.xxs * 2).toPx()
+        }
+        val widest = shown.maxOfOrNull { measurer.measure(it.label, base, maxLines = 1, softWrap = false).size.width } ?: 0
+        val scale = if (widest <= 0 || widest <= tileText) 1f else (tileText / widest).coerceAtLeast(MIN_LABEL_SCALE)
+        val label = base.copy(fontSize = base.fontSize * scale)
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Space.xs)) {
         shown.chunked(QUICK_ACTION_COLUMNS).forEachIndexed { r, row ->
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Space.xs)) {
-                row.forEachIndexed { c, a -> QuickActionTile(a, primary = r == 0 && c == 0, modifier = Modifier.weight(1f)) }
+                row.forEachIndexed { c, a -> QuickActionTile(a, primary = r == 0 && c == 0, label = label, modifier = Modifier.weight(1f)) }
                 // A short last row keeps the tiles the same width as the full rows above it.
                 repeat(QUICK_ACTION_COLUMNS - row.size) { Spacer(Modifier.weight(1f)) }
             }
         }
     }
+    }
 }
 
+/** The labels never shrink below this share of `labelLarge` (then they end in "…"). */
+private const val MIN_LABEL_SCALE = 0.6f
+
 @Composable
-private fun QuickActionTile(a: QuickActionUi, primary: Boolean, modifier: Modifier) {
+private fun QuickActionTile(a: QuickActionUi, primary: Boolean, label: androidx.compose.ui.text.TextStyle, modifier: Modifier) {
     val bg = if (primary) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh
     val fg = if (primary) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
     val description = a.contentDescription ?: a.label
@@ -99,12 +115,11 @@ private fun QuickActionTile(a: QuickActionUi, primary: Boolean, modifier: Modifi
             a.label,
             color = fg,
             maxLines = 1,
-            // No wrapping: a label too wide shrinks (auto-size measures width only when it can't wrap).
+            // One size for the whole grid (see QuickActionGrid); never wraps.
             softWrap = false,
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.labelLarge,
-            autoSize = TextAutoSize.StepBased(minFontSize = 8.sp, maxFontSize = MaterialTheme.typography.labelLarge.fontSize),
+            style = label,
         )
     }
 }

@@ -87,7 +87,7 @@ class TodayGlanceScreenTest {
 
     @Test fun sleepIsInstant() {
         render()
-        compose.onNodeWithText("Going to bed").performClick()
+        compose.onNodeWithText("Bedtime").performClick()
         compose.waitUntil(5_000) { TodayFixtures.instantRuns == 1 }
         compose.onNodeWithText("Good night").assertExists()
         compose.onNodeWithText("Undo").performClick()

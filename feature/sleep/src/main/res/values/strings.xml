@@ -80,4 +80,6 @@
     <string name="sleep_glance_slept">Slept %1$s</string>
     <string name="sleep_glance_good_night">Good night</string>
     <string name="sleep_glance_morning">Morning · slept %1$s</string>
+    <!-- Today's one-tap tile: short, so the grid keeps one readable size. -->
+    <string name="sleep_quick_bed">Bedtime</string>
 </resources>

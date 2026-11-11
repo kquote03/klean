@@ -34,7 +34,7 @@ class TodayWidgetStateTest {
         ),
         ModuleId.SLEEP to GlanceContribution(
             done = listOf(row("s1", ModuleId.SLEEP, "Slept 7 h 20 m", 700)),
-            quickAction = QuickAction.Instant(ModuleId.SLEEP, "Going to bed", icon) { InstantResult("Good night", null) },
+            quickAction = QuickAction.Instant(ModuleId.SLEEP, "Bedtime", icon) { InstantResult("Good night", null) },
         ),
         ModuleId.WORKOUT to GlanceContribution(quickAction = QuickAction.Open(ModuleId.WORKOUT, "Workout", icon, Unit)),
     )
@@ -57,7 +57,7 @@ class TodayWidgetStateTest {
         val s = todayWidgetState(buildGlance(all, parts, now = 1200))
         assertEquals(listOf(WidgetActionKind.VOICE, WidgetActionKind.CAPTURE, WidgetActionKind.CAPTURE, WidgetActionKind.SLEEP), s.actions.map { it.kind })
         assertEquals(listOf(null, ModuleId.DIET, ModuleId.TASKS, ModuleId.SLEEP), s.actions.map { it.module })
-        assertEquals("Going to bed", s.actions.last().label)
+        assertEquals("Bedtime", s.actions.last().label)
     }
 
     @Test fun modulesSwitchedOffDropTheirActionsAndRows() = runTest {
