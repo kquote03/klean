@@ -12,3 +12,5 @@ import kotlinx.serialization.Serializable
 @Serializable object ExercisesRoute
 @Serializable data class ExerciseHistoryRoute(val exerciseId: String)
 @Serializable object WorkoutSettingsRoute
+/** The start sheet (Today's Workout tile): saved workouts, Run, an empty workout. */
+@Serializable data object WorkoutStartSheetRoute

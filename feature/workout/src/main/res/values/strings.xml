@@ -130,4 +130,9 @@
     <string name="workout_edit_saved">Edit</string>
     <string name="workout_in_progress_label">In progress</string>
     <string name="workout_started_at">Started %1$s</string>
+    <!-- Today at a glance -->
+    <string name="workout_glance_quick">Workout</string>
+    <string name="workout_glance_running">Workout in progress</string>
+    <string name="workout_start_sheet_title">Start a workout</string>
+    <string name="workout_start_sheet_continue">Continue your workout</string>
 </resources>
