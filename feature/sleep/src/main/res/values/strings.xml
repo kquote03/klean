@@ -76,4 +76,8 @@
     <string name="sleep_hero_since">Since %1$s</string>
     <string name="sleep_hero_week">This week</string>
     <string name="sleep_hero_none">No nights this week</string>
+    <!-- Today at a glance -->
+    <string name="sleep_glance_slept">Slept %1$s</string>
+    <string name="sleep_glance_good_night">Good night</string>
+    <string name="sleep_glance_morning">Morning · slept %1$s</string>
 </resources>
