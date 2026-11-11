@@ -33,8 +33,9 @@ fun SegmentedTabs(labels: List<String>, selected: Int, onSelect: (Int) -> Unit, 
                     activeContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                     inactiveContainerColor = MaterialTheme.colorScheme.surface,
                 ),
-                // A little less side padding than the default 12 dp, so four labels fit at large font scales.
-                contentPadding = PaddingValues(horizontal = Space.xs),
+                // Far less side padding than the default 12 dp, so four labels fit at large font scales beside the Add button
+                // in the bottom toolbar.
+                contentPadding = PaddingValues(horizontal = Space.xxs),
                 modifier = Modifier.heightIn(min = Space.touchTarget),
             ) {
                 // Four segments at font scale 1.5 don't fit: the label shrinks to fit (down to 8 sp, like the bar's labels) before it
