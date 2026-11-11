@@ -70,4 +70,8 @@
     <string name="delegation_test_token">Hermes answered, but didn\'t accept the key.</string>
     <string name="delegation_test_unreachable">Can\'t reach Hermes at that address right now.</string>
     <string name="delegation_test_not_set">Enter an address first.</string>
+    <!-- Today at a glance -->
+    <string name="delegation_glance_approval">Wants to: %1$s</string>
+    <string name="delegation_glance_question">Waiting for your answer</string>
+    <string name="delegation_glance_done">Finished</string>
 </resources>
