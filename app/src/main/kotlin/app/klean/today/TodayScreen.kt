@@ -228,7 +228,8 @@ fun TodayContent(
         QuickActionGrid(
             tiles,
             leftHanded = leftHanded,
-            modifier = Modifier.padding(start = start, end = end, top = Space.xs, bottom = pad.calculateBottomPadding() + Space.sm),
+            // Right above the navigation bar (which already keeps clear of the system bars): no extra gap.
+            modifier = Modifier.padding(start = start, end = end, top = Space.xs, bottom = Space.sm),
         )
         }
     }
