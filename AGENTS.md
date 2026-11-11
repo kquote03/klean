@@ -184,6 +184,7 @@ build-logic/         convention plugins: klean.android.library / .compose / .fea
   - **Avoid the system file picker (SAF):** it froze Waydroid's system process twice. Test file import/export with unit tests.
   - No on-screen keyboard: Back closes the screen instead of a keyboard.
 - **`python3` is not on the host:** run `ui.py`, `wshot` and the count script as `nix shell nixpkgs#python3 -c python3 …`.
+- **Launching the app in scripts:** use `adb shell am start -W -n app.klean.debug/app.klean.MainActivity`. `monkey` may not launch it, and a later "Settings" tap can then land in Android's own Settings app.
 - **Debug helpers:**
   - `~/.hermes/cache/scratch/bin/ui.py dump|tap "<text>"|has "<text>"` reads and taps the UI by text.
   - `~/.hermes/cache/scratch/bin/wshot <png>` takes a screenshot (it strips Waydroid's amdgpu warning).
@@ -256,14 +257,22 @@ build-logic/         convention plugins: klean.android.library / .compose / .fea
 | M27 | Wear OS: watch app (`m27`), plus the phone side (27.7, merged after the tag). The optional on-watch health session (27.8) is not built | ✅ |
 | M28 | Capture everywhere (rules first, "Move to…" across all module pairs) | ✅ `m28` |
 | Server image | `klean-server` Dockerfile, GHCR (amd64 + arm64), reproducible | ✅ |
-| UI overhaul | Plan `.hermes/plans/2026-11-10_222226-ui-overhaul-and-remaining-milestones.md`, direction A (grouped tabs + Soft cards). Phases 1–2 done; Phase 3: Today, Add menu, Tasks and Calendar done; Track, People, Settings, Onboarding and widgets in progress; web follows (Phase 4) | ⏳ → tag `ui1` |
+| UI overhaul | Plan `.hermes/plans/2026-11-10_222226-ui-overhaul-and-remaining-milestones.md`, direction A (grouped tabs + Soft cards). Every Android screen redesigned (Phase 3), with the web following (Phase 4). Gate: 1261 Android tests and 193 web tests | ✅ `ui1` |
 | M29 | Acceptance on the Pixel, watch, Docker server and browser (`docs/acceptance-p1.md`) → tag `p1` | ⏳ after `ui1` |
 
 ## Resume here — next steps in order
 
-1. **UI overhaul Phase 3 (rest):** lane brief `~/.hermes/cache/scratch/lane-ui-p3b.md`, worktree `../klean-ui`. Then remove `@Ignore` from `NoRawDpTest`, run the gate, and tag `ui1`.
-2. **UI Phase 4, web:** lane brief `~/.hermes/cache/scratch/lane-ui-web.md`. pnpm only.
-3. **M29** with the user, then tag `p1`.
+1. **M29 acceptance with the user** on the Pixel, watch, Docker server and browser (`docs/acceptance-p1.md`), then tag `p1`. Setup:
+   - Install the nightly APK over the Pixel's copy. It should upgrade in place, keeping the user's entries; this has never been tried.
+   - Install `wear-debug.apk` from the nightly release.
+   - `docker compose -f deploy/docker-compose.yml up -d`. The GHCR package must be public first.
+2. **Small UI follow-ups:**
+   - the container transform from Today's cards;
+   - check both widgets on the Pixel (Waydroid can't place widgets);
+   - saved workout templates on the web.
+3. **Needs the user:**
+   - Google OAuth client IDs (`docs/google-oauth.md`);
+   - a Hermes URL and token (`docs/hermes.md`).
 
 **UI rules (from the overhaul; they apply to every new screen):**
 - Every screen uses `KleanScreen`, plus `ModuleCard`, `SectionHeader`, `ListRow`, `EmptyState` and `SegmentedTabs` (`core/design`).
@@ -274,7 +283,16 @@ build-logic/         convention plugins: klean.android.library / .compose / .fea
   - at most 7 tappable elements and no text inputs in the first viewport (forms excepted);
   - secondary actions live in menus or behind long-press.
 - Every screen's test calls `assertClutterBudget()` (`:core:testing`), and the screen has Roborazzi light and dark references.
-- Any action moved off a screen is listed in `docs/ui/audit.md` with its new home.
+- Any action moved off a screen is listed in `docs/ui/audit.md` (web: `docs/ui/web.md`) with its new home.
+- **Building blocks:**
+  - `KleanScreen(onBack = …)` gives detail screens a back arrow.
+  - `FactCard` is a small summary card.
+  - Track › Week is built from `WeekSummaryProvider`s contributed by each tracker.
+  - A redesigned module sets `KleanModule.drawsGroupChrome = true` and draws its own group title and tabs.
+  - `KleanMotion` holds the screen transitions: shared axis, or a cross-fade when animations are off.
+  - Glance widgets mirror the look through `WidgetTokens`.
+- **`NoRawDpTest`** fails on raw `dp` paddings in any feature screen. Use `Space`.
+- **Web:** the components live in `web/src/ui/kit.ts`. Every screen is checked by `expectClutterBudget` (`web/e2e/clutter.ts`) at 390×844 and 1440×900. Mark the nav `data-clutter-exempt` and lists `data-clutter-exempt="list"`.
 
 **Small follow-ups** (fold into a later lane, not urgent):
 - the status line repeats a birthday on the day (the reminder plus Birthdays' own line);
