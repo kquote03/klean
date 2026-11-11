@@ -64,6 +64,14 @@ class AppearanceViewModelTest {
         assertEquals(1, refreshed.get())
     }
 
+    @Test fun leftHandedIsOffByDefaultAndSaves() = runTest {
+        val vm = vm(supported = true)
+        assertFalse(real { vm.state.first { it.loaded } }.leftHanded)
+        vm.setLeftHanded(true)
+        real { vm.state.first { it.leftHanded } }
+        assertTrue(real { prefs.leftHanded.first() })
+    }
+
     @Test fun belowAndroid12TheOptionIsHidden() = runTest {
         val vm = vm(supported = false)
         assertFalse(real { vm.state.first { it.loaded } }.wallpaperColoursSupported)

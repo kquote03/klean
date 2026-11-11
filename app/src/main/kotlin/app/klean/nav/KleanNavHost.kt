@@ -92,6 +92,7 @@ fun KleanNavHost(
                 onSettings = { nav.navigate(SettingsRoute) { launchSingleTop = true } },
                 account = shell.account,
                 onAccount = { nav.navigate(AccountRoute) { launchSingleTop = true } },
+                leftHandedFlow = shell.devicePrefs?.leftHanded ?: kotlinx.coroutines.flow.flowOf(false),
             )
             NewModulesSheet(registry, shell.newModules)
         }

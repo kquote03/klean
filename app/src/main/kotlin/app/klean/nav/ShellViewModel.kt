@@ -54,6 +54,8 @@ class ShellViewModel @Inject constructor(
     val account: AccountActions = NoAccounts,
     /** Today's whiteboard: every enabled module's rows and one-tap action. */
     val glance: TodayGlance = TodayGlance(emptySet(), NoGate),
+    /** The device's own settings (Today's left-handed layout); null in shell tests. */
+    val devicePrefs: app.klean.core.data.prefs.DevicePrefs? = null,
 ) : ViewModel() {
     private val _startWithSetup = MutableStateFlow<Boolean?>(null)
 

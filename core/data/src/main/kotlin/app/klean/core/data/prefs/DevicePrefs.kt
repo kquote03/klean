@@ -37,6 +37,7 @@ class DevicePrefs @Inject constructor(
         val deviceId = stringPreferencesKey("deviceId")
         val onboardingDone = booleanPreferencesKey("onboardingDone")
         val dynamicColor = booleanPreferencesKey("dynamicColor")
+        val leftHanded = booleanPreferencesKey("leftHanded")
         val lastScreenOffAt = longPreferencesKey("lastScreenOffAt")
         val unlockSheetPretend = booleanPreferencesKey("unlockSheetPretend")
         val nextPromptAt = longPreferencesKey("nextPromptAt")
@@ -68,6 +69,10 @@ class DevicePrefs @Inject constructor(
     /** "Use wallpaper colours" (Material You). Off: Klean's own pastel scheme. */
     val dynamicColor: Flow<Boolean> = flow(K.dynamicColor, false)
     suspend fun setDynamicColor(v: Boolean) = put(K.dynamicColor, v)
+
+    /** Today's one-tap buttons sit for the left thumb (Speak bottom-left) instead of the right. */
+    val leftHanded: Flow<Boolean> = flow(K.leftHanded, false)
+    suspend fun setLeftHanded(v: Boolean) = put(K.leftHanded, v)
 
     val lastScreenOffAt: Flow<Long?> = nullable(K.lastScreenOffAt)
     suspend fun setLastScreenOffAt(v: Long?) = put(K.lastScreenOffAt, v)
@@ -167,6 +172,7 @@ class DevicePrefs @Inject constructor(
         val EXPORTABLE: List<Pair<Preferences.Key<*>, (String) -> Any?>> = listOf(
             K.onboardingDone to bool,
             K.dynamicColor to bool,
+            K.leftHanded to bool,
             K.nextPromptAt to long,
             K.highlightPromptId to text,
             K.autoBackupKeep to int,

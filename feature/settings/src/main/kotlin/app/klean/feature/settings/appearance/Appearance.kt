@@ -35,6 +35,8 @@ data class AppearanceUiState(
     val wallpaperColours: Boolean = false,
     /** Material You needs Android 12; below that the switch is hidden. */
     val wallpaperColoursSupported: Boolean = false,
+    /** Today's one-tap buttons for the left thumb. */
+    val leftHanded: Boolean = false,
 )
 
 @HiltViewModel
@@ -46,9 +48,14 @@ class AppearanceViewModel(
     @Inject constructor(prefs: DevicePrefs, widgets: WidgetRefresher) :
         this(prefs, widgets, Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
 
-    val state: StateFlow<AppearanceUiState> = prefs.dynamicColor
-        .map { AppearanceUiState(loaded = true, wallpaperColours = it, wallpaperColoursSupported = wallpaperColoursSupported) }
+    val state: StateFlow<AppearanceUiState> = kotlinx.coroutines.flow.combine(prefs.dynamicColor, prefs.leftHanded) { colours, left ->
+        AppearanceUiState(loaded = true, wallpaperColours = colours, wallpaperColoursSupported = wallpaperColoursSupported, leftHanded = left)
+    }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AppearanceUiState(wallpaperColoursSupported = wallpaperColoursSupported))
+
+    fun setLeftHanded(on: Boolean) {
+        viewModelScope.launch { prefs.setLeftHanded(on) }
+    }
 
     fun setWallpaperColours(on: Boolean) {
         viewModelScope.launch {
@@ -72,6 +79,12 @@ fun AppearanceSettingsScreen(onBack: () -> Unit, vm: AppearanceViewModel = hiltV
                     supporting = { Text(stringResource(R.string.appearance_wallpaper_colours_summary)) },
                 )
             }
+            SwitchListItem(
+                checked = s.leftHanded,
+                onCheckedChange = vm::setLeftHanded,
+                headline = { Text(stringResource(R.string.appearance_left_handed)) },
+                supporting = { Text(stringResource(R.string.appearance_left_handed_summary)) },
+            )
             Text(
                 stringResource(R.string.appearance_dark_note),
                 style = MaterialTheme.typography.bodyMedium,

@@ -54,17 +54,33 @@ data class QuickActionUi(
 const val QUICK_ACTION_COLUMNS = 4
 const val QUICK_ACTION_MAX = 8
 
+/**
+ * Lays [reach] (most reached-for first) out in rows of [QUICK_ACTION_COLUMNS] for a thumb: the first item takes the
+ * bottom corner on the holding side (bottom-right for the right hand), then outwards along the bottom row, then the
+ * row above. A short top row hugs the thumb side; null is an empty slot. Rows are returned top to bottom.
+ */
+fun <T> thumbRows(reach: List<T>, leftHanded: Boolean): List<List<T?>> {
+    val rowsBottomUp = reach.take(QUICK_ACTION_MAX).chunked(QUICK_ACTION_COLUMNS).map { chunk ->
+        // chunk[0] goes nearest the thumb; the far side is padded.
+        val padded: List<T?> = chunk + List(QUICK_ACTION_COLUMNS - chunk.size) { null }
+        if (leftHanded) padded else padded.reversed()
+    }
+    return rowsBottomUp.reversed()
+}
+
 /** A quick-action tile's height. */
 val QuickActionHeight = 72.dp
 
 /**
- * Today's one-tap grid: up to [QUICK_ACTION_MAX] tonal tiles in rows of [QUICK_ACTION_COLUMNS], each an icon over a
- * one-line label that shrinks rather than wraps (font 1.5). The first tile (Speak) sits on the primary container,
+ * Today's one-tap grid, at the bottom of the screen within the thumb's reach: up to [QUICK_ACTION_MAX] tonal tiles laid
+ * out by [thumbRows] ([actions] in reach order), each an icon over a one-line label that shrinks rather than wraps
+ * (font 1.5). The first tile (Speak) sits on the primary container,
  * the rest on `surfaceContainerHigh`. The whole grid is one region for the clutter budget ([CLUTTER_EXEMPT]).
  */
 @Composable
-fun QuickActionGrid(actions: List<QuickActionUi>, modifier: Modifier = Modifier) {
+fun QuickActionGrid(actions: List<QuickActionUi>, modifier: Modifier = Modifier, leftHanded: Boolean = false) {
     val shown = actions.take(QUICK_ACTION_MAX)
+    val first = shown.firstOrNull()
     val base = MaterialTheme.typography.labelLarge
     val measurer = androidx.compose.ui.text.rememberTextMeasurer()
     val density = androidx.compose.ui.platform.LocalDensity.current
@@ -78,11 +94,15 @@ fun QuickActionGrid(actions: List<QuickActionUi>, modifier: Modifier = Modifier)
         val scale = if (widest <= 0 || widest <= tileText) 1f else (tileText / widest).coerceAtLeast(MIN_LABEL_SCALE)
         val label = base.copy(fontSize = base.fontSize * scale)
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Space.xs)) {
-        shown.chunked(QUICK_ACTION_COLUMNS).forEachIndexed { r, row ->
+        thumbRows(shown, leftHanded).forEach { row ->
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Space.xs)) {
-                row.forEachIndexed { c, a -> QuickActionTile(a, primary = r == 0 && c == 0, label = label, modifier = Modifier.weight(1f)) }
-                // A short last row keeps the tiles the same width as the full rows above it.
-                repeat(QUICK_ACTION_COLUMNS - row.size) { Spacer(Modifier.weight(1f)) }
+                row.forEach { a ->
+                    if (a == null) {
+                        Spacer(Modifier.weight(1f))
+                    } else {
+                        QuickActionTile(a, primary = a === first, label = label, modifier = Modifier.weight(1f))
+                    }
+                }
             }
         }
     }

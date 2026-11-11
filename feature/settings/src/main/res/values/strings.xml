@@ -151,4 +151,6 @@
         <item>Dagger and Hilt|Apache License 2.0</item>
         <item>Ktor client|Apache License 2.0</item>
     </string-array>
+    <string name="appearance_left_handed">Left-handed</string>
+    <string name="appearance_left_handed_summary">Today\'s Speak and Type buttons sit in the bottom-left corner, by your left thumb</string>
 </resources>

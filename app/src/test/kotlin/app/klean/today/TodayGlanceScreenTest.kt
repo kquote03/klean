@@ -98,7 +98,8 @@ class TodayGlanceScreenTest {
 
     @Test fun sectionsInOrder() {
         render()
-        val tops = listOf("Speak", "Needs attention", "Coming up", "So far today").map {
+        // The day reads top down; the one-tap buttons sit below it, by the thumb.
+        val tops = listOf("Needs attention", "Coming up", "So far today", "Speak").map {
             compose.onNodeWithText(it).getUnclippedBoundsInRoot().top
         }
         assertEquals(tops.sorted(), tops)

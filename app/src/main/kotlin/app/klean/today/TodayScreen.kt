@@ -3,6 +3,8 @@ package app.klean.today
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -92,7 +94,9 @@ fun TodayScreen(
     onSettings: () -> Unit = {},
     account: AccountSource = NoAccounts,
     onAccount: () -> Unit = onSettings,
+    leftHandedFlow: kotlinx.coroutines.flow.Flow<Boolean> = kotlinx.coroutines.flow.flowOf(false),
 ) {
+    val leftHanded by leftHandedFlow.collectAsStateWithLifecycle(initialValue = false)
     val visibleFlow = remember(registry, layout) {
         combine(registry.enabled, registry.dashboardCards, layout.order, layout.hidden) { on, cards, order, hidden ->
             // Arrange Today orders the modules with a place on Today; the rest (Reminders) follow in nav order.
@@ -122,6 +126,7 @@ fun TodayScreen(
         // Gmail's gesture: swipe the avatar to switch accounts. Needing consent opens the menu instead.
         onSwitchAccount = { step -> scope.launch { if (!account.switchBy(step)) onAccount() } },
         timeOf = remember(ctx, zone) { deviceTime(ctx, zone) },
+        leftHanded = leftHanded,
     )
 }
 
@@ -151,6 +156,8 @@ fun TodayContent(
     onAccount: () -> Unit = onSettings,
     onSwitchAccount: (Int) -> Unit = {},
     timeOf: (Long) -> String = { ms -> java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT).format(java.util.Date(ms)) },
+    /** Settings › Appearance › Left-handed: Speak and Type in the bottom-left corner instead of bottom-right. */
+    leftHanded: Boolean = false,
 ) {
     val arrange = stringResource(R.string.today_arrange)
     val undo = stringResource(R.string.today_undo)
@@ -190,8 +197,17 @@ fun TodayContent(
             )
         },
     ) { pad ->
-        LazyColumn(Modifier.fillMaxSize(), contentPadding = pad, verticalArrangement = Arrangement.spacedBy(Space.xs)) {
-            item(key = "quick") { QuickActionGrid(tiles) }
+        // The day reads from the top; the one-tap buttons stay at the bottom, where the thumb rests (user feedback
+        // 2026-11-11): Speak and Type sit in the bottom corner on the holding side.
+        val dir = androidx.compose.ui.platform.LocalLayoutDirection.current
+        val start = pad.calculateStartPadding(dir)
+        val end = pad.calculateEndPadding(dir)
+        Column(Modifier.fillMaxSize()) {
+        LazyColumn(
+            Modifier.weight(1f).fillMaxWidth(),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(start = start, end = end, top = pad.calculateTopPadding(), bottom = Space.md),
+            verticalArrangement = Arrangement.spacedBy(Space.xs),
+        ) {
             if (state.loaded && state.noModules) {
                 item(key = "empty") {
                     EmptyState(stringResource(R.string.today_empty), action = MenuAction(stringResource(R.string.nav_settings), onClick = onSettings))
@@ -208,6 +224,12 @@ fun TodayContent(
             item(key = "done") {
                 Section(stringResource(R.string.today_done), g.done, stringResource(R.string.today_done_empty), dimmed = true, timeOf, onOpen, onCheck)
             }
+        }
+        QuickActionGrid(
+            tiles,
+            leftHanded = leftHanded,
+            modifier = Modifier.padding(start = start, end = end, top = Space.xs, bottom = pad.calculateBottomPadding() + Space.sm),
+        )
         }
     }
 }
