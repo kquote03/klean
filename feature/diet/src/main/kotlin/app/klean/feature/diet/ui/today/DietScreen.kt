@@ -18,6 +18,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavBackStackEntry
 import app.klean.core.design.component.CLUTTER_EXEMPT
+import app.klean.core.design.component.CalorieProgress
 import app.klean.core.design.component.CardTone
 import app.klean.core.design.component.EmptyState
 import app.klean.core.design.component.KleanScreen
@@ -47,6 +48,7 @@ fun DietScreen(
         onOpenEntry = onOpenEntry,
         onOpenHistory = onOpenHistory,
         onAddForGap = onAddForGap,
+        onFillCalories = vm::fillMissing,
         snackbar = snackbar,
         offer = { DeliveryOfferCard() },
     )
@@ -65,8 +67,12 @@ fun DietScreenContent(
     snackbar: SnackbarHostState? = null,
     /** A one-time, dismissible card (the delivery offer); nothing once answered. */
     offer: @Composable () -> Unit = {},
+    onFillCalories: () -> Unit = {},
 ) {
-    val menu = listOf(MenuAction(stringResource(R.string.diet_history_open), onClick = onOpenHistory))
+    val menu = listOfNotNull(
+        state.withoutCalories?.let { MenuAction(stringResource(R.string.diet_fill_calories), onClick = onFillCalories) },
+        MenuAction(stringResource(R.string.diet_history_open), onClick = onOpenHistory),
+    )
     KleanScreen(title = stringResource(R.string.diet_label), menu = menu, snackbarHostState = snackbar) { pad ->
         if (!state.loaded) return@KleanScreen
         val entries = state.rows.filterIsInstance<DietRow.Entry>()
@@ -81,8 +87,15 @@ fun DietScreenContent(
                 ModuleCard(
                     label = stringResource(R.string.diet_summary_today),
                     fact = latest?.text ?: stringResource(R.string.diet_summary_none),
-                    supporting = listOfNotNull(latest?.timeLabel, state.caloriesSoFar).joinToString(" · ").ifEmpty { null },
+                    supporting = listOfNotNull(
+                        latest?.timeLabel,
+                        state.caloriesSoFar.takeIf { state.calorieGoal <= 0 },
+                        state.withoutCalories,
+                    ).joinToString(" · ").ifEmpty { null },
                     tone = CardTone.SECONDARY,
+                    hero = state.calories?.takeIf { state.calorieGoal > 0 }?.let { kcal ->
+                        { CalorieProgress(eaten = kcal.total, goal = state.calorieGoal, estimated = kcal.estimated) }
+                    },
                 )
             }
             item(key = "offer") { offer() }

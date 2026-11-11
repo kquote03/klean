@@ -71,6 +71,43 @@ class DietShotsTest {
         compose.assertClutterBudget()
     }
 
+    @Test fun calorieGoalBar() {
+        val rows = listOf(
+            entry("t1", "8:10", "Oatmeal").copy(kcalLabel = "300 kcal"),
+            entry("t2", "11:27", "Banana").copy(kcalLabel = "≈ 105 kcal"),
+            entry("t3", "13:10", "Salad"),
+        )
+        val state = DietUiState(
+            rows = rows, loaded = true, showCalories = true, caloriesSoFar = "≈ 405 kcal so far",
+            calories = app.klean.feature.diet.ui.DayCalories(405, estimated = true, missing = 1), calorieGoal = 2000,
+            withoutCalories = "1 food without calories",
+        )
+        render("diet-calorie-goal", state)
+        compose.onNodeWithText("≈ 405 of 2,000 kcal").assertExists()
+        compose.onNodeWithText("≈ 405 kcal so far", substring = true).assertDoesNotExist()
+        compose.onNodeWithText("1 food without calories", substring = true).assertExists()
+        compose.assertClutterBudget()
+    }
+
+    @Test fun noBarWithoutAGoal() {
+        val state = DietUiState(
+            rows = listOf(entry("t1", "8:10", "Oatmeal").copy(kcalLabel = "300 kcal")), loaded = true, showCalories = true,
+            caloriesSoFar = "300 kcal so far", calories = app.klean.feature.diet.ui.DayCalories(300, false, 0),
+        )
+        compose.setContent { DietScreenContent(state = state, onOpenEntry = {}, onOpenHistory = {}, onAddForGap = {}) }
+        compose.onNodeWithText("of", substring = true).assertDoesNotExist()
+        compose.onNodeWithText("300 kcal so far", substring = true).assertExists()
+    }
+
+    @Test fun fillInCaloriesIsInTheMenuWhenSomeAreMissing() {
+        var filled = 0
+        val state = DietUiState(rows = listOf(entry("t1", "8:10", "Salad")), loaded = true, showCalories = true, withoutCalories = "1 food without calories")
+        compose.setContent { DietScreenContent(state = state, onOpenEntry = {}, onOpenHistory = {}, onAddForGap = {}, onFillCalories = { filled++ }) }
+        compose.onNodeWithContentDescription("More options").performClick()
+        compose.onNodeWithText("Fill in calories").performClick()
+        assertEquals(1, filled)
+    }
+
     @Test fun historyIsInTheOverflow() {
         val shot = render("diet-menu", DietUiState(rows = listOf(entry("t1", "8:10", "Oatmeal, banana")), loaded = true))
         compose.onNodeWithContentDescription("More options").performClick()

@@ -107,6 +107,19 @@ class DietSettingsViewModelTest {
         assertEquals(listOf("reschedule", "reschedule"), calls)
     }
 
+    @Test fun calorieGoalIsDigitsCappedAndBlankClears() = runBlocking {
+        val v = vm()
+        v.setCalorieGoal("2000").join()
+        assertEquals(2000, settings.get(SyncedKeys.DietCalorieGoal))
+        assertEquals(2000, v.uiState.first { it.calorieGoal == 2000 }.calorieGoal)
+        v.setCalorieGoal("").join()
+        assertEquals(0, settings.get(SyncedKeys.DietCalorieGoal))
+        v.setCalorieGoal("99999").join()
+        assertEquals(10_000, settings.get(SyncedKeys.DietCalorieGoal))
+        v.setCalorieGoal("1,800 kcal").join()
+        assertEquals(1800, settings.get(SyncedKeys.DietCalorieGoal))
+    }
+
     @Test fun noNextCheckInWhenOff() = runBlocking {
         prefs.setNextPromptAt(42L)
         settings.set(SyncedKeys.DietPromptsEnabled, false)

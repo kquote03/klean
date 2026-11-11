@@ -22,6 +22,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -43,6 +45,7 @@ fun DietSettingsScreen(
         onPrompts = { vm.setPromptsEnabled(it) },
         onLearn = { vm.setLearnMealTimes(it) },
         onCalories = { vm.setShowCalories(it) },
+        onCalorieGoal = { vm.setCalorieGoal(it) },
         onStatusLine = { vm.setStatusNotification(it) },
         onUnlockSheet = { vm.setUnlockSheet(it) },
         onPretendLongBreak = { vm.pretendLongBreak() },
@@ -68,6 +71,7 @@ fun DietSettingsContent(
     onPretendLongBreak: () -> Unit = {},
     onOpenDeliveryApps: () -> Unit = {},
     onOpenPlaces: () -> Unit = {},
+    onCalorieGoal: (String) -> Unit = {},
 ) {
     Scaffold(
         topBar = {
@@ -114,6 +118,7 @@ fun DietSettingsContent(
                 checked = state.showCalories,
                 onChange = onCalories,
             )
+            if (state.showCalories) CalorieGoalRow(state.calorieGoal, onCalorieGoal)
             ListItem(
                 headlineContent = { Text(stringResource(R.string.delivery_apps_title)) },
                 supportingContent = { Text(stringResource(R.string.delivery_apps_summary)) },
@@ -158,4 +163,36 @@ fun DietSettingsContent(
 @Composable
 internal fun ToggleRow(title: String, summary: String, checked: Boolean, onChange: (Boolean) -> Unit, enabled: Boolean = true) {
     SwitchListItem(checked = checked, onCheckedChange = onChange, headline = { Text(title) }, supporting = { Text(summary) }, enabled = enabled)
+}
+
+/** "Daily calorie goal" (blank = no goal), and how missing calories get filled in. */
+@Composable
+private fun CalorieGoalRow(goal: Int, onChange: (String) -> Unit) {
+    var text by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(if (goal > 0) goal.toString() else "") }
+    androidx.compose.runtime.LaunchedEffect(goal) {
+        if ((text.toIntOrNull() ?: 0) != goal) text = if (goal > 0) goal.toString() else ""
+    }
+    Column(Modifier.padding(horizontal = Space.md, vertical = Space.xs)) {
+        androidx.compose.material3.OutlinedTextField(
+            value = text,
+            onValueChange = { v ->
+                text = v.filter(Char::isDigit).take(5)
+                onChange(text)
+            },
+            label = { Text(stringResource(R.string.diet_settings_goal)) },
+            placeholder = { Text(stringResource(R.string.diet_settings_goal_none)) },
+            suffix = { Text(stringResource(R.string.diet_settings_goal_unit)) },
+            singleLine = true,
+            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                keyboardType = androidx.compose.ui.text.input.KeyboardType.Number,
+            ),
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Text(
+            stringResource(R.string.diet_settings_fill_explainer),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = Space.xs),
+        )
+    }
 }

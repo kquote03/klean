@@ -150,6 +150,11 @@ class DietViewModel @Inject constructor(
         viewModelScope.launch { repo.logEntry(clean, CaptureSource.MODULE_SCREEN) }
     }
 
+    /** "Fill in calories": history, then the assigned AI, for today's entries without calories. */
+    fun fillMissing() {
+        viewModelScope.launch { repo.fillMissing(repo.todayDate()) }
+    }
+
     /** Undo from the "Entry removed" snackbar shown after deleting on the entry screen. */
     fun undoRemove(id: String) {
         viewModelScope.launch { repo.restore(id) }

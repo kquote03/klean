@@ -15,7 +15,12 @@
     <string name="diet_onboarding_title">Diet preferences</string>
     <string name="diet_onboarding_body">Klean asks now and then what you ate, and you answer in a few words. All of this can change later in Settings.</string>
     <string name="diet_settings_calories">Show calories</string>
-    <string name="diet_settings_calories_summary">Show estimates next to entries when there are some</string>
+    <string name="diet_settings_calories_summary">Calories next to entries, a calorie slot when adding food, and a daily total</string>
+    <string name="diet_settings_goal">Daily calorie goal</string>
+    <string name="diet_settings_goal_none">No goal</string>
+    <string name="diet_settings_goal_unit">kcal</string>
+    <string name="diet_settings_fill_explainer">Leave calories empty and Klean fills them in from what you logged before. With an AI set for Calorie estimates (Settings › AI), it estimates the rest.</string>
+    <string name="diet_fill_calories">Fill in calories</string>
     <string name="diet_debug_title">Debug</string>
     <string name="diet_debug_fire">Fire a check-in now</string>
     <string name="diet_debug_show_next">Show next check-in</string>

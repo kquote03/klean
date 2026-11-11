@@ -13,4 +13,5 @@
     <string name="design_selected">Selected</string>
     <string name="design_back">Back</string>
     <string name="design_mark_done">Done: %1$s</string>
+    <string name="design_kcal_of_goal">%1$s of %2$s kcal</string>
 </resources>

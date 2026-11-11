@@ -66,6 +66,8 @@ data class DietSettingsState(
     val promptsEnabled: Boolean = true,
     val learnMealTimes: Boolean = true,
     val showCalories: Boolean = false,
+    /** Daily calorie goal; 0 = no goal (no bar). */
+    val calorieGoal: Int = 0,
     val statusNotification: Boolean = true,
     /** "Show today's list after a long break" (unlock sheet). */
     val unlockSheet: Boolean = true,
@@ -101,11 +103,13 @@ class DietSettingsViewModel @Inject constructor(
         prefs.nextPromptAt,
         debugInfo,
         prefs.unlockSheetPretend,
-    ) { (prompts, learn, calories, statusLine, unlock), next, info, pretend ->
+        settings.observe(SyncedKeys.DietCalorieGoal),
+    ) { (prompts, learn, calories, statusLine, unlock), next, info, pretend, goal ->
         DietSettingsState(
             promptsEnabled = prompts,
             learnMealTimes = learn,
             showCalories = calories,
+            calorieGoal = goal,
             statusNotification = statusLine,
             unlockSheet = unlock,
             nextCheckIn = next?.takeIf { prompts }?.let(fmt::time),
@@ -118,6 +122,13 @@ class DietSettingsViewModel @Inject constructor(
     fun setPromptsEnabled(v: Boolean) = setAndReplan(SyncedKeys.DietPromptsEnabled, v)
     fun setLearnMealTimes(v: Boolean) = setAndReplan(SyncedKeys.DietLearnMealTimes, v)
     fun setShowCalories(v: Boolean): Job = viewModelScope.launch { settings.set(SyncedKeys.DietShowCalories, v) }
+    /** Digits only; blank or 0 clears the goal; capped at [MAX_GOAL]. */
+    fun setCalorieGoal(text: String): Job = viewModelScope.launch {
+        val digits = text.filter(Char::isDigit).take(6)
+        val goal = (digits.toIntOrNull() ?: 0).coerceIn(0, MAX_GOAL)
+        settings.set(SyncedKeys.DietCalorieGoal, goal)
+    }
+
     fun setStatusNotification(v: Boolean): Job = viewModelScope.launch {
         settings.set(SyncedKeys.DietStatusNotification, v)
         status.refresh()
@@ -140,5 +151,9 @@ class DietSettingsViewModel @Inject constructor(
     private fun setAndReplan(key: SettingKey<Boolean>, v: Boolean): Job = viewModelScope.launch {
         settings.set(key, v)
         prompts.reschedule()
+    }
+
+    companion object {
+        const val MAX_GOAL = 10_000
     }
 }
