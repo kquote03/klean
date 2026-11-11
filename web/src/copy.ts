@@ -166,7 +166,7 @@ export const t = {
     birthday: "Birthday",
     none: "No contacts yet.",
     noneBirthdays: "No birthdays saved yet.",
-    turns: (n: number) => `turns ${n}`,
+    turns: (n: number) => `Turns ${n}`,
     todayLabel: "Today",
     tomorrow: "Tomorrow",
     inDays: (n: number) => `In ${n} days`,

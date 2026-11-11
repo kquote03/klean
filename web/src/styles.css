@@ -49,6 +49,7 @@ h1, h2, h3, p, ul { margin: 0; padding: 0; }
 ul { list-style: none; }
 button, input, select, textarea { font: inherit; color: inherit; }
 button { background: none; border: 0; padding: 0; cursor: pointer; text-align: inherit; }
+a { color: var(--md-sys-color-primary); text-underline-offset: 3px; }
 :focus-visible { outline: 3px solid var(--md-sys-color-primary); outline-offset: 2px; border-radius: var(--r-s); }
 .icon { flex: none; display: block; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -311,6 +312,8 @@ m3e-form-field input, m3e-form-field textarea, m3e-form-field select { width: 10
 /* ---- pairing ---- */
 .qr { background: var(--c-lowest); border-radius: var(--r-m); padding: var(--s16); width: fit-content; color: var(--on-surface); }
 .qr svg { display: block; width: 240px; height: 240px; }
+/* Dark modules on a light tile in both themes, so every scanner reads it. */
+@media (prefers-color-scheme: dark) { .qr { background: var(--md-sys-color-inverse-surface); color: var(--md-sys-color-inverse-on-surface); } }
 .code { font-size: 22px; line-height: 28px; letter-spacing: 2px; font-variant-numeric: tabular-nums; }
 
 /* ---- login ---- */
@@ -320,5 +323,6 @@ m3e-form-field input, m3e-form-field textarea, m3e-form-field select { width: 10
 .brand h1 { color: var(--on-surface); }
 
 .lrow m3e-switch { flex: none; }
+.lrow > .btn { flex: none; white-space: nowrap; }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }

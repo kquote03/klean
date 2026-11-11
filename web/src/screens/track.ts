@@ -112,6 +112,7 @@ function sessionSheet(app: App) {
   return html`<dialog class="sheet" id="session-sheet" aria-labelledby="session-title">
     ${s ? html`<div class="stack">
       <h2 id="session-title">${running ? t.workout.inProgress : str(s.notes) ?? t.workout.noteless}</h2>
+      <p class="lead-text">${[fmtWeekdayLong(dayOf(num(s.started_at)!)), fmtTime(num(s.started_at)!), running ? null : t.workout.minutes(minutes(s)), num(s.distance_m) ? `${(num(s.distance_m)! / 1000).toFixed(1)} km` : null].filter(Boolean).join(" · ")}</p>
       ${sets.length ? html`<ul class="list-group">${sets.map((x) => listRow({ title: str(x.exercise) ?? "", meta: [num(x.reps) !== null ? `${num(x.reps)} ×` : null, num(x.weight_kg) !== null ? `${num(x.weight_kg)} kg` : null].filter(Boolean).join(" ") }))}</ul>` : nothing}
       ${running ? html`<form class="stack" @submit=${addSet}>
         <div class="fields">
