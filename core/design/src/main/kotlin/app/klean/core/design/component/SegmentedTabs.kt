@@ -1,5 +1,6 @@
 package app.klean.core.design.component
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material3.MaterialTheme
@@ -32,9 +33,11 @@ fun SegmentedTabs(labels: List<String>, selected: Int, onSelect: (Int) -> Unit, 
                     activeContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                     inactiveContainerColor = MaterialTheme.colorScheme.surface,
                 ),
+                // A little less side padding than the default 12 dp, so four labels fit at large font scales.
+                contentPadding = PaddingValues(horizontal = Space.xs),
                 modifier = Modifier.heightIn(min = Space.touchTarget),
             ) {
-                // Four segments at font scale 1.5 don't fit: the label shrinks to fit (down to 10 sp) before it
+                // Four segments at font scale 1.5 don't fit: the label shrinks to fit (down to 8 sp, like the bar's labels) before it
                 // ends in "…", so "Workout" never reads as "Wo…" (seen on Waydroid in Track).
                 Text(
                     label,
@@ -48,4 +51,4 @@ fun SegmentedTabs(labels: List<String>, selected: Int, onSelect: (Int) -> Unit, 
     }
 }
 
-private val MIN_LABEL = 10.sp
+private val MIN_LABEL = 8.sp
