@@ -92,6 +92,8 @@ class ShellSmokeTest {
         compose.onNodeWithContentDescription("Account and settings").performClick()
         compose.waitForIdle()
         compose.onNodeWithText("More from Klean").assertExists()
+        // Full screen, like Google's account menu: no navigation bar.
+        compose.onAllNodes(hasClickAction() and hasText("Today")).assertCountEquals(0)
         compose.onNodeWithText("Settings").performClick()
         compose.waitForIdle()
     }

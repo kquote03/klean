@@ -152,8 +152,9 @@ fun KleanAppUi(vm: ShellViewModel = hiltViewModel(), deepLinks: Flow<Intent> = e
         onCapture = { ctx.startActivity(CaptureActivity.intent(ctx, CaptureSource.DASHBOARD)) },
     )
 
-    // The wizard is full screen: no bar while it runs, or while the start screen is still being decided.
-    val inSetup = startWithSetup == null || current.isOn(OnboardingRoute)
+    // The wizard and the account menu are full screen: no bar while they show, or while the start screen is
+    // still being decided.
+    val inSetup = startWithSetup == null || current.isOn(OnboardingRoute) || current.isOn(AccountRoute)
     val layoutType = if (inSetup) {
         NavigationSuiteType.None
     } else {
