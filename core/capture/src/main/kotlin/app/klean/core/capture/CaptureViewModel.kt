@@ -70,7 +70,15 @@ data class CaptureUiState(
     val finished: Boolean = false,
     /** Field placeholder: the holistic one, or the target module's own (e.g. "What did you eat?"). */
     val placeholderRes: Int = R.string.capture_placeholder,
+    /** The optional calorie slot (Food with Show calories on): `300`, `200g`, `150x100x200`. */
+    val calories: String = "",
+    val showCalorieSlot: Boolean = false,
 )
+
+/** Whether diet's Show calories is on; the capture sheet then offers the calorie slot for Food. */
+fun interface CalorieSlotSetting {
+    fun observe(): kotlinx.coroutines.flow.Flow<Boolean>
+}
 
 @HiltViewModel
 class CaptureViewModel @Inject constructor(
@@ -81,7 +89,9 @@ class CaptureViewModel @Inject constructor(
     private val photos: PhotoStorage,
     private val zone: ZoneProvider,
     private val savedState: SavedStateHandle,
+    calorieSetting: CalorieSlotSetting = CalorieSlotSetting { kotlinx.coroutines.flow.flowOf(false) },
 ) : ViewModel() {
+    private var caloriesOn = false
     private var target: ModuleId? = null
     private var source: CaptureSource = CaptureActivity.DEFAULT_SOURCE
 
@@ -114,7 +124,17 @@ class CaptureViewModel @Inject constructor(
             text = savedState.get<String>(CaptureActivity.EXTRA_TEXT),
             eatenAt = savedState.get<Long>(CaptureActivity.EXTRA_EATEN_AT),
         )
+        viewModelScope.launch {
+            calorieSetting.observe().collect { on ->
+                caloriesOn = on
+                _state.update { it.copy(showCalorieSlot = slotFor(target)) }
+            }
+        }
     }
+
+    private fun slotFor(target: ModuleId?) = caloriesOn && target == ModuleId.DIET
+
+    fun onCaloriesChange(text: String) = _state.update { it.copy(calories = text) }
 
     /**
      * Aims the sheet: the one entry point for CaptureActivity (from its intent) and the in-app sheet (from the Add
@@ -149,6 +169,7 @@ class CaptureViewModel @Inject constructor(
             startVoice = voice,
             placeholderRes = target?.let { t -> registry.all.firstOrNull { it.id == t }?.capturePlaceholderRes }
                 ?: R.string.capture_placeholder,
+            showCalorieSlot = slotFor(target),
         )
         eatenAt?.let(::setEatenAt)
         suggestionsJob?.cancel()
@@ -204,6 +225,9 @@ class CaptureViewModel @Inject constructor(
         val input = CaptureInput(
             clean, source, clock.now().toEpochMilliseconds(),
             viaVoice = viaVoice, photoFile = _state.value.photoFile, targetModule = target, eatenAt = _state.value.eatenAt,
+            extras = _state.value.calories.trim().takeIf { it.isNotEmpty() && _state.value.showCalorieSlot }
+                ?.let { mapOf(app.klean.shared.diet.CalorieInput.EXTRA_KEY to it) }
+                .orEmpty(),
         )
         return when (val r = service.submit(input)) {
             CaptureResult.NoModule -> {
@@ -310,4 +334,12 @@ class CaptureViewModel @Inject constructor(
         const val CONFIRM_MS = 1_500L
         const val ALTERNATIVES_MS = 4_000L
     }
+}
+
+@dagger.Module
+@dagger.hilt.InstallIn(dagger.hilt.components.SingletonComponent::class)
+object CalorieSlotModule {
+    @dagger.Provides
+    fun calorieSlot(settings: app.klean.core.data.settings.SettingsRepository): CalorieSlotSetting =
+        CalorieSlotSetting { settings.observe(app.klean.core.data.settings.SyncedKeys.DietShowCalories) }
 }

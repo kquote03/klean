@@ -91,6 +91,7 @@ fun CaptureSheet(
             onRemovePhoto = vm::removePhoto,
             onEatenTimePicked = vm::onEatenTimePicked,
             onMoveMenu = vm::holdOpen,
+            onCaloriesChange = vm::onCaloriesChange,
             modifier = Modifier.navigationBarsPadding().imePadding(),
         )
     }
@@ -111,6 +112,7 @@ internal fun CaptureSheetContent(
     modifier: Modifier = Modifier,
     /** The "Move to…" menu opened (true) or closed without a choice (false). */
     onMoveMenu: (Boolean) -> Unit = {},
+    onCaloriesChange: (String) -> Unit = {},
 ) {
     var pickTime by remember { mutableStateOf(false) }
     val text = state.text
@@ -152,6 +154,15 @@ internal fun CaptureSheetContent(
                             PhotoMenu(expanded = photoMenu, onDismiss = { photoMenu = false }, picker = photoPicker)
                         }
                     }
+                }
+                if (state.showCalorieSlot) {
+                    KcalSlot(
+                        state.calories,
+                        onCaloriesChange,
+                        enabled = phase != CapturePhase.Saving,
+                        onDone = { onSubmit(text) },
+                        modifier = Modifier.fillMaxWidth().padding(top = Space.xs),
+                    )
                 }
                 if (state.eatenAt != null) {
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = Space.xxs)) {

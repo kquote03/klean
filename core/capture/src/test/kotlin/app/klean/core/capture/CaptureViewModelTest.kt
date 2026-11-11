@@ -68,6 +68,44 @@ class CaptureViewModelTest {
         assertTrue(vm.state.value.finished)
     }
 
+    @Test fun theCalorieSlotRidesAlongForFoodWhenShowCaloriesIsOn() = runTest(dispatcher) {
+        val on = kotlinx.coroutines.flow.MutableStateFlow(true)
+        val vm = CaptureViewModel(
+            UniversalCaptureService(setOf(diet), gate, DefaultCaptureRouter(null)),
+            ModuleRegistry(emptySet(), gate), clock, rec, FakePhotoStorage(), DubaiZone,
+            SavedStateHandle(mapOf(CaptureActivity.EXTRA_TARGET_MODULE to "diet")),
+            CalorieSlotSetting { on },
+        )
+        runCurrent()
+        assertTrue(vm.state.value.showCalorieSlot)
+        vm.onCaloriesChange("150x100x200")
+        vm.submit("chips")
+        runCurrent()
+        assertEquals(mapOf("diet.kcal" to "150x100x200"), diet.executed.single().extras)
+
+        on.value = false
+        runCurrent()
+        assertFalse(vm.state.value.showCalorieSlot)
+        vm.start(ModuleId.TASKS, CaptureSource.MODULE_SCREEN)
+        assertFalse(vm.state.value.showCalorieSlot)
+    }
+
+    @Test fun noSlotForOtherModulesAndNoExtrasWhenEmpty() = runTest(dispatcher) {
+        val vm = CaptureViewModel(
+            UniversalCaptureService(setOf(diet), gate, DefaultCaptureRouter(null)),
+            ModuleRegistry(emptySet(), gate), clock, rec, FakePhotoStorage(), DubaiZone,
+            SavedStateHandle(mapOf(CaptureActivity.EXTRA_TARGET_MODULE to "tasks")),
+            CalorieSlotSetting { kotlinx.coroutines.flow.flowOf(true) },
+        )
+        runCurrent()
+        assertFalse(vm.state.value.showCalorieSlot)
+        vm.start(ModuleId.DIET, CaptureSource.MODULE_SCREEN)
+        assertTrue(vm.state.value.showCalorieSlot)
+        vm.submit("toast")
+        runCurrent()
+        assertEquals(emptyMap<String, String>(), diet.executed.single().extras)
+    }
+
     @Test fun universalSheetUsesTheHolisticPlaceholder() = runTest(dispatcher) {
         assertEquals(R.string.capture_placeholder, vm().state.value.placeholderRes)
     }

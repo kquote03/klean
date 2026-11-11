@@ -62,4 +62,10 @@
     <string name="capture_change_time">Change</string>
     <string name="capture_ok">OK</string>
     <string name="capture_cancel">Cancel</string>
+    <string name="capture_kcal">kcal</string>
+    <string name="capture_kcal_preview">= %1$d kcal</string>
+    <string name="capture_kcal_grams">%1$d g · Klean will fill in the calories</string>
+    <string name="capture_kcal_invalid">Not sure what that means</string>
+    <string name="capture_kcal_help">Type the calories (300), or how much you ate (200g), or kcal per amount × what you ate (150x100x200 = 150 kcal per 100 g, ate 200 g → 300 kcal). Leave it empty and Klean fills it in.</string>
+    <string name="capture_kcal_help_label">How to write calories</string>
 </resources>
