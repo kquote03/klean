@@ -22,7 +22,7 @@
         android:gravity="center_vertical"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
-        android:text="@string/today_widget_add"
+        android:text="@string/today_quick_voice"
         android:textColor="#FF1D1A3A"
         android:textSize="15sp" />
 

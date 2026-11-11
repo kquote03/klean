@@ -721,4 +721,4 @@ Plan `.hermes/plans/2026-11-11_090844-today-at-a-glance-voice-back.md`.
 - [x] C1 design components (`QuickActionGrid`, `GlanceSection`, `TimelineRow`)
 - [x] C2/C3 Today whiteboard screen
 - [x] C4 Track › Week independent of `TodayCards` (it only reads `WeekSummaryProvider`s; nothing to change)
-- [ ] C5 Today widget: mini whiteboard
+- [x] C5 Today widget: mini whiteboard (Speak, Food, Task, Sleep; next 2; last 3 done). Unverified on a placed widget: Waydroid can't place widgets

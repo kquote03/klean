@@ -66,5 +66,9 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/today_widget_info" />
         </receiver>
+        <!-- The Today widget's Sleep button: toggles in place, without opening the app. -->
+        <receiver
+            android:name=".widget.SleepToggleReceiver"
+            android:exported="false" />
     </application>
 </manifest>
