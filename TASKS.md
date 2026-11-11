@@ -701,6 +701,15 @@ Direction: navigation A (grouped tabs) + Soft cards, the recommended default (no
 2. Open: the container transform from Today's cards (shared axis only); place both widgets on the Pixel to check the new look (Waydroid can't place widgets); the CI workflow's gate step needs `:wear:testDebugUnitTest verifyRoborazziDebug` (`.github/workflows` is the parent's); AGENTS.md updates are in the lane report (protected file).
 3. Next: Phase 4 (the web client follows the same structure: Track › Week, People with Birthdays as a view).
 
+## Today at a glance (plan 2026-11-11)
+NAV lane (branch `nav`, worktree `../klean-nav`):
+- [x] D1–D2 Add menu: the screen's own line last; New contact last in People (left People's overflow)
+- [x] D3 In-process capture sheet (no CaptureActivity from inside the app; `CaptureViewModel.start`, `LocalCaptureLauncher` for module screens)
+- [ ] E1 BackNavigationTest (Waydroid)
+- [ ] E2 Back fixes
+- [ ] E3 Route-aware motion (fade-through / shared axis X / slide up)
+- [ ] E4 Predictive back declared; no direct onBackPressed
+
 ## Follow-ups (from the user, to do while working nearby)
 - [ ] AI settings: a "Get a free key" button that opens https://aistudio.google.com/apikey, plus a three-line how-to (create key → copy → paste here). The key stays in `SecretStore`. Calm copy; no sign-in-for-quota (Gemini has no consumer OAuth quota path).
 

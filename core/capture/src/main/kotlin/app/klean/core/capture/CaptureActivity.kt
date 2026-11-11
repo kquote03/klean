@@ -27,6 +27,8 @@ class CaptureActivity : ComponentActivity() {
         // Before the view model reads the extras: a deep link or Assistant/shortcut intent becomes plain extras.
         intent = normalize(intent)
         super.onCreate(savedInstanceState)
+        // The same entry point as the in-app sheet; after a recreation the view model already holds it.
+        if (savedInstanceState == null) vm.startFrom(intent)
         enableEdgeToEdge()
         setContent { KleanThemeFromPrefs(prefs) { CaptureSheet(vm = vm, onDismiss = ::finish) } }
     }
@@ -44,6 +46,16 @@ class CaptureActivity : ComponentActivity() {
 
         /** Used when a caller passes no source, e.g. a manual `adb shell am start`. */
         val DEFAULT_SOURCE = CaptureSource.DASHBOARD
+
+        /** Aims [this] sheet from an intent's extras (after [normalize]). */
+        fun CaptureViewModel.startFrom(intent: Intent) = start(
+            target = intent.getStringExtra(EXTRA_TARGET_MODULE)?.let(::ModuleId),
+            source = intent.getStringExtra(EXTRA_SOURCE)?.let { runCatching { CaptureSource.valueOf(it) }.getOrNull() }
+                ?: DEFAULT_SOURCE,
+            voice = intent.getBooleanExtra(EXTRA_START_VOICE, false),
+            text = intent.getStringExtra(EXTRA_TEXT),
+            eatenAt = if (intent.hasExtra(EXTRA_EATEN_AT)) intent.getLongExtra(EXTRA_EATEN_AT, 0L) else null,
+        )
 
         /**
          * `klean://capture?text=…&module=…` and App Actions extras (`text`, `module`) → this activity's extras.

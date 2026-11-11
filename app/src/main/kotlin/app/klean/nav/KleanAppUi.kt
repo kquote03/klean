@@ -31,7 +31,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -45,7 +44,7 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import app.klean.R
-import app.klean.core.capture.CaptureActivity
+import app.klean.core.capture.LocalCaptureLauncher
 import app.klean.core.design.component.AddMenuItem
 import app.klean.core.design.component.AddMenuSpec
 import app.klean.core.design.component.GroupChrome
@@ -59,7 +58,6 @@ import app.klean.core.design.theme.Space
 import app.klean.core.ui.module.KleanModule
 import app.klean.feature.contacts.ContactEditRoute
 import app.klean.feature.onboarding.OnboardingRoute
-import app.klean.shared.diet.CaptureSource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
@@ -90,7 +88,13 @@ private data class BarGroup(val group: NavGroup, val modules: List<KleanModule>)
  * top-level screen, and the group chrome (title and module tabs) for module screens.
  */
 @Composable
-fun KleanAppUi(vm: ShellViewModel = hiltViewModel(), deepLinks: Flow<Intent> = emptyFlow()) {
+fun KleanAppUi(
+    vm: ShellViewModel = hiltViewModel(),
+    deepLinks: Flow<Intent> = emptyFlow(),
+    /** The capture sheet shown in place (tests pass a stand-in: the real one needs Hilt). */
+    captureSheet: @Composable (CaptureRequest, () -> Unit) -> Unit = { r, d -> InAppCaptureSheet(r, d) },
+) {
+    val sheets = remember { ShellSheets() }
     val registry = vm.registry
     val enabled by registry.enabled.collectAsStateWithLifecycle(initialValue = emptyList())
     val startWithSetup by vm.startWithSetup.collectAsStateWithLifecycle()
@@ -99,7 +103,6 @@ fun KleanAppUi(vm: ShellViewModel = hiltViewModel(), deepLinks: Flow<Intent> = e
     val backStack by nav.currentBackStackEntryAsState()
     val current = backStack?.destination
     val scope = rememberCoroutineScope()
-    val ctx = LocalContext.current
     LaunchedEffect(nav, deepLinks) { deepLinks.collect { nav.handleDeepLink(it) } }
 
     val groups = remember(enabled) {
@@ -152,11 +155,11 @@ fun KleanAppUi(vm: ShellViewModel = hiltViewModel(), deepLinks: Flow<Intent> = e
                 if (e.opensContactEditor) {
                     nav.navigate(ContactEditRoute())
                 } else {
-                    ctx.startActivity(CaptureActivity.intent(ctx, CaptureSource.DASHBOARD, target = e.module))
+                    sheets.capture = CaptureRequest(e.module)
                 }
             }
         },
-        onCapture = { ctx.startActivity(CaptureActivity.intent(ctx, CaptureSource.DASHBOARD)) },
+        onCapture = { sheets.capture = CaptureRequest(target = null) },
     )
 
     // The wizard and the account menu are full screen: no bar while they show, or while the start screen is
@@ -192,7 +195,11 @@ fun KleanAppUi(vm: ShellViewModel = hiltViewModel(), deepLinks: Flow<Intent> = e
             val module = if (g.overview && i == 0) null else g.modules[i - (if (g.overview) 1 else 0)]
             module != null && !module.drawsGroupChrome && g.modules.size > 1
         }
-        CompositionLocalProvider(LocalGroupChrome provides resolver, LocalAddMenu provides addSpec.takeIf { !inSetup }) {
+        CompositionLocalProvider(
+            LocalGroupChrome provides resolver,
+            LocalAddMenu provides addSpec.takeIf { !inSetup },
+            LocalCaptureLauncher provides sheets.launcher,
+        ) {
             Column {
                 if (legacy != null) LegacyGroupHeader(chrome(legacy.first, legacy.second))
                 Box(if (legacy != null) Modifier.weight(1f).consumeWindowInsets(WindowInsets.statusBars) else Modifier.weight(1f)) {
@@ -205,6 +212,7 @@ fun KleanAppUi(vm: ShellViewModel = hiltViewModel(), deepLinks: Flow<Intent> = e
                     }
                 }
             }
+            ShellSheetsHost(sheets, captureSheet)
         }
     }
 }

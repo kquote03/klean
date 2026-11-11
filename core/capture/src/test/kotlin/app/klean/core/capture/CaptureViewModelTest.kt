@@ -72,6 +72,31 @@ class CaptureViewModelTest {
         assertEquals(R.string.capture_placeholder, vm().state.value.placeholderRes)
     }
 
+    /** The in-app sheet (plan 2026-11-11, D3) and CaptureActivity both aim the sheet through start(). */
+    @Test fun startAimsTheSheetLikeTheActivityExtras() = runTest(dispatcher) {
+        val module = PlaceholderModule(ModuleId.DIET, placeholder = 4242)
+        val saved = SavedStateHandle()
+        val vm = CaptureViewModel(
+            UniversalCaptureService(setOf(diet), gate, DefaultCaptureRouter(null)),
+            ModuleRegistry(setOf(module), gate),
+            clock, rec, FakePhotoStorage(), DubaiZone, saved,
+        )
+        runCurrent()
+        assertEquals(R.string.capture_placeholder, vm.state.value.placeholderRes)
+        vm.start(ModuleId.DIET, CaptureSource.DASHBOARD, voice = true, text = "oats")
+        runCurrent()
+        assertEquals(4242, vm.state.value.placeholderRes)
+        assertEquals("oats", vm.state.value.text)
+        assertEquals(listOf("tea"), vm.state.value.suggestions)
+        assertTrue(vm.consumeStartVoice())
+        // Kept for a recreation: a new view model over the same saved state is aimed the same way.
+        assertEquals("diet", saved.get<String>(CaptureActivity.EXTRA_TARGET_MODULE))
+        vm.submit(vm.state.value.text)
+        runCurrent()
+        assertEquals(ModuleId.DIET, diet.executed.single().targetModule)
+        assertEquals(CaptureSource.DASHBOARD, diet.executed.single().source)
+    }
+
     @Test fun moduleTargetedSheetKeepsTheModulePlaceholder() = runTest(dispatcher) {
         val module = PlaceholderModule(ModuleId.DIET, placeholder = 4242)
         val vm = CaptureViewModel(

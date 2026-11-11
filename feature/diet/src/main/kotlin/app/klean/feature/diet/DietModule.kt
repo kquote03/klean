@@ -16,10 +16,9 @@ import app.klean.feature.diet.notification.DietStatusActions
 import app.klean.core.ui.module.DashboardSlot
 import app.klean.core.ui.module.KleanModule
 import app.klean.feature.diet.ui.dashboard.DietDashboardCard
-import android.content.Context
-import androidx.compose.ui.platform.LocalContext
 import app.klean.feature.diet.ui.today.DietRow
-import app.klean.core.capture.CaptureActivity
+import app.klean.core.capture.CaptureLauncher
+import app.klean.core.capture.rememberCaptureLauncher
 import app.klean.feature.diet.ui.entry.FoodEntryScreen
 import app.klean.feature.diet.ui.history.DietDayScreen
 import app.klean.feature.diet.ui.history.DietHistoryScreen
@@ -68,11 +67,11 @@ class DietKleanModule @Inject constructor(private val enablement: DietEnablement
     override fun registerGraph(builder: NavGraphBuilder, nav: NavController) = with(builder) {
         navigation<DietGraph>(startDestination = DietRoute) {
             composable<DietRoute>(deepLinks = listOf(navDeepLink { uriPattern = DietStatusActions.DEEP_LINK_DIET })) { entry ->
-                val ctx = LocalContext.current
+                val capture = rememberCaptureLauncher()
                 DietScreen(
                     onOpenEntry = { nav.navigate(FoodEntryRoute(it)) },
                     onOpenHistory = { nav.navigate(DietHistoryRoute) },
-                    onAddForGap = { gap -> ctx.startActivity(gapCaptureIntent(ctx, gap)) },
+                    onAddForGap = { gap -> capture.openForGap(gap) },
                     backStackEntry = entry,
                 )
             }
@@ -80,11 +79,11 @@ class DietKleanModule @Inject constructor(private val enablement: DietEnablement
                 DietHistoryScreen(onBack = { nav.popBackStack() }, onOpenDay = { nav.navigate(DietDayRoute(it.toString())) })
             }
             composable<DietDayRoute> { entry ->
-                val ctx = LocalContext.current
+                val capture = rememberCaptureLauncher()
                 DietDayScreen(
                     onBack = { nav.popBackStack() },
                     onOpenEntry = { nav.navigate(FoodEntryRoute(it)) },
-                    onAddForGap = { gap -> ctx.startActivity(gapCaptureIntent(ctx, gap)) },
+                    onAddForGap = { gap -> capture.openForGap(gap) },
                     backStackEntry = entry,
                 )
             }
@@ -118,9 +117,12 @@ class DietKleanModule @Inject constructor(private val enablement: DietEnablement
     override suspend fun onEnabledChanged(enabled: Boolean) = enablement.onEnabledChanged(enabled)
 }
 
-/** "Add something" on a gap: the capture sheet, preset to the middle of the gap ("For around 14:00 · Change"). */
-private fun gapCaptureIntent(ctx: Context, gap: DietRow.GapRow) =
-    CaptureActivity.intent(ctx, CaptureSource.MODULE_SCREEN, ModuleId.DIET, eatenAt = gap.midpointMs)
+/**
+ * "Add something" on a gap: the capture sheet, preset to the middle of the gap ("For around 14:00 · Change"), shown
+ * in place so Back stays in the app.
+ */
+private fun CaptureLauncher.openForGap(gap: DietRow.GapRow) =
+    open(ModuleId.DIET, CaptureSource.MODULE_SCREEN, voice = false, eatenAt = gap.midpointMs)
 
 @Module
 @InstallIn(SingletonComponent::class)

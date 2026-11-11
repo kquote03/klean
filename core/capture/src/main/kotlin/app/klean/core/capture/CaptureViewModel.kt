@@ -80,30 +80,18 @@ class CaptureViewModel @Inject constructor(
     recognizer: VoiceRecognizer,
     private val photos: PhotoStorage,
     private val zone: ZoneProvider,
-    savedState: SavedStateHandle,
+    private val savedState: SavedStateHandle,
 ) : ViewModel() {
-    private val target: ModuleId? = savedState.get<String>(CaptureActivity.EXTRA_TARGET_MODULE)?.let(::ModuleId)
-    private val source: CaptureSource = savedState.get<String>(CaptureActivity.EXTRA_SOURCE)
-        ?.let { runCatching { CaptureSource.valueOf(it) }.getOrNull() }
-        ?: CaptureActivity.DEFAULT_SOURCE
+    private var target: ModuleId? = null
+    private var source: CaptureSource = CaptureActivity.DEFAULT_SOURCE
 
-    private val _state = MutableStateFlow(
-        CaptureUiState(
-            text = savedState.get<String>(CaptureActivity.EXTRA_TEXT).orEmpty(),
-            startVoice = savedState.get<Boolean>(CaptureActivity.EXTRA_START_VOICE) == true,
-            placeholderRes = target?.let { t -> registry.all.firstOrNull { it.id == t }?.capturePlaceholderRes }
-                ?: R.string.capture_placeholder,
-        ),
-    )
+    private val _state = MutableStateFlow(CaptureUiState())
     val state: StateFlow<CaptureUiState> = _state.asStateFlow()
-
-    init {
-        savedState.get<Long>(CaptureActivity.EXTRA_EATEN_AT)?.let(::setEatenAt)
-    }
 
     private var lastSaved: CaptureResult.Saved? = null
     private var closeJob: Job? = null
-    private var startVoicePending = _state.value.startVoice
+    private var suggestionsJob: Job? = null
+    private var startVoicePending = false
 
     val voice = VoiceSession(
         scope = viewModelScope,
@@ -113,7 +101,55 @@ class CaptureViewModel @Inject constructor(
     )
 
     init {
-        viewModelScope.launch {
+        // CaptureActivity's intent extras (and anything start() kept across process death) are the saved state.
+        restart(
+            target = savedState.get<String>(CaptureActivity.EXTRA_TARGET_MODULE)?.let(::ModuleId),
+            source = savedState.get<String>(CaptureActivity.EXTRA_SOURCE)
+                ?.let { runCatching { CaptureSource.valueOf(it) }.getOrNull() }
+                ?: CaptureActivity.DEFAULT_SOURCE,
+            voice = savedState.get<Boolean>(CaptureActivity.EXTRA_START_VOICE) == true,
+            text = savedState.get<String>(CaptureActivity.EXTRA_TEXT),
+            eatenAt = savedState.get<Long>(CaptureActivity.EXTRA_EATEN_AT),
+        )
+    }
+
+    /**
+     * Aims the sheet: the one entry point for CaptureActivity (from its intent) and the in-app sheet (from the Add
+     * menu or Today). [target] null = universal capture; [voice] starts listening once the sheet shows; [text]
+     * prefills the field (never saved without Save); [eatenAt] presets the entry's time (UTC ms).
+     */
+    fun start(
+        target: ModuleId?,
+        source: CaptureSource,
+        voice: Boolean = false,
+        text: String? = null,
+        eatenAt: Long? = null,
+    ) {
+        savedState[CaptureActivity.EXTRA_TARGET_MODULE] = target?.value
+        savedState[CaptureActivity.EXTRA_SOURCE] = source.name
+        savedState[CaptureActivity.EXTRA_START_VOICE] = voice
+        savedState[CaptureActivity.EXTRA_TEXT] = text
+        savedState[CaptureActivity.EXTRA_EATEN_AT] = eatenAt
+        restart(target, source, voice, text, eatenAt)
+    }
+
+    private fun restart(target: ModuleId?, source: CaptureSource, voice: Boolean, text: String?, eatenAt: Long?) {
+        this.target = target
+        this.source = source
+        closeJob?.cancel()
+        // A photo attached to an unsaved entry would be left on disk with nothing pointing at it.
+        if (lastSaved == null) _state.value.photoFile?.let(photos::delete)
+        lastSaved = null
+        startVoicePending = voice
+        _state.value = CaptureUiState(
+            text = text.orEmpty(),
+            startVoice = voice,
+            placeholderRes = target?.let { t -> registry.all.firstOrNull { it.id == t }?.capturePlaceholderRes }
+                ?: R.string.capture_placeholder,
+        )
+        eatenAt?.let(::setEatenAt)
+        suggestionsJob?.cancel()
+        suggestionsJob = viewModelScope.launch {
             val s = service.suggestions(target)
             _state.update { it.copy(suggestions = s) }
         }
