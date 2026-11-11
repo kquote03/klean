@@ -5,8 +5,8 @@ import app.klean.core.ui.module.GlanceRow
 import app.klean.core.ui.module.QuickAction
 import app.klean.shared.module.ModuleId
 
-/** One whiteboard section: the rows shown, and how many more there are ("+3 more"). */
-data class GlanceSection(val rows: List<GlanceRow>, val moreCount: Int = 0)
+/** One whiteboard section: the rows shown, and the [overflow] behind "+[moreCount] more". */
+data class GlanceSection(val rows: List<GlanceRow>, val moreCount: Int = 0, val overflow: List<GlanceRow> = emptyList())
 
 /**
  * Today's whiteboard: the modules' one-tap actions, then what needs attention, what's coming up and what has
@@ -31,7 +31,7 @@ const val MAX_UPCOMING = 6
  */
 fun buildGlance(visible: List<ModuleId>, parts: Map<ModuleId, GlanceContribution>, now: Long): Glance {
     val shown = visible.distinct().mapNotNull { id -> parts[id]?.let { id to it } }
-    fun section(rows: List<GlanceRow>, max: Int) = GlanceSection(rows.take(max), (rows.size - max).coerceAtLeast(0))
+    fun section(rows: List<GlanceRow>, max: Int) = GlanceSection(rows.take(max), (rows.size - max).coerceAtLeast(0), rows.drop(max))
     val upcoming = shown.flatMap { it.second.upcoming }.filter { (it.at ?: Long.MAX_VALUE) >= now }.sortedBy { it.at ?: Long.MAX_VALUE }
     val done = shown.flatMap { it.second.done }.sortedBy { it.at ?: Long.MIN_VALUE }
     val attention = shown.flatMap { it.second.attention }.sortedBy { it.at ?: Long.MIN_VALUE }
