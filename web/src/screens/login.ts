@@ -23,15 +23,15 @@ export function loginScreen(app: App) {
       app.refresh();
     }
   };
-  return html`<div class="login"><section class="card" aria-labelledby="login-title">
-    <div class="brand">${icon("today", { size: 48 })}<h1 id="login-title">${t.login.title}</h1></div>
+  return html`<div class="login"><section class="panel" aria-labelledby="login-title">
+    <div class="brand">${icon("today", { size: 48 })}<h1 id="login-title" class="headline-s">${t.login.title}</h1></div>
     <p>${t.login.lead}</p>
     <form class="stack" @submit=${submit} data-testid="login-form">
       ${field({ label: t.login.password, name: "password", type: "password", required: true, autocomplete: "current-password", testid: "password" })}
       ${field({ label: t.login.deviceName, name: "deviceName", value: t.login.deviceNameDefault, testid: "device-name" })}
       ${state.error ? html`<p class="error-text" role="alert">${state.error}</p>` : ""}
-      <div class="actions"><m3e-button variant="filled" type="submit" ?disabled=${state.busy} data-testid="sign-in">${state.busy ? t.login.working : t.login.submit}</m3e-button></div>
+      <div class="actions end"><button type="submit" class="btn filled" ?disabled=${state.busy} data-testid="sign-in">${state.busy ? t.login.working : t.login.submit}</button></div>
     </form>
-    <p class="muted">${t.login.firstSetup}</p>
+    <p class="muted body-m">${t.login.firstSetup}</p>
   </section></div>`;
 }

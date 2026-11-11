@@ -1,40 +1,37 @@
-// The app shell: session, store, sync loop, routing, and rendering with lit-html. Screens are plain functions of
-// the App; M3E web components do the Material 3 parts.
+// The app shell: session, store, sync loop, grouped routing (Today · Plan · Track · People) and rendering with
+// lit-html. Screens are plain functions of the App built from the Soft-cards kit (ui/kit.ts).
 import { html, render, nothing, type TemplateResult } from "lit";
 import { Api, ApiError } from "./api";
 import { memoryPersistence, openIdb, type Persistence } from "./data/idb";
 import { RecordStore } from "./data/store";
 import { SyncEngine, type SyncState } from "./data/sync";
-import { Model, type ModuleKey } from "./model";
+import { Model } from "./model";
 import { clearSession, deviceId, loadSession, saveSession, type Session } from "./session";
 import { t } from "./copy";
 import { icon } from "./ui/icons";
+import { segmentedTabs } from "./ui/kit";
+import { loadLast, navGroups, pathOf, resolve, saveLast, type Dest, type GroupId, type Resolved } from "./nav";
 import { loginScreen } from "./screens/login";
 import { todayScreen } from "./screens/today";
 import { tasksScreen } from "./screens/tasks";
 import { calendarScreen } from "./screens/calendar";
-import { contactsScreen } from "./screens/contacts";
-import { workoutScreen } from "./screens/workout";
-import { sleepScreen } from "./screens/sleep";
-import { dietScreen } from "./screens/diet";
+import { peopleScreen } from "./screens/people";
+import { weekScreen, workoutScreen, sleepScreen, dietScreen } from "./screens/track";
 import { approvalsScreen } from "./screens/approvals";
 import { settingsScreen } from "./screens/settings";
-import { moreScreen } from "./screens/more";
+import { addButton, addMenu, captureSheet } from "./screens/add";
 
-export interface Route { path: string; title: string; icon: string; module?: ModuleKey; render: (app: App) => TemplateResult; rail: boolean; bar: boolean; wide?: boolean }
-
-export const ROUTES: Route[] = [
-  { path: "/", title: t.nav.today, icon: "today", render: todayScreen, rail: true, bar: true, wide: true },
-  { path: "/tasks", title: t.nav.tasks, icon: "tasks", module: "tasks", render: tasksScreen, rail: true, bar: true },
-  { path: "/calendar", title: t.nav.calendar, icon: "calendar", module: "calendar", render: calendarScreen, rail: true, bar: true, wide: true },
-  { path: "/contacts", title: t.nav.contacts, icon: "person", module: "contacts", render: contactsScreen, rail: true, bar: true },
-  { path: "/workout", title: t.nav.workout, icon: "workout", module: "workout", render: workoutScreen, rail: true, bar: false },
-  { path: "/sleep", title: t.nav.sleep, icon: "sleep", module: "sleep", render: sleepScreen, rail: true, bar: false },
-  { path: "/diet", title: t.nav.diet, icon: "diet", module: "diet", render: dietScreen, rail: true, bar: false },
-  { path: "/approvals", title: t.nav.approvals, icon: "approvals", render: approvalsScreen, rail: true, bar: false },
-  { path: "/settings", title: t.nav.settings, icon: "settings", render: settingsScreen, rail: true, bar: false, wide: true },
-  { path: "/more", title: t.nav.more, icon: "more", render: moreScreen, rail: false, bar: true },
-];
+const DEST_VIEW: Record<Dest, (app: App) => TemplateResult> = {
+  tasks: tasksScreen, calendar: calendarScreen,
+  week: weekScreen, workout: workoutScreen, sleep: sleepScreen, diet: dietScreen,
+  contacts: peopleScreen, birthdays: peopleScreen,
+};
+const GROUP_ICON: Record<GroupId, string> = { today: "today", plan: "plan", track: "track", people: "people" };
+const DEST_LABEL: Record<Dest, string> = {
+  tasks: t.nav.tasks, calendar: t.nav.calendar, week: t.nav.week, workout: t.nav.workout, sleep: t.nav.sleep,
+  diet: t.nav.diet, contacts: t.nav.contacts, birthdays: t.nav.birthdays,
+};
+const GROUP_TONE = { plan: "plan", track: "track", people: "people" } as const;
 
 export interface Toast { text: string; actions?: { label: string; run: () => void }[]; at: number }
 
@@ -47,7 +44,7 @@ export class App {
   sync: SyncEngine | null = null;
   syncState: SyncState = "idle";
   path = location.pathname;
-  /** Per-screen UI state (tabs, open editors, …); survives re-renders, not reloads. */
+  /** Per-screen UI state (views, open sheets, …); survives re-renders, not reloads. */
   ui: Record<string, unknown> = {};
   toastMsg: Toast | null = null;
   private timer: number | undefined;
@@ -141,33 +138,49 @@ export class App {
     });
   }
 
-  route(): Route {
-    const r = ROUTES.find((x) => x.path === this.path) ?? ROUTES[0];
-    if (r.module && !this.model.isOn(r.module)) return ROUTES[0];
+  isOn = (m: Parameters<Model["isOn"]>[0]) => this.model.isOn(m);
+
+  /** Where the current path lands; group paths open on the module last used in that group. */
+  route(): Resolved {
+    const r = resolve(this.path, this.isOn, loadLast());
+    if (r.kind === "dest") saveLast(r.group, r.dest);
+    const canonical = pathOf(r);
+    if (canonical !== this.path) { history.replaceState(null, "", canonical); this.path = canonical; }
     return r;
   }
 
-  private navItems(where: "rail" | "bar") {
-    const current = this.route();
-    return ROUTES.filter((r) => r[where] && (!r.module || this.model.isOn(r.module))).map((r) => {
-      const selected = r === current || (where === "bar" && !current.bar && r.path === "/more");
-      return html`<m3e-nav-item ?selected=${selected} @click=${(e: Event) => { e.preventDefault(); this.go(r.path); }}
-        aria-current=${selected ? "page" : "false"} data-path=${r.path}>${icon(r.icon, { slot: "icon" })}${r.title}</m3e-nav-item>`;
+  /** The segmented control across a group's modules (hidden when the group has one). */
+  tabs(group: GroupId, current: Dest) {
+    const entry = navGroups(this.isOn).find((g) => g.id === group);
+    if (!entry) return nothing;
+    return segmentedTabs({
+      options: entry.dests.map((d) => [d, DEST_LABEL[d]] as [Dest, string]), current, label: t.nav[group],
+      tone: GROUP_TONE[group as keyof typeof GROUP_TONE] ?? "neutral",
+      pick: (d) => this.go(`/${group}/${d}`),
+    });
+  }
+
+  private navItems(current: GroupId) {
+    return navGroups(this.isOn).map((g) => {
+      const selected = g.id === current;
+      const path = g.id === "today" ? "/" : `/${g.id}`;
+      return html`<m3e-nav-item ?selected=${selected} @click=${(e: Event) => { e.preventDefault(); this.go(path); }}
+        aria-current=${selected ? "page" : "false"} data-path=${path} data-group=${g.id}>${icon(GROUP_ICON[g.id], { slot: "icon" })}${t.nav[g.id]}</m3e-nav-item>`;
     });
   }
 
   private view(): TemplateResult {
     if (!this.session || !this.store) return html`${loginScreen(this)}${this.toastView()}`;
     const r = this.route();
+    const group: GroupId = r.kind === "dest" ? r.group : "today";
+    const body = r.kind === "dest" ? DEST_VIEW[r.dest](this) : r.kind === "settings" ? settingsScreen(this) : r.kind === "approvals" ? approvalsScreen(this) : todayScreen(this);
     return html`
       <div class="shell">
-        <m3e-nav-rail class="rail" mode="compact" aria-label="Klean">
-          <div class="rail-brand">${icon("today", { size: 32, label: t.appName })}</div>
-          ${this.navItems("rail")}
-        </m3e-nav-rail>
-        <main class="content ${r.wide ? "" : "narrow"}" id="main">${r.render(this)}</main>
-        <m3e-nav-bar class="bar" mode="compact" aria-label="Klean">${this.navItems("bar")}</m3e-nav-bar>
+        <m3e-nav-rail class="rail" mode="compact" aria-label=${t.nav.groups} data-clutter-exempt>${this.navItems(group)}</m3e-nav-rail>
+        <main class="content" id="main">${body}</main>
+        <m3e-nav-bar class="bar" mode="compact" aria-label=${t.nav.groups} data-clutter-exempt>${this.navItems(group)}</m3e-nav-bar>
       </div>
+      ${addButton(this)}${addMenu(this)}${captureSheet(this)}
       ${this.toastView()}`;
   }
 
@@ -175,15 +188,14 @@ export class App {
     const m = this.toastMsg;
     if (!m) return nothing;
     return html`<div class="toast" role="status" aria-live="polite"><span class="grow">${m.text}</span>
-      ${m.actions?.map((a) => html`<m3e-button variant="text" @click=${() => { this.toastMsg = null; a.run(); this.refresh(); }}>${a.label}</m3e-button>`)}</div>`;
+      ${m.actions?.map((a) => html`<button type="button" class="btn text" @click=${() => { this.toastMsg = null; a.run(); this.refresh(); }}>${a.label}</button>`)}</div>`;
   }
 
-  /** The page header: title, sync status and optional actions. */
-  head(title: string, actions: TemplateResult | typeof nothing = nothing) {
+  /** Sync status: a quiet dot and a few words, in each screen's top bar. */
+  status() {
     const pending = this.store?.pending().length ?? 0;
     const label = this.syncState === "syncing" ? t.sync.syncing : this.syncState === "offline" ? t.sync.offline
       : this.syncState === "error" ? t.sync.error : pending ? t.sync.pending(pending) : t.sync.synced;
-    return html`<header class="page-head"><h1>${title}</h1>
-      <span class="status" data-state=${this.syncState} data-testid="sync-status"><span class="dot"></span>${label}</span>${actions}</header>`;
+    return html`<span class="status" data-state=${this.syncState} data-testid="sync-status"><span class="sdot"></span><span class="slabel">${label}</span></span>`;
   }
 }
