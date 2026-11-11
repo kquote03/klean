@@ -36,7 +36,11 @@ fun KleanNavHost(
 ) {
     val registry = shell.registry
     val ctx = androidx.compose.ui.platform.LocalContext.current
-    val motion = androidx.compose.runtime.remember(ctx) { KleanMotion.from(ctx) }
+    // Today, Track's Week and every module's start screen are top level: moving between them fades through.
+    val motion = androidx.compose.runtime.remember(ctx, registry) {
+        val topLevel = setOf(TodayRoute::class, TrackWeekRoute::class) + registry.all.map { it.startRoute::class }
+        KleanMotion.from(ctx, topLevel)
+    }
     NavHost(
         navController = nav,
         startDestination = if (startWithSetup) OnboardingRoute else TodayRoute,

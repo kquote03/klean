@@ -21,6 +21,8 @@ Every value here maps to a Kotlin token in Phase 2 (`Space`, `KleanShapes`, `Mat
 - **Settings:** an icon button in Today's top bar (`Tune` icon, label "Settings"). Group screens with real secondary actions (Plan: lists, sort, show finished; People: new contact, import) put them in a top-bar overflow menu. Track has no overflow; per-item actions live in long-press menus and detail screens.
 - **Today's cards are entry points:** each card opens its group (Plan, Track, People) with a container transform.
 - **No "More".** Ever.
+- **The Add menu's own line sits nearest the finger** (user feedback 2026-11-11): the current screen's module is always the last line, next to the Add button (Event on Calendar, Log food on Diet). In People that last line is **New contact**, which shows only there (`addMenuEntries`, `AddMenuEntriesTest`).
+- **Adding never leaves the app's activity.** The shell shows the capture sheet in place (`ShellSheets`, `LocalCaptureLauncher` for module screens); `CaptureActivity` is only for outside entry points (QS tile, widgets, notification, shortcuts, `klean://capture`, the watch).
 
 ## Spacing (`Space`)
 
@@ -81,10 +83,18 @@ Only the existing tokens (`core/design/tokens/klean-color-tokens.json`, light an
 
 ## Motion
 
-- Tabs: **shared-axis X**, 250 ms, emphasized easing.
+By how the two screens relate (`Motion.kt`, `MotionKindTest`; user feedback 2026-11-11):
+
+| From → to | Motion |
+|---|---|
+| Top level ↔ top level (Today, a group's module tabs, Track › Week, switching bar groups) | **fade-through**: 90 ms out, 210 ms in with a 0.92 → 1 scale |
+| Parent → child, and Back | **shared axis X**, 250 ms, emphasized easing |
+| Into a full-screen page (account menu, voice screen) | **slide up**; Back slides it down over the screen it came from |
+| Any, with reduced motion (system animator scale 0 or "remove animations") | cross-fade at 100 ms, no movement |
+
+- Back (button or predictive gesture) plays the NavHost's pop transition, so it never shows the system's shrinking window inside the app; only Back on Today leaves the app. `BackNavigationTest` (Waydroid) walks every screen and overlay.
 - Today card to group screen: **container transform**, 250 ms.
 - Add button to Add menu: the Material 3 FAB menu expand, items staggered 20 ms.
-- With reduced motion (system animator scale 0 or "remove animations"): cross-fade at 100 ms, no movement.
 
 ## Components (Phase 2 targets)
 

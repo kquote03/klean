@@ -707,7 +707,7 @@ NAV lane (branch `nav`, worktree `../klean-nav`):
 - [x] D3 In-process capture sheet (no CaptureActivity from inside the app; `CaptureViewModel.start`, `LocalCaptureLauncher` for module screens)
 - [x] E1 BackNavigationTest (Waydroid): 15 paths, 15 pass (2026-11-11)
 - [x] E2 Back fixes: none needed beyond D3 (the capture sheet was the zoom); Calendar views stay a choice inside one screen, so Back leaves Plan
-- [ ] E3 Route-aware motion (fade-through / shared axis X / slide up)
+- [x] E3 Route-aware motion (fade-through / shared axis X / slide up); `FULL_SCREEN_ROUTES` in Motion.kt takes VoiceRoute
 - [ ] E4 Predictive back declared; no direct onBackPressed
 
 ## Follow-ups (from the user, to do while working nearby)
