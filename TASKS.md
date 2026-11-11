@@ -710,3 +710,11 @@ Direction: navigation A (grouped tabs) + Soft cards, the recommended default (no
 - [ ] Release signing key (`app.klean`), kept out of the repo; its SHA-1 gets its own Android OAuth client.
 - [ ] Google OAuth: Tasks is a sensitive scope, so publishing needs Google's verification (privacy policy URL, home page, verified domain, logo, a short demo video).
 - [ ] Play Console: Data safety form, Health Connect declaration (sleep/exercise/nutrition), exact-alarm and location-permission justifications, content rating.
+
+## Today at a glance (plan 2026-11-11)
+
+### Lane VOICE (branch `voice`)
+- [x] V1 — `VoiceEngineTest`: engine order and error mapping (red first; 10 cases)
+- [ ] V2 — `VoiceEngine` (system → on-device → system dialog), real error reasons, language-pack download
+- [ ] V3 — `VoiceCaptureScreen` + `VoiceRoute` (`klean://voice`, shortcut `voice`); the capture sheet's mic opens it
+- [ ] V4 — Waydroid voice check; acceptance row V5
