@@ -703,3 +703,10 @@ Direction: navigation A (grouped tabs) + Soft cards, the recommended default (no
 
 ## Follow-ups (from the user, to do while working nearby)
 - [ ] AI settings: a "Get a free key" button that opens https://aistudio.google.com/apikey, plus a three-line how-to (create key → copy → paste here). The key stays in `SecretStore`. Calm copy; no sign-in-for-quota (Gemini has no consumer OAuth quota path).
+
+## Before publishing (user: later, once the logo and privacy policy are final)
+- [ ] Final logo → launcher icon (adaptive + monochrome), watch icon, web PWA icons, Play listing graphics.
+- [ ] Privacy policy at a public URL; link it in Settings › About, the web app and the Play listing.
+- [ ] Release signing key (`app.klean`), kept out of the repo; its SHA-1 gets its own Android OAuth client.
+- [ ] Google OAuth: Tasks is a sensitive scope, so publishing needs Google's verification (privacy policy URL, home page, verified domain, logo, a short demo video).
+- [ ] Play Console: Data safety form, Health Connect declaration (sleep/exercise/nutrition), exact-alarm and location-permission justifications, content rating.
