@@ -55,7 +55,7 @@ class DietGlanceProvider(
             val byEntry = day.items.filter { !it.sync.deleted && it.state != FoodItemState.REJECTED }.groupBy { it.entryId }
             GlanceContribution(
                 upcoming = if (on && next != null) {
-                    listOf(GlanceRow(KEY_NEXT, moduleId, ctx.getString(R.string.diet_glance_checkin, fmt.time(next)), next, icon = Icons.Rounded.Schedule, route = LINK))
+                    listOf(GlanceRow(KEY_NEXT, moduleId, ctx.getString(R.string.diet_glance_checkin), next, icon = Icons.Rounded.Schedule, route = LINK))
                 } else {
                     emptyList()
                 },

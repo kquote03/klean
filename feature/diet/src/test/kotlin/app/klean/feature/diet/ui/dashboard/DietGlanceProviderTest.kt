@@ -81,7 +81,8 @@ class DietGlanceProviderTest {
         assertTrue(provider().glance().first().upcoming.isEmpty())
         promptsOn.value = true
         val row = provider().glance().first().upcoming.single()
-        assertEquals("Check-in around T${at(11, 17)}", row.text)
+        // The time sits in the gutter; the text doesn't repeat it.
+        assertEquals("Food check-in", row.text)
         assertEquals(at(11, 17), row.at)
     }
 
