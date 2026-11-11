@@ -11,6 +11,9 @@ interface TodayLayoutStore {
     val hidden: Flow<Set<String>>
     suspend fun setOrder(ids: List<String>)
     suspend fun setHidden(ids: Set<String>)
+    /** Today's one-tap buttons, nearest the thumb first ([quickButtonOrder]); empty means the default. */
+    val buttons: Flow<List<String>>
+    suspend fun setButtons(keys: List<String>)
 }
 
 class DevicePrefsTodayLayout @Inject constructor(private val prefs: DevicePrefs) : TodayLayoutStore {
@@ -18,6 +21,8 @@ class DevicePrefsTodayLayout @Inject constructor(private val prefs: DevicePrefs)
     override val hidden: Flow<Set<String>> = prefs.hiddenCards
     override suspend fun setOrder(ids: List<String>) = prefs.setCardOrder(ids)
     override suspend fun setHidden(ids: Set<String>) = prefs.setHiddenCards(ids)
+    override val buttons: Flow<List<String>> = prefs.buttonOrder
+    override suspend fun setButtons(keys: List<String>) = prefs.setButtonOrder(keys)
 }
 
 /** For shell tests without Hilt. */
@@ -26,4 +31,6 @@ class InMemoryTodayLayout(order: List<String> = emptyList(), hidden: Set<String>
     override val hidden = MutableStateFlow(hidden)
     override suspend fun setOrder(ids: List<String>) { order.value = ids }
     override suspend fun setHidden(ids: Set<String>) { hidden.value = ids }
+    override val buttons = MutableStateFlow(emptyList<String>())
+    override suspend fun setButtons(keys: List<String>) { buttons.value = keys }
 }

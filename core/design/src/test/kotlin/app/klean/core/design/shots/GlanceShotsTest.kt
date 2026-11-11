@@ -47,7 +47,7 @@ class GlanceShotsTest {
     @get:Rule val compose = createComposeRule()
 
     private val tapped = mutableListOf<String>()
-    private fun tile(label: String, icon: androidx.compose.ui.graphics.vector.ImageVector) = QuickActionUi(label, icon) { tapped += label }
+    private fun tile(label: String, icon: androidx.compose.ui.graphics.vector.ImageVector) = QuickActionUi(label, icon, primary = label == "Speak") { tapped += label }
     private val eight = listOf(
         tile("Speak", Icons.Rounded.Mic), tile("Type", Icons.Rounded.Keyboard), tile("Food", Icons.Rounded.Restaurant),
         tile("Task", Icons.Rounded.CheckCircleOutline), tile("Bedtime", Icons.Rounded.Bedtime), tile("Workout", Icons.Rounded.FitnessCenter),

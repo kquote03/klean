@@ -51,6 +51,7 @@ class DevicePrefs @Inject constructor(
         val deliveryOffer = stringPreferencesKey("deliveryOffer")
         val mainPhone = booleanPreferencesKey("mainPhone")
         val cardOrder = stringPreferencesKey("cardOrder")
+        val buttonOrder = stringPreferencesKey("buttonOrder")
         val hiddenCards = stringSetPreferencesKey("hiddenCards")
         val pendingNewModules = stringSetPreferencesKey("pendingNewModules")
         val lastInGroup = stringPreferencesKey("lastInGroup")
@@ -122,6 +123,10 @@ class DevicePrefs @Inject constructor(
     /** Today's card order as module ids (device-local layout); empty = the default slot order. */
     val cardOrder: Flow<List<String>> = store.data.map { p -> p[K.cardOrder]?.split(',')?.filter { it.isNotEmpty() } ?: emptyList() }
     suspend fun setCardOrder(v: List<String>) = put(K.cardOrder, v.joinToString(",").ifEmpty { null })
+
+    /** Today's one-tap buttons, nearest the thumb first (keys: "speak", "type", module ids). Empty: the default. */
+    val buttonOrder: Flow<List<String>> = store.data.map { p -> p[K.buttonOrder]?.split(',')?.filter { it.isNotEmpty() } ?: emptyList() }
+    suspend fun setButtonOrder(v: List<String>) = put(K.buttonOrder, v.joinToString(",").ifEmpty { null })
 
     /** Module ids whose Today card is hidden. */
     val hiddenCards: Flow<Set<String>> = flow(K.hiddenCards, emptySet())

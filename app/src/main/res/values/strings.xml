@@ -17,6 +17,10 @@
     <string name="add_contact">New contact</string>
     <string name="today_capture_placeholder">Add anything: a task, a time, a meal…</string>
     <string name="today_arrange">Arrange Today</string>
+    <string name="today_arrange_buttons">Arrange buttons</string>
+    <string name="today_arrange_buttons_hint">Tap two buttons to swap them</string>
+    <string name="today_arrange_buttons_reset">Reset</string>
+    <string name="today_arrange_buttons_tile">%1$s. Tap, then tap another button to swap</string>
     <string name="today_account">Account and settings</string>
     <string name="today_account_next">Next account</string>
     <string name="today_account_previous">Previous account</string>

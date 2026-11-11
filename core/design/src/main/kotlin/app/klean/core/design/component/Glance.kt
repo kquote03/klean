@@ -1,6 +1,7 @@
 package app.klean.core.design.component
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -47,6 +48,10 @@ data class QuickActionUi(
     val label: String,
     val icon: ImageVector,
     val contentDescription: String? = null,
+    /** Drawn on the primary container (Speak), wherever it sits. */
+    val primary: Boolean = false,
+    /** Picked in arrange mode: outlined until a second tap swaps it. */
+    val selected: Boolean = false,
     val onClick: () -> Unit,
 )
 
@@ -80,7 +85,6 @@ val QuickActionHeight = 72.dp
 @Composable
 fun QuickActionGrid(actions: List<QuickActionUi>, modifier: Modifier = Modifier, leftHanded: Boolean = false) {
     val shown = actions.take(QUICK_ACTION_MAX)
-    val first = shown.firstOrNull()
     val base = MaterialTheme.typography.labelLarge
     val measurer = androidx.compose.ui.text.rememberTextMeasurer()
     val density = androidx.compose.ui.platform.LocalDensity.current
@@ -100,7 +104,7 @@ fun QuickActionGrid(actions: List<QuickActionUi>, modifier: Modifier = Modifier,
                     if (a == null) {
                         Spacer(Modifier.weight(1f))
                     } else {
-                        QuickActionTile(a, primary = a === first, label = label, modifier = Modifier.weight(1f))
+                        QuickActionTile(a, primary = a.primary, label = label, modifier = Modifier.weight(1f))
                     }
                 }
             }
@@ -123,6 +127,13 @@ private fun QuickActionTile(a: QuickActionUi, primary: Boolean, label: androidx.
             .heightIn(min = QuickActionHeight)
             .clip(MaterialTheme.shapes.medium)
             .background(bg)
+            .then(
+                if (a.selected) {
+                    Modifier.border(Space.xxs, MaterialTheme.colorScheme.primary, MaterialTheme.shapes.medium)
+                } else {
+                    Modifier
+                },
+            )
             .clickable(role = Role.Button, onClick = a.onClick)
             .semantics(mergeDescendants = true) { contentDescription = description }
             .padding(horizontal = Space.xxs, vertical = Space.xs),

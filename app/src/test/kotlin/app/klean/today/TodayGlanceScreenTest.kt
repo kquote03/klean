@@ -1,5 +1,6 @@
 package app.klean.today
 
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CheckCircleOutline
 import androidx.compose.runtime.CompositionLocalProvider
@@ -38,6 +39,7 @@ class TodayGlanceScreenTest {
     private val actions = mutableListOf<QuickAction>()
     private var voice = 0
     private var typed = 0
+    private val order = androidx.compose.runtime.mutableStateOf(emptyList<String>())
     private val add = AddMenuSpec(listOf(AddMenuItem("tasks", "Task", Icons.Rounded.CheckCircleOutline) {}), onCapture = {})
 
     @Before fun reset() {
@@ -59,6 +61,8 @@ class TodayGlanceScreenTest {
                     onArrange = {},
                     onSettings = {},
                     timeOf = TodayFixtures.timeOf,
+                    buttonOrder = order.value,
+                    onButtonOrder = { order.value = it },
                 )
             }
         }
@@ -124,5 +128,22 @@ class TodayGlanceScreenTest {
         assertFalse(Regex("\\bno\\b").containsMatchIn(words))
         assertFalse("missed" in words)
         compose.assertClutterBudget()
+    }
+
+    @Test fun arrangeButtonsSwapsTwoTapsAndRunsNothing() {
+        render()
+        compose.onNodeWithContentDescription("More options").performClick()
+        compose.onNodeWithText("Arrange buttons").performClick()
+        compose.onNodeWithText("Tap two buttons to swap them").assertExists()
+        compose.onNodeWithText("Speak").performClick()
+        compose.onNodeWithText("Food").performClick()
+        // Food took Speak's corner and nothing ran.
+        assertEquals("diet", order.value.first())
+        assertEquals(0, voice)
+        assertTrue(actions.isEmpty())
+        compose.onNodeWithText("Reset").performClick()
+        assertTrue(order.value.isEmpty())
+        compose.onNodeWithText("Done").performClick()
+        compose.onNodeWithText("Tap two buttons to swap them").assertDoesNotExist()
     }
 }

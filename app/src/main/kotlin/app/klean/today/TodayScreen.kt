@@ -97,6 +97,7 @@ fun TodayScreen(
     leftHandedFlow: kotlinx.coroutines.flow.Flow<Boolean> = kotlinx.coroutines.flow.flowOf(false),
 ) {
     val leftHanded by leftHandedFlow.collectAsStateWithLifecycle(initialValue = false)
+    val buttonOrder by layout.buttons.collectAsStateWithLifecycle(initialValue = emptyList())
     val visibleFlow = remember(registry, layout) {
         combine(registry.enabled, registry.dashboardCards, layout.order, layout.hidden) { on, cards, order, hidden ->
             // Arrange Today orders the modules with a place on Today; the rest (Reminders) follow in nav order.
@@ -127,6 +128,8 @@ fun TodayScreen(
         onSwitchAccount = { step -> scope.launch { if (!account.switchBy(step)) onAccount() } },
         timeOf = remember(ctx, zone) { deviceTime(ctx, zone) },
         leftHanded = leftHanded,
+        buttonOrder = buttonOrder,
+        onButtonOrder = { keys -> scope.launch { layout.setButtons(keys) } },
     )
 }
 
@@ -158,17 +161,24 @@ fun TodayContent(
     timeOf: (Long) -> String = { ms -> java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT).format(java.util.Date(ms)) },
     /** Settings › Appearance › Left-handed: Speak and Type in the bottom-left corner instead of bottom-right. */
     leftHanded: Boolean = false,
+    /** The user's button order, nearest the thumb first (empty: the default, Food right above Speak). */
+    buttonOrder: List<String> = emptyList(),
+    onButtonOrder: (List<String>) -> Unit = {},
 ) {
     val arrange = stringResource(R.string.today_arrange)
+    val arrangeButtons = stringResource(R.string.today_arrange_buttons)
+    // Arrange mode: tap a button, then another, to swap them. Nothing runs while arranging.
+    var arranging by rememberSaveable { mutableStateOf(false) }
+    var picked by rememberSaveable { mutableStateOf<String?>(null) }
     val undo = stringResource(R.string.today_undo)
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val g = state.glance
-    val tiles = listOf(
-        QuickActionUi(stringResource(R.string.today_quick_voice), Icons.Rounded.Mic, onClick = onVoice),
-        QuickActionUi(stringResource(R.string.today_quick_type), Icons.Rounded.Keyboard, stringResource(R.string.today_quick_type_description), onClick = onType),
-    ) + g.quickActions.map { a ->
-        QuickActionUi(a.label, a.icon) {
+    val byKey = linkedMapOf<String, QuickActionUi>(
+        SPEAK_KEY to QuickActionUi(stringResource(R.string.today_quick_voice), Icons.Rounded.Mic, primary = true, onClick = onVoice),
+        TYPE_KEY to QuickActionUi(stringResource(R.string.today_quick_type), Icons.Rounded.Keyboard, stringResource(R.string.today_quick_type_description), onClick = onType),
+    )
+    g.quickActions.forEach { a -> byKey[a.module.value] = QuickActionUi(a.label, a.icon) {
             if (a is QuickAction.Instant) {
                 scope.launch {
                     val r = a.run() ?: return@launch
@@ -183,6 +193,28 @@ fun TodayContent(
             }
         }
     }
+    val order = quickButtonOrder(byKey.keys.toList(), buttonOrder)
+    val swapHint = stringResource(R.string.today_arrange_buttons_tile)
+    val tiles = order.mapNotNull { key ->
+        val t = byKey[key] ?: return@mapNotNull null
+        if (!arranging) {
+            t
+        } else {
+            t.copy(
+                selected = picked == key,
+                contentDescription = swapHint.format(t.label),
+                onClick = {
+                    val first = picked
+                    if (first == null || first == key) {
+                        picked = if (first == key) null else key
+                    } else {
+                        onButtonOrder(swapKeys(order, first, key))
+                        picked = null
+                    }
+                },
+            )
+        }
+    }
     KleanScreen(
         title = weekday(state.today),
         showAdd = false,
@@ -190,7 +222,8 @@ fun TodayContent(
         header = {
             TodayHeader(
                 today = state.today,
-                menu = if (canArrange) listOf(MenuAction(arrange, onClick = onArrange)) else emptyList(),
+                menu = listOf(MenuAction(arrangeButtons) { arranging = true; picked = null }) +
+                    if (canArrange) listOf(MenuAction(arrange, onClick = onArrange)) else emptyList(),
                 avatar = avatar,
                 onAccount = onAccount,
                 onSwitchAccount = onSwitchAccount,
@@ -225,6 +258,13 @@ fun TodayContent(
                 Section(stringResource(R.string.today_done), g.done, stringResource(R.string.today_done_empty), dimmed = true, timeOf, onOpen, onCheck)
             }
         }
+        if (arranging) {
+            ArrangeButtonsBar(
+                onReset = { onButtonOrder(emptyList()); picked = null },
+                onDone = { arranging = false; picked = null },
+                modifier = Modifier.padding(start = start, end = end),
+            )
+        }
         QuickActionGrid(
             tiles,
             leftHanded = leftHanded,
@@ -232,6 +272,22 @@ fun TodayContent(
             modifier = Modifier.padding(start = start, end = end, top = Space.xs, bottom = Space.sm),
         )
         }
+    }
+}
+
+/** Shown above the buttons while arranging them: what to do, Reset and Done. Back also finishes. */
+@Composable
+private fun ArrangeButtonsBar(onReset: () -> Unit, onDone: () -> Unit, modifier: Modifier = Modifier) {
+    androidx.activity.compose.BackHandler(onBack = onDone)
+    Row(modifier.fillMaxWidth().padding(top = Space.xs), verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            stringResource(R.string.today_arrange_buttons_hint),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f),
+        )
+        androidx.compose.material3.TextButton(onClick = onReset) { Text(stringResource(R.string.today_arrange_buttons_reset)) }
+        androidx.compose.material3.TextButton(onClick = onDone) { Text(stringResource(R.string.today_arrange_done)) }
     }
 }
 
