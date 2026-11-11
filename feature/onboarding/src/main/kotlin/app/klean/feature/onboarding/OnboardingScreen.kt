@@ -16,6 +16,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import app.klean.core.design.theme.Space
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -64,41 +69,42 @@ fun OnboardingScreen(
     BackHandler(enabled = s.position > 1 && !s.finished) { vm.back() }
 
     Scaffold { padding ->
-        Column(Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp, vertical = 16.dp)) {
+        Column(Modifier.fillMaxSize().padding(padding).padding(Space.screenEdge)) {
+            // Where you are, as a quiet bar and its words: never a count of what's left to do.
+            LinearProgressIndicator(
+                progress = { s.position.toFloat() / s.steps.size.coerceAtLeast(1) },
+                modifier = Modifier.fillMaxWidth().padding(top = Space.xs),
+            )
             Text(
                 stringResource(R.string.onboarding_progress, s.position, s.steps.size),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 8.dp),
+                modifier = Modifier.padding(top = Space.xs),
             )
-            Spacer(Modifier.height(8.dp))
             Text(
                 stepTitle(s.current, vm),
-                style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.padding(horizontal = 8.dp),
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.padding(top = Space.lg, bottom = Space.md).semantics { heading() },
             )
-            Spacer(Modifier.height(16.dp))
             Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())) {
                 StepBody(s, vm, permissions, onOpenAiSettings)
             }
-            Spacer(Modifier.height(16.dp))
             val first = s.current == OnboardingStep.Welcome
             // Same height even when large text wraps one label onto two lines.
-            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
-                // Equal weight on purpose: skipping is as normal as going on.
+            Row(Modifier.fillMaxWidth().padding(top = Space.md).height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(Space.sm)) {
+                // Equal width on purpose: skipping is as normal as going on. Next is the page's one primary action.
                 OutlinedButton(
                     onClick = { if (first) vm.skipAll() else vm.skip() },
-                    modifier = Modifier.weight(1f).fillMaxHeight().heightIn(min = 48.dp),
+                    modifier = Modifier.weight(1f).fillMaxHeight().heightIn(min = Space.touchTarget),
                 ) {
                     Text(
                         stringResource(if (first) R.string.onboarding_skip_setup else R.string.onboarding_skip),
                         textAlign = TextAlign.Center,
                     )
                 }
-                Spacer(Modifier.width(12.dp))
                 FilledTonalButton(
                     onClick = { vm.next() },
-                    modifier = Modifier.weight(1f).fillMaxHeight().heightIn(min = 48.dp),
+                    modifier = Modifier.weight(1f).fillMaxHeight().heightIn(min = Space.touchTarget),
                 ) {
                     Text(
                         stringResource(
@@ -157,9 +163,9 @@ private fun StepBody(s: OnboardingUiState, vm: OnboardingViewModel, permissions:
         OnboardingStep.Ai -> {
             Body(R.string.onboarding_ai_body)
             if (onOpenAiSettings != null) {
-                FilledTonalButton(
+                OutlinedButton(
                     onClick = onOpenAiSettings,
-                    modifier = Modifier.padding(horizontal = 8.dp).heightIn(min = 48.dp),
+                    modifier = Modifier.padding(vertical = Space.xs).heightIn(min = Space.touchTarget),
                 ) { Text(stringResource(R.string.onboarding_ai_open)) }
             }
             Body(R.string.onboarding_ai_later)
@@ -180,14 +186,13 @@ private fun WidgetBody(receivers: List<Class<*>>) {
             val name = remember(component) {
                 runCatching { ctx.packageManager.getReceiverInfo(component, 0).loadLabel(ctx.packageManager).toString() }.getOrNull()
             }
-            FilledTonalButton(
+            OutlinedButton(
                 onClick = { runCatching { manager.requestPinAppWidget(component, null, null) } },
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp).heightIn(min = 48.dp),
+                modifier = Modifier.padding(vertical = Space.xxs).heightIn(min = Space.touchTarget),
             ) {
                 Text(name?.let { stringResource(R.string.onboarding_widget_add_named, it) } ?: stringResource(R.string.onboarding_widget_add))
             }
         }
-        Spacer(Modifier.height(8.dp))
         Body(R.string.onboarding_widget_also)
     } else {
         Body(R.string.onboarding_widget_manual)
@@ -199,6 +204,6 @@ private fun Body(res: Int) {
     Text(
         stringResource(res),
         style = MaterialTheme.typography.bodyLarge,
-        modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+        modifier = Modifier.padding(vertical = Space.xs),
     )
 }
