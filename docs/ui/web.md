@@ -94,7 +94,7 @@ Counts (interactive / inputs / primary, the same at both sizes and in both theme
 | People › Contacts | 6 / 0 / 1 |
 | People › Birthdays | 5 / 0 / 1 |
 | Approvals | 2 / 0 / 1 |
-| Settings | 4 / 0 / 1 |
+| Settings | 4 / 0 / 1 on a laptop, 3 / 0 / 1 on a phone |
 
 ## Tests
 
