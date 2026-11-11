@@ -272,3 +272,10 @@ Only 4 of 20 screens meet the budget outright. The common causes, in order of we
 | Diet: calories so far | top bar subtitle | the hero's supporting line ("8:10 · ~1,850 kcal so far") |
 | Diet: entries with gap markers' "Add something" | the list | "Today" list group; a gap row taps to add at that time |
 | Diet: (new) the rest of the week | — | "Earlier this week" list group (last 5 entries of the six days before) |
+| People: search field always on top | Contacts | top-bar Search icon opens the field (Close search clears it) |
+| People: "New contact" FAB | bottom right | People overflow → New contact; the empty state's action |
+| People: settings gear | top bar | People overflow → Contacts settings |
+| People: People · Birthdays tab row | under the top bar | the "Coming up" hero (next birthday) opens Birthdays; also People overflow → Birthdays; "All people" goes back; `klean://contacts?tab=birthdays` still opens it |
+| People: merge card with Merge / Keep apart per pair and Not now | top of the list | one row "These look like the same people" that opens the choices in a dialog |
+| People: A–Z letter headers | Contacts | one "Everyone" list group with initials; other accounts keep their own group |
+| Contact detail: primary-coloured section labels and plain list items | detail | `SectionHeader`s and list groups; a number calls, an email writes; Edit stays the top bar's one action |

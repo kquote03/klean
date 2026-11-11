@@ -1,5 +1,6 @@
 package app.klean.feature.contacts.ui
 
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -43,23 +44,27 @@ class ContactsScreenTest {
             ContactsContent(s, tab, {}, onOpen, {}, {}, {}, { merged += it }, {}, {})
         }
 
-    @Test fun peopleListMergeCardAndOtherAccount() {
+    @Test fun peopleListMergeOfferAndOtherAccount() {
         val opened = mutableListOf<Pair<String?, Long?>>()
         val merged = mutableListOf<DuplicatePair>()
         show(state, onOpen = { a, b -> opened += a to b }, merged = merged)
-        rule.onNodeWithText("These look like the same people").assertIsDisplayed()
-        rule.onNodeWithText("Sara, also in me@dav").assertIsDisplayed()
+        rule.onNodeWithText("These look like the same people").assertIsDisplayed().performClick()
+        // In the offer's row and in its choices.
+        rule.onAllNodesWithText("Sara, also in me@dav", substring = true).assertCountEquals(2)
         rule.onNodeWithText("Merge").assertHeightIsAtLeast(48.dp).performClick()
         assertEquals(listOf(pair), merged)
+        rule.onNodeWithText("Not now").performClick()
         rule.onNodeWithText("In me@dav").assertIsDisplayed()
         rule.onNodeWithText("Sara Dav").performClick()
         assertEquals(listOf<Pair<String?, Long?>>(null to 3L), opened)
-        rule.onNodeWithContentDescription("New contact").assertIsDisplayed()
-        rule.onNodeWithContentDescription("Contacts settings").assertHeightIsAtLeast(48.dp)
+        rule.onNodeWithContentDescription("More options").assertHeightIsAtLeast(48.dp).performClick()
+        rule.onNodeWithText("New contact").assertIsDisplayed()
+        rule.onNodeWithText("Contacts settings").assertIsDisplayed()
     }
 
     @Test fun birthdaysTabFromTheDeepLinkAndHiddenWhenOff() {
         show(state, tab = "birthdays")
+        rule.onNodeWithText("All people").assertIsDisplayed()
         rule.onNodeWithText("Coming up").assertIsDisplayed()
         rule.onNodeWithText("Tomorrow").assertIsDisplayed()
         rule.onNodeWithText("Turns 30").assertIsDisplayed()

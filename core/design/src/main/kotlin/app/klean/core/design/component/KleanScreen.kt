@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material3.DropdownMenu
@@ -86,6 +87,7 @@ val LocalAddMenu = staticCompositionLocalOf<AddMenuSpec?> { null }
  * The one screen scaffold (docs/ui/design-system.md). A top bar with a `titleLarge` title, optional [subtitle],
  * icon [actions] and an overflow [menu]; the group's segmented tabs when the screen is a module inside a group;
  * the Add button (from [LocalAddMenu]) and a snackbar host. [header] replaces the title row (Today's weekday).
+ * A detail screen passes [onBack] for a back arrow (and usually `showAdd = false`).
  *
  * [content] gets padding that already holds the top bar, the screen edge on both sides, and room under the last
  * item for the Add button; pass it to a lazy list's `contentPadding` so rows scroll edge to edge.
@@ -100,6 +102,7 @@ fun KleanScreen(
     menu: List<MenuAction> = emptyList(),
     snackbarHostState: SnackbarHostState? = null,
     showAdd: Boolean = true,
+    onBack: (() -> Unit)? = null,
     content: @Composable (PaddingValues) -> Unit,
 ) {
     val group = LocalGroupChrome.current.chromeFor(LocalLifecycleOwner.current)
@@ -113,7 +116,7 @@ fun KleanScreen(
                     if (header != null) {
                         header()
                     } else {
-                        TopBar(group?.title ?: title, subtitle.takeIf { group == null }, actions, allMenu)
+                        TopBar(group?.title ?: title, subtitle.takeIf { group == null }, actions, allMenu, onBack.takeIf { group == null })
                     }
                     if (group != null && group.tabs.size > 1) {
                         SegmentedTabs(
@@ -161,11 +164,16 @@ fun KleanScreen(
 val AddButtonClearance = 96.dp
 
 @Composable
-private fun TopBar(title: String, subtitle: String?, actions: @Composable RowScope.() -> Unit, menu: List<MenuAction>) {
+private fun TopBar(title: String, subtitle: String?, actions: @Composable RowScope.() -> Unit, menu: List<MenuAction>, onBack: (() -> Unit)?) {
     Row(
-        Modifier.fillMaxWidth().heightIn(min = 64.dp).padding(start = Space.screenEdge, end = Space.xxs),
+        Modifier.fillMaxWidth().heightIn(min = 64.dp).padding(start = if (onBack != null) Space.xxs else Space.screenEdge, end = Space.xxs),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        if (onBack != null) {
+            IconButton(onClick = onBack, modifier = Modifier.size(Space.touchTarget)) {
+                Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.design_back))
+            }
+        }
         Column(Modifier.weight(1f).semantics(mergeDescendants = true) { heading() }) {
             Text(title, style = MaterialTheme.typography.titleLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
             if (subtitle != null) {

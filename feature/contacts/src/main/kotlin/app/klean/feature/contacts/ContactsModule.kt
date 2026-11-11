@@ -73,6 +73,7 @@ class ContactsKleanModule @Inject constructor(
     override val dashboardSlot: DashboardSlot? = null
     override val startRoute: Any = ContactsRoute()
     override val graphRoute: Any = ContactsGraph
+    override val drawsGroupChrome: Boolean = true
     override val settingsRoute: Any = ContactsSettingsRoute
     override val capturePlaceholderRes: Int = R.string.contacts_capture_placeholder
 
@@ -134,6 +135,7 @@ class BirthdaysKleanModule @Inject constructor(
     override val inNavigation: Boolean = false
     override val startRoute: Any = ContactsRoute(ContactsLinks.TAB_BIRTHDAYS)
     override val graphRoute: Any = ContactsGraph
+    override val drawsGroupChrome: Boolean = true
     override val settingsRoute: Any = BirthdaysSettingsRoute
 
     /** Contacts registers the shared graph. */

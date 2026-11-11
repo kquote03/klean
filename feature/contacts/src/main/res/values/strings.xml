@@ -13,7 +13,7 @@
     <string name="contacts_delete_title">Delete %1$s?</string>
     <string name="contacts_delete_body">They also leave the phone\'s contacts and their birthday reminders stop.</string>
     <string name="contacts_search">Search names, numbers, emails</string>
-    <string name="contacts_empty">No contacts yet. Add someone with the button below, or bring in a contacts file from Settings.</string>
+    <string name="contacts_empty">No contacts yet. Add someone, or bring in a contacts file from Contacts settings.</string>
     <string name="contacts_no_match">Nobody matches that.</string>
     <string name="contacts_gone">This contact isn\'t here any more.</string>
     <string name="contacts_in_account">In %1$s</string>
@@ -144,4 +144,12 @@
         <item quantity="one">%1$s turns %3$d tomorrow</item>
         <item quantity="other">%1$s turns %3$d in %2$d days</item>
     </plurals>
+    <!-- People (UI Phase 3) -->
+    <string name="contacts_everyone">Everyone</string>
+    <string name="contacts_all_people">All people</string>
+    <string name="contacts_search_open">Search</string>
+    <string name="contacts_search_close">Close search</string>
+    <string name="birthdays_turns_when">Turns %1$d · %2$s</string>
+    <string name="contacts_call">Call %1$s</string>
+    <string name="contacts_write">Write to %1$s</string>
 </resources>

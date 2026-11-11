@@ -11,4 +11,5 @@
     <string name="design_add_close">Close the Add menu</string>
     <string name="design_type_or_speak">Type or speak…</string>
     <string name="design_selected">Selected</string>
+    <string name="design_back">Back</string>
 </resources>
