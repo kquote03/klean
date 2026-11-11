@@ -72,6 +72,8 @@ import app.klean.core.data.db.entity.WorkoutTemplateEntity
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3, spec = KleanDatabase.V2ToV3::class),
+        // v4: food_entry.kcal / kcal_source / grams (plan 2026-11-11, calories). Nullable columns only.
+        AutoMigration(from = 3, to = 4),
     ],
 )
 abstract class KleanDatabase : RoomDatabase() {
@@ -110,7 +112,7 @@ abstract class KleanDatabase : RoomDatabase() {
     }
 
     companion object {
-        const val VERSION = 3
+        const val VERSION = 4
         const val FILE_NAME = "klean.db"
     }
 }

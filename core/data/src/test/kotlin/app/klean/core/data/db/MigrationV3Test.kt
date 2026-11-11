@@ -57,7 +57,6 @@ class MigrationV3Test {
         useReaderConnection { c -> c.usePrepared("PRAGMA user_version") { s -> s.step(); s.getLong(0) } }
 
     @Test fun v2FixtureMigratesToV3() = runBlocking {
-        assertEquals(3L, db.userVersion())
         assertEquals(KleanDatabase.VERSION.toLong(), db.userVersion())
         assertEquals(listOf("porridge"), db.foodEntryDao().range(0, Long.MAX_VALUE).map { it.rawText })
         // The change counter carries on from v2, so new writes still sort after old ones.
@@ -157,7 +156,7 @@ class MigrationV3Test {
 
     @Test fun v1FileMigratesThroughV2ToV3() = runBlocking {
         val chained = open("/backup-v1.sqlite", "migration-v1-v3-test.db")
-        assertEquals(3L, chained.userVersion())
+        assertEquals(KleanDatabase.VERSION.toLong(), chained.userVersion())
         assertEquals(
             listOf("porridge", "shawarma and fries", "tea"),
             chained.foodEntryDao().range(0, Long.MAX_VALUE).map { it.rawText },

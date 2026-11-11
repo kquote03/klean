@@ -33,5 +33,11 @@ data class FoodEntryEntity(
     @ColumnInfo(name = "meal_type") val mealType: MealType?,
     @ColumnInfo(name = "meal_type_provider") val mealTypeProvider: String?,
     @ColumnInfo(name = "enrichment") val enrichment: EnrichmentStatus,
+    /** The entry's calories, or null. Set by the user, by history or by AI (see [kcalSource]). v4. */
+    @ColumnInfo(name = "kcal") val kcal: Int? = null,
+    /** `USER` / `HISTORY` / `AI` ([app.klean.shared.diet.KcalSource] by name). Null when [kcal] is null. */
+    @ColumnInfo(name = "kcal_source") val kcalSource: String? = null,
+    /** How much was eaten, if the user said (grams). Lets history scale per gram. */
+    @ColumnInfo(name = "grams") val grams: Int? = null,
     @Embedded val sync: SyncColumns,
 )
