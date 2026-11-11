@@ -8,6 +8,7 @@ import app.klean.core.google.AccountActions
 import app.klean.core.google.NoAccounts
 import app.klean.core.data.module.ModuleGate
 import app.klean.core.ui.module.DashboardContributions
+import app.klean.core.ui.module.TodayGlance
 import app.klean.core.ui.module.TodayItems
 import app.klean.core.ui.module.WeekSummaries
 import app.klean.feature.diet.ui.MinuteTicker
@@ -51,6 +52,8 @@ class ShellViewModel @Inject constructor(
     val weekSummaries: WeekSummaries = WeekSummaries(emptySet(), NoGate),
     /** Today's avatar: the current Google account, if any. */
     val account: AccountActions = NoAccounts,
+    /** Today's whiteboard: every enabled module's rows and one-tap action. */
+    val glance: TodayGlance = TodayGlance(emptySet(), NoGate),
 ) : ViewModel() {
     private val _startWithSetup = MutableStateFlow<Boolean?>(null)
 

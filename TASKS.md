@@ -719,3 +719,15 @@ NAV lane (branch `nav`, worktree `../klean-nav`):
 - [ ] Release signing key (`app.klean`), kept out of the repo; its SHA-1 gets its own Android OAuth client.
 - [ ] Google OAuth: Tasks is a sensitive scope, so publishing needs Google's verification (privacy policy URL, home page, verified domain, logo, a short demo video).
 - [ ] Play Console: Data safety form, Health Connect declaration (sleep/exercise/nutrition), exact-alarm and location-permission justifications, content rating.
+
+## Today at a glance (plan 2026-11-11)
+Plan `.hermes/plans/2026-11-11_090844-today-at-a-glance-voice-back.md`.
+
+### Lane GLANCE (branch `glance`, worktree `../klean-glance`)
+- [x] A1 `TodayGlanceProvider`, `GlanceContribution`, `QuickAction`, gate-filtered `TodayGlance` (`core/ui`)
+- [x] A2/A3 `buildGlance` + `GlanceTest`
+- [x] B1 Diet glance · [x] B2 Tasks · [x] B3 Reminders · [x] B4 Calendar · [x] B5 People · [x] B6 Sleep · [x] B7 Workout · [x] B8 Delegation
+- [x] C1 design components (`QuickActionGrid`, `GlanceSection`, `TimelineRow`)
+- [x] C2/C3 Today whiteboard screen
+- [x] C4 Track › Week independent of `TodayCards` (it only reads `WeekSummaryProvider`s; nothing to change)
+- [x] C5 Today widget: mini whiteboard (Speak, Food, Task, Sleep; next 2; last 3 done). Unverified on a placed widget: Waydroid can't place widgets

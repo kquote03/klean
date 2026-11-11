@@ -27,6 +27,9 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.dialog
+import androidx.compose.ui.window.DialogProperties
+import app.klean.feature.workout.ui.WorkoutStartSheet
 import androidx.navigation.compose.navigation
 import androidx.navigation.navDeepLink
 import app.klean.core.capture.CaptureActivity
@@ -136,6 +139,14 @@ class WorkoutKleanModule @Inject constructor(
             }
         }
         composable<WorkoutSettingsRoute> { WorkoutSettingsScreen(onBack = { nav.popBackStack() }) }
+        // Today's Workout tile: a sheet over Today; Back or a tap outside closes it, starting goes on into the session.
+        dialog<WorkoutStartSheetRoute>(dialogProperties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
+            WorkoutStartSheet(
+                onDismiss = { nav.popBackStack() },
+                onOpenSession = { id -> nav.navigate(SessionRoute(id)) { popUpTo<WorkoutStartSheetRoute> { inclusive = true } } },
+                onRunStarted = { nav.navigate(WorkoutRoute) { popUpTo<WorkoutStartSheetRoute> { inclusive = true } } },
+            )
+        }
     }
 
     @Composable

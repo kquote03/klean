@@ -12,4 +12,5 @@
     <string name="design_type_or_speak">Type or speak…</string>
     <string name="design_selected">Selected</string>
     <string name="design_back">Back</string>
+    <string name="design_mark_done">Done: %1$s</string>
 </resources>

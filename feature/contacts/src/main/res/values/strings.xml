@@ -152,4 +152,7 @@
     <string name="birthdays_turns_when">Turns %1$d · %2$s</string>
     <string name="contacts_call">Call %1$s</string>
     <string name="contacts_write">Write to %1$s</string>
+    <!-- Today at a glance -->
+    <string name="contacts_glance_quick">Contact</string>
+    <string name="contacts_glance_today">Today</string>
 </resources>

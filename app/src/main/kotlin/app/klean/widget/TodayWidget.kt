@@ -1,5 +1,6 @@
 package app.klean.widget
 
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
@@ -9,7 +10,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
@@ -21,6 +21,7 @@ import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.SizeMode
+import androidx.glance.appwidget.action.actionSendBroadcast
 import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.lazy.LazyColumn
@@ -46,17 +47,24 @@ import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import app.klean.R
 import app.klean.core.capture.CaptureActivity
+import app.klean.core.common.ApplicationScope
 import app.klean.core.common.ZoneProvider
 import app.klean.core.data.prefs.DevicePrefs
 import app.klean.core.design.theme.KleanColors
 import app.klean.core.design.theme.WidgetTokens
+import app.klean.core.ui.module.GlanceRow
 import app.klean.core.ui.module.StatusSurface
-import app.klean.core.ui.module.TodayItems
+import app.klean.core.ui.module.TodayGlance
+import app.klean.feature.sleep.data.SleepRepository
 import app.klean.shared.diet.CaptureSource
+import app.klean.shared.module.ModuleId
+import app.klean.today.EMPTY_GLANCE
+import app.klean.today.buildGlance
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
+import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
@@ -66,13 +74,15 @@ import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.time.Clock
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 
 @EntryPoint
 @InstallIn(SingletonComponent::class)
 interface TodayWidgetEntryPoint {
-    fun items(): TodayItems
+    fun glance(): TodayGlance
     fun prefs(): DevicePrefs
     fun clock(): Clock
     fun zone(): ZoneProvider
@@ -84,20 +94,31 @@ private val Surface = DayNightColorProvider(
     night = KleanColors.dark.getValue(WidgetTokens.SURFACE),
 )
 
+/** The widget's buttons first (Food, Task, Sleep), then the other enabled modules, so the grid's cap never drops them. */
+private val WIDGET_FIRST = listOf(ModuleId.DIET, ModuleId.TASKS, ModuleId.SLEEP)
+
 /**
- * "Klean Today" (holistic plan H1): the date, the next few items across modules and an "Add anything"
- * pill that opens universal capture. Diet keeps its own widget and adds no rows here.
+ * "Klean Today" (plan 2026-11-11 C5): a small whiteboard of the day. Speak, Food, Task and Sleep as one-tap buttons
+ * (capture opens CaptureActivity, the right place outside the app; Sleep toggles in place through
+ * [SleepToggleReceiver]), the next two things coming up, and the last three things done today, foods included.
  */
 class TodayWidget : GlanceAppWidget() {
     override val sizeMode = SizeMode.Responsive(setOf(COMPACT, MEDIUM))
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val ep = EntryPointAccessors.fromApplication(context, TodayWidgetEntryPoint::class.java)
-        val states = ep.items().items().map { todayWidgetState(it) }
-        val initial = runCatching { states.first() }.getOrDefault(TodayWidgetState(emptyList(), 0))
+        val clock = ep.clock()
+        val states = ep.glance().byModule().map { parts ->
+            val ids = parts.keys.sortedBy { it.value }
+            todayWidgetState(buildGlance(WIDGET_FIRST.filter { it in ids } + (ids - WIDGET_FIRST.toSet()), parts, clock.now().toEpochMilliseconds()))
+        }
+        val initial = runCatching { states.first() }.getOrDefault(todayWidgetState(EMPTY_GLANCE))
+        val zoneId = java.time.ZoneId.of(ep.zone().current().id)
         val date = DateTimeFormatter.ofPattern(
             android.text.format.DateFormat.getBestDateTimePattern(Locale.getDefault(), "EEEEMMMMd"), Locale.getDefault(),
-        ).format(java.time.Instant.ofEpochMilli(ep.clock().now().toEpochMilliseconds()).atZone(java.time.ZoneId.of(ep.zone().current().id)))
+        ).format(java.time.Instant.ofEpochMilli(clock.now().toEpochMilliseconds()).atZone(zoneId))
+        val timeFormat = android.text.format.DateFormat.getTimeFormat(context).apply { timeZone = java.util.TimeZone.getTimeZone(zoneId) }
+        val timeOf: (Long) -> String = { ms -> timeFormat.format(java.util.Date(ms)) }
         val dynamicColor = ep.prefs().dynamicColor
         val initialDynamic = dynamicColor.first() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
         provideContent {
@@ -105,7 +126,7 @@ class TodayWidget : GlanceAppWidget() {
             val dynamic by remember { dynamicColor }.collectAsState(initialDynamic)
             val wallpaper = dynamic && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
             GlanceTheme(colors = if (wallpaper) DynamicThemeColorProviders else Colors) {
-                TodayWidgetContent(state, date, if (wallpaper) GlanceTheme.colors.surface else Surface)
+                TodayWidgetContent(state, date, timeOf, if (wallpaper) GlanceTheme.colors.surface else Surface)
             }
         }
     }
@@ -120,6 +141,32 @@ class TodayWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = TodayWidget()
 }
 
+/**
+ * The widget's Sleep button: "Going to bed" or "I'm up" right away, without opening the app. Sleep's own write
+ * refreshes the widget (and the status line) through `StatusRefresh`.
+ */
+@AndroidEntryPoint
+class SleepToggleReceiver : BroadcastReceiver() {
+    @Inject lateinit var sleep: SleepRepository
+    @Inject lateinit var clock: Clock
+    @Inject @ApplicationScope lateinit var scope: CoroutineScope
+
+    override fun onReceive(context: Context, intent: Intent) {
+        val done = goAsync()
+        scope.launch {
+            try {
+                sleep.toggle(clock.now().toEpochMilliseconds())
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                android.util.Log.w("Klean", "sleep toggle from the widget failed", e)
+            } finally {
+                done.finish()
+            }
+        }
+    }
+}
+
 /** Re-renders placed Today widgets through the same `StatusRefresh` hook as the status line. */
 @Singleton
 class TodayWidgetRefresher @Inject constructor(@ApplicationContext private val ctx: Context) : StatusSurface {
@@ -132,8 +179,15 @@ abstract class TodayWidgetModule {
     @Binds @IntoSet abstract fun surface(r: TodayWidgetRefresher): StatusSurface
 }
 
-private fun captureAction(context: Context): Action =
-    actionStartActivity(CaptureActivity.intent(context, CaptureSource.WIDGET).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+private fun actionFor(context: Context, a: WidgetAction): Action = when (a.kind) {
+    WidgetActionKind.SLEEP -> actionSendBroadcast(Intent(context, SleepToggleReceiver::class.java))
+    WidgetActionKind.VOICE -> actionStartActivity(
+        CaptureActivity.intent(context, CaptureSource.WIDGET, startVoice = true).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+    )
+    WidgetActionKind.CAPTURE -> actionStartActivity(
+        CaptureActivity.intent(context, CaptureSource.WIDGET, target = a.module).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+    )
+}
 
 private fun openAction(context: Context, route: String): Action =
     actionStartActivity(
@@ -141,56 +195,54 @@ private fun openAction(context: Context, route: String): Action =
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
     )
 
-/** A small Soft card (docs/ui/design-system.md): the date as its title, the capture pill, then the next items. */
+/** A small Soft card (docs/ui/design-system.md): the date, the one-tap buttons, then what's next and the day so far. */
 @Composable
-private fun TodayWidgetContent(state: TodayWidgetState, date: String, surface: ColorProvider) {
+private fun TodayWidgetContent(state: TodayWidgetState, date: String, timeOf: (Long) -> String, surface: ColorProvider) {
     val size = LocalSize.current
     Column(
         modifier = GlanceModifier.fillMaxSize().background(surface).cornerRadius(WidgetTokens.cardRadius).padding(WidgetTokens.cardPadding),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (size.height < TodayWidget.MEDIUM.height || size.width < TodayWidget.MEDIUM.width) {
-            CompactContent(state)
+            Actions(state.actions.take(2))
         } else {
-            FullContent(state, date)
+            FullContent(state, date, timeOf)
         }
     }
 }
 
+/** The one-tap buttons in a row; Speak leads on the primary container, the rest sit on the surface variant. */
 @Composable
-private fun Pill(modifier: GlanceModifier) {
-    val ctx = LocalContext.current
-    Row(
-        modifier.height(WidgetTokens.pillHeight).background(GlanceTheme.colors.primaryContainer).cornerRadius(WidgetTokens.pillRadius)
-            .padding(horizontal = WidgetTokens.pillPadding).clickable(captureAction(ctx)),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            ctx.getString(R.string.today_widget_add),
-            style = TextStyle(color = GlanceTheme.colors.onPrimaryContainer, fontSize = WidgetTokens.label, fontWeight = FontWeight.Bold),
-            maxLines = 1,
-        )
-    }
-}
-
-@Composable
-private fun CompactContent(state: TodayWidgetState) {
+private fun Actions(actions: List<WidgetAction>) {
     val ctx = LocalContext.current
     Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Pill(GlanceModifier.defaultWeight())
-        if (state.total > 0) {
-            Spacer(GlanceModifier.width(WidgetTokens.gap))
-            Text(
-                ctx.resources.getQuantityString(R.plurals.today_widget_count, state.total, state.total),
-                style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = WidgetTokens.meta),
-                maxLines = 2,
-            )
+        actions.forEachIndexed { i, a ->
+            if (i > 0) Spacer(GlanceModifier.width(WidgetTokens.gap))
+            val primary = a.kind == WidgetActionKind.VOICE
+            Row(
+                GlanceModifier.defaultWeight().height(WidgetTokens.pillHeight)
+                    .background(if (primary) GlanceTheme.colors.primaryContainer else GlanceTheme.colors.surfaceVariant)
+                    .cornerRadius(WidgetTokens.pillRadius)
+                    .clickable(actionFor(ctx, a)),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    a.label ?: ctx.getString(R.string.today_quick_voice),
+                    style = TextStyle(
+                        color = if (primary) GlanceTheme.colors.onPrimaryContainer else GlanceTheme.colors.onSurfaceVariant,
+                        fontSize = WidgetTokens.meta,
+                        fontWeight = FontWeight.Bold,
+                    ),
+                    maxLines = 1,
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun FullContent(state: TodayWidgetState, date: String) {
+private fun FullContent(state: TodayWidgetState, date: String, timeOf: (Long) -> String) {
     val ctx = LocalContext.current
     Column(GlanceModifier.fillMaxSize()) {
         Text(
@@ -200,7 +252,7 @@ private fun FullContent(state: TodayWidgetState, date: String) {
             maxLines = 1,
         )
         Spacer(GlanceModifier.height(WidgetTokens.gap))
-        Pill(GlanceModifier.fillMaxWidth())
+        Actions(state.actions)
         Spacer(GlanceModifier.height(WidgetTokens.gap))
         if (state.isEmpty) {
             Text(
@@ -209,20 +261,31 @@ private fun FullContent(state: TodayWidgetState, date: String) {
                 style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = WidgetTokens.meta),
             )
         } else {
+            // Coming up first (what's next), then the day so far, quieter: one list, so it scrolls on a small widget.
+            val rows = state.upcoming.map { it to false } + state.done.map { it to true }
             LazyColumn(GlanceModifier.fillMaxSize()) {
-                items(state.rows, itemId = { it.key.hashCode().toLong() }) { row ->
-                    Row(
-                        GlanceModifier.fillMaxWidth().padding(horizontal = WidgetTokens.rowPadding, vertical = WidgetTokens.rowPadding)
-                            .clickable(openAction(ctx, row.route)),
-                    ) {
-                        row.timeLabel?.let {
-                            Text(it, style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = WidgetTokens.meta))
-                            Spacer(GlanceModifier.width(WidgetTokens.gap))
-                        }
-                        Text(row.text, style = TextStyle(color = GlanceTheme.colors.onSurface, fontSize = WidgetTokens.body), maxLines = 1)
-                    }
-                }
+                items(rows, itemId = { (it.first.key + it.second).hashCode().toLong() }) { (row, done) -> WidgetRow(row, done, timeOf) }
             }
         }
+    }
+}
+
+@Composable
+private fun WidgetRow(row: GlanceRow, done: Boolean, timeOf: (Long) -> String) {
+    val ctx = LocalContext.current
+    val route = row.route
+    Row(
+        GlanceModifier.fillMaxWidth().padding(horizontal = WidgetTokens.rowPadding, vertical = WidgetTokens.rowPadding)
+            .let { if (route != null) it.clickable(openAction(ctx, route)) else it },
+    ) {
+        row.at?.let {
+            Text(timeOf(it), style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = WidgetTokens.meta), maxLines = 1)
+            Spacer(GlanceModifier.width(WidgetTokens.gap))
+        }
+        Text(
+            row.text,
+            style = TextStyle(color = if (done) GlanceTheme.colors.onSurfaceVariant else GlanceTheme.colors.onSurface, fontSize = WidgetTokens.body),
+            maxLines = 1,
+        )
     }
 }

@@ -1,37 +1,37 @@
 package app.klean.today
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.RadioButtonUnchecked
-import androidx.compose.material3.Icon
+import androidx.compose.material.icons.rounded.Keyboard
+import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.semantics.CustomAccessibilityAction
-import androidx.compose.ui.semantics.customActions
-import kotlinx.coroutines.launch
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -39,46 +39,54 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import app.klean.R
 import app.klean.core.common.ZoneProvider
 import app.klean.core.design.component.AccountAvatar
-import app.klean.core.design.component.CardTone
 import app.klean.core.design.component.EmptyState
 import app.klean.core.design.component.KleanScreen
-import app.klean.core.design.component.ListRow
 import app.klean.core.design.component.MenuAction
-import app.klean.core.design.component.ModuleCard
 import app.klean.core.design.component.OverflowMenu
+import app.klean.core.design.component.QuickActionGrid
+import app.klean.core.design.component.QuickActionUi
+import app.klean.core.design.component.TimelineRow
 import app.klean.core.design.theme.Space
 import app.klean.core.google.AccountSource
 import app.klean.core.google.NoAccounts
 import app.klean.core.google.ui.rememberAccountPhoto
-import app.klean.core.ui.module.DashboardContributions
-import app.klean.core.ui.module.KleanModule
+import app.klean.core.ui.module.GlanceRow
+import app.klean.core.ui.module.QuickAction
+import app.klean.core.ui.module.TodayGlance
 import app.klean.core.ui.module.ModuleRegistry
-import app.klean.core.ui.module.TodayItems
 import app.klean.feature.diet.ui.MinuteTicker
-import app.klean.nav.NavGroup
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.time.Clock
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.datetime.LocalDate
+import app.klean.core.design.component.GlanceSection as SectionCard
 
 /** What Today's top-bar avatar shows: the current Google account's photo or initial, or a neutral person. */
 data class TodayAvatar(val photo: ImageBitmap? = null, val initial: String? = null, val canSwitch: Boolean = false)
 
+/** How long an instant action's Undo stays on screen (Sleep's "Good night · Undo"). */
+const val INSTANT_UNDO_MS = 6_000L
+
 /**
- * Today (Soft cards): the weekday, then one card per group (Plan, Track, People) that opens the group. Adding is the
- * Add button; the top-bar avatar opens the account menu (with Settings in it); "Arrange Today" is in the overflow
- * menu. Lives in :app.
+ * Today, the whiteboard of the day (plan 2026-11-11): the weekday, a one-tap grid (Speak, Type, then one tile per
+ * module in Arrange Today's order), then Needs attention, Coming up and So far today, each ordered by time across
+ * modules. There is no Add button here: the grid replaces it. The avatar opens the account menu; Arrange Today is in
+ * the overflow menu. Lives in :app.
  */
 @Composable
 fun TodayScreen(
     registry: ModuleRegistry,
-    dashboard: DashboardContributions,
-    todayItems: TodayItems,
+    glance: TodayGlance,
     clock: Clock,
     zone: ZoneProvider,
     ticker: MinuteTicker,
-    onOpenGroup: (NavGroup) -> Unit,
+    onQuickAction: (QuickAction) -> Unit,
+    onVoice: () -> Unit,
+    onType: () -> Unit,
+    onOpen: (String) -> Unit,
     layout: TodayLayoutStore = InMemoryTodayLayout(),
     onArrange: () -> Unit = {},
     onSettings: () -> Unit = {},
@@ -87,50 +95,94 @@ fun TodayScreen(
 ) {
     val visibleFlow = remember(registry, layout) {
         combine(registry.enabled, registry.dashboardCards, layout.order, layout.hidden) { on, cards, order, hidden ->
-            // Modules without a card of their own (Reminders) still feed their group's card.
-            arrangeTodayCards(cards, order, hidden) + on.filter { it.dashboardSlot == null }
+            // Arrange Today orders the modules with a place on Today; the rest (Reminders) follow in nav order.
+            (arrangeTodayCards(cards, order, hidden) + on.filter { it.dashboardSlot == null }).map { it.id }
         }
     }
-    val vm: TodayDashboardViewModel = viewModel {
-        TodayDashboardViewModel(dashboard, todayItems, visibleFlow, clock, zone, ticker.ticks())
-    }
+    val vm: TodayGlanceViewModel = viewModel { TodayGlanceViewModel(glance, visibleFlow, clock, zone, ticker.ticks()) }
     val state by vm.state.collectAsStateWithLifecycle()
     val hasCards by registry.dashboardCards.collectAsStateWithLifecycle(initialValue = emptyList())
     val accounts by account.state.collectAsStateWithLifecycle(initialValue = app.klean.core.google.AccountsState.None)
     val current = accounts.current
     val photo = rememberAccountPhoto(current?.let { accounts.photos[it.email] })
     val scope = rememberCoroutineScope()
+    val ctx = LocalContext.current
     TodayContent(
         state = state,
         canArrange = hasCards.isNotEmpty(),
-        onOpenGroup = onOpenGroup,
+        onQuickAction = onQuickAction,
+        onVoice = onVoice,
+        onType = onType,
+        onOpen = onOpen,
+        onCheck = vm::check,
         onArrange = onArrange,
         onSettings = onSettings,
         avatar = TodayAvatar(photo, current?.initial, canSwitch = accounts.accounts.size > 1),
         onAccount = onAccount,
         // Gmail's gesture: swipe the avatar to switch accounts. Needing consent opens the menu instead.
         onSwitchAccount = { step -> scope.launch { if (!account.switchBy(step)) onAccount() } },
+        timeOf = remember(ctx, zone) { deviceTime(ctx, zone) },
     )
 }
 
-/** Today without its data sources, for screenshot tests. */
+/** "1:15 PM" or "13:15", as the phone is set, in the user's zone. */
+private fun deviceTime(ctx: android.content.Context, zone: ZoneProvider): (Long) -> String = { ms ->
+    val f = android.text.format.DateFormat.getTimeFormat(ctx)
+    f.timeZone = java.util.TimeZone.getTimeZone(zone.current().id)
+    f.format(java.util.Date(ms))
+}
+
+/**
+ * Today without its data sources, for tests. A [QuickAction.Instant] runs here and answers with a snackbar and Undo;
+ * the other actions go to [onQuickAction].
+ */
 @Composable
 fun TodayContent(
     state: TodayState,
     canArrange: Boolean,
-    onOpenGroup: (NavGroup) -> Unit,
+    onQuickAction: (QuickAction) -> Unit,
+    onVoice: () -> Unit,
+    onType: () -> Unit,
+    onOpen: (String) -> Unit,
     onArrange: () -> Unit,
     onSettings: () -> Unit,
+    onCheck: (GlanceRow) -> Unit = {},
     avatar: TodayAvatar = TodayAvatar(),
     onAccount: () -> Unit = onSettings,
     onSwitchAccount: (Int) -> Unit = {},
+    timeOf: (Long) -> String = { ms -> java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT).format(java.util.Date(ms)) },
 ) {
     val arrange = stringResource(R.string.today_arrange)
+    val undo = stringResource(R.string.today_undo)
+    val snackbar = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val g = state.glance
+    val tiles = listOf(
+        QuickActionUi(stringResource(R.string.today_quick_voice), Icons.Rounded.Mic, onClick = onVoice),
+        QuickActionUi(stringResource(R.string.today_quick_type), Icons.Rounded.Keyboard, stringResource(R.string.today_quick_type_description), onClick = onType),
+    ) + g.quickActions.map { a ->
+        QuickActionUi(a.label, a.icon) {
+            if (a is QuickAction.Instant) {
+                scope.launch {
+                    val r = a.run() ?: return@launch
+                    // Undo stays for a few seconds, then the snackbar leaves on its own.
+                    val result = withTimeoutOrNull(INSTANT_UNDO_MS) {
+                        snackbar.showSnackbar(r.message, actionLabel = if (r.undo != null) undo else null, duration = SnackbarDuration.Indefinite)
+                    }
+                    if (result == SnackbarResult.ActionPerformed) r.undo?.invoke()
+                }
+            } else {
+                onQuickAction(a)
+            }
+        }
+    }
     KleanScreen(
         title = weekday(state.today),
+        showAdd = false,
+        snackbarHostState = snackbar,
         header = {
             TodayHeader(
-                state = state,
+                today = state.today,
                 menu = if (canArrange) listOf(MenuAction(arrange, onClick = onArrange)) else emptyList(),
                 avatar = avatar,
                 onAccount = onAccount,
@@ -138,31 +190,80 @@ fun TodayContent(
             )
         },
     ) { pad ->
-        LazyColumn(Modifier.fillMaxSize(), contentPadding = pad, verticalArrangement = Arrangement.spacedBy(Space.cardGap)) {
-            items(state.approvals, key = { "m/" + it.id.value }) { m -> ApprovalsCard(m) }
-            if (state.loaded && state.cards.isEmpty() && state.approvals.isEmpty()) {
+        LazyColumn(Modifier.fillMaxSize(), contentPadding = pad, verticalArrangement = Arrangement.spacedBy(Space.xs)) {
+            item(key = "quick") { QuickActionGrid(tiles) }
+            if (state.loaded && state.noModules) {
                 item(key = "empty") {
                     EmptyState(stringResource(R.string.today_empty), action = MenuAction(stringResource(R.string.nav_settings), onClick = onSettings))
                 }
+                return@LazyColumn
             }
-            items(state.cards, key = { it.group.name }) { card -> GroupCard(card) { onOpenGroup(card.group) } }
+            if (!state.loaded) return@LazyColumn
+            item(key = "attention") {
+                Section(stringResource(R.string.today_attention), g.attention, empty = null, dimmed = false, timeOf, onOpen, onCheck)
+            }
+            item(key = "upcoming") {
+                Section(stringResource(R.string.today_upcoming), g.upcoming, stringResource(R.string.today_upcoming_empty), dimmed = false, timeOf, onOpen, onCheck)
+            }
+            item(key = "done") {
+                Section(stringResource(R.string.today_done), g.done, stringResource(R.string.today_done_empty), dimmed = true, timeOf, onOpen, onCheck)
+            }
         }
     }
 }
 
-/** Delegation's approvals lead Today when there are any; the card opens each approval itself. */
+/** One whiteboard section; "+N more" opens the rest in place. */
 @Composable
-private fun ApprovalsCard(module: KleanModule) = module.DashboardCard(onOpen = {}, modifier = Modifier)
+private fun Section(
+    title: String,
+    section: GlanceSection,
+    empty: String?,
+    dimmed: Boolean,
+    timeOf: (Long) -> String,
+    onOpen: (String) -> Unit,
+    onCheck: (GlanceRow) -> Unit,
+) {
+    var expanded by rememberSaveable { mutableStateOf(false) }
+    val more = if (section.moreCount > 0 && !expanded) {
+        MenuAction(stringResource(R.string.today_more, section.moreCount)) { expanded = true }
+    } else {
+        null
+    }
+    val rows = if (expanded) section.rows + section.overflow else section.rows
+    SectionCard(
+        title = title,
+        empty = empty,
+        more = more,
+        content = if (rows.isEmpty()) {
+            null
+        } else {
+            {
+                rows.forEach { r ->
+                    TimelineRow(
+                        time = r.at?.let(timeOf),
+                        title = r.text,
+                        detail = r.detail,
+                        icon = r.icon,
+                        dimmed = dimmed,
+                        checkable = r.checkable,
+                        onCheck = { onCheck(r) },
+                        onClick = r.route?.let { route -> { onOpen(route) } },
+                    )
+                }
+            }
+        },
+    )
+}
 
 @Composable
-private fun TodayHeader(state: TodayState, menu: List<MenuAction>, avatar: TodayAvatar, onAccount: () -> Unit, onSwitchAccount: (Int) -> Unit) {
+private fun TodayHeader(today: LocalDate, menu: List<MenuAction>, avatar: TodayAvatar, onAccount: () -> Unit, onSwitchAccount: (Int) -> Unit) {
     Row(
-        Modifier.fillMaxWidth().padding(start = Space.screenEdge, end = Space.xxs, top = Space.md, bottom = Space.lg),
+        Modifier.fillMaxWidth().padding(start = Space.screenEdge, end = Space.xxs, top = Space.md, bottom = Space.md),
         verticalAlignment = Alignment.Top,
     ) {
         Column(Modifier.weight(1f).semantics(mergeDescendants = true) { heading() }) {
-            Text(weekday(state.today), style = MaterialTheme.typography.displaySmall)
-            Text(dayAndMonth(state.today), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(weekday(today), style = MaterialTheme.typography.displaySmall)
+            Text(dayAndMonth(today), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         TopBarAvatar(avatar, onAccount, onSwitchAccount)
         OverflowMenu(menu)
@@ -206,65 +307,6 @@ private fun TopBarAvatar(avatar: TodayAvatar, onAccount: () -> Unit, onSwitch: (
         contentDescription = stringResource(R.string.today_account),
         modifier = swipe,
     )
-}
-
-@Composable
-private fun GroupCard(card: TodayCard, onOpen: () -> Unit) {
-    val tone = when (card.group) {
-        NavGroup.PLAN -> CardTone.PRIMARY
-        NavGroup.TRACK -> CardTone.SECONDARY
-        else -> CardTone.TERTIARY
-    }
-    val groupName = stringResource(
-        when (card.group) {
-            NavGroup.PLAN -> R.string.nav_plan
-            NavGroup.TRACK -> R.string.nav_track
-            else -> R.string.nav_people
-        },
-    )
-    val label = card.label ?: stringResource(R.string.today_card_next)
-    val fact = card.fact ?: stringResource(R.string.today_card_clear)
-    val dot = dotColor(tone)
-    ModuleCard(
-        label = label,
-        fact = fact,
-        supporting = card.supporting,
-        tone = tone,
-        onClick = onOpen,
-        onClickLabel = stringResource(R.string.today_card_open, groupName),
-        body = if (card.rows.isEmpty()) {
-            null
-        } else {
-            {
-                card.rows.forEach { row ->
-                    ListRow(
-                        title = row.text,
-                        meta = row.meta,
-                        dense = true,
-                        titleMaxLines = 1,
-                        leading = { RowMark(row, dot) },
-                    )
-                }
-            }
-        },
-    )
-}
-
-@Composable
-private fun RowMark(row: TodayRow, dot: Color) {
-    val icon = row.icon
-    when {
-        row.isTask -> Icon(Icons.Rounded.RadioButtonUnchecked, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-        icon != null -> Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-        else -> Box(Modifier.size(Space.xs).background(dot, CircleShape))
-    }
-}
-
-@Composable
-private fun dotColor(tone: CardTone): Color = when (tone) {
-    CardTone.PRIMARY -> MaterialTheme.colorScheme.primary
-    CardTone.SECONDARY -> MaterialTheme.colorScheme.secondary
-    CardTone.TERTIARY -> MaterialTheme.colorScheme.tertiary
 }
 
 private fun LocalDate.toJava(): java.time.LocalDate = java.time.LocalDate.of(year, month.ordinal + 1, day)

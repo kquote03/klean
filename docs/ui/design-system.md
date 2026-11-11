@@ -128,8 +128,9 @@ Checked in prototypes (`shared/chrome.js` writes the count; `index.html` shows i
 6. **Breathing room.** `sectionGap` between sections, at most 3 section headers in the first viewport, no dividers where spacing already separates.
 7. **No duplicate entry points on one screen.** (The Track Week page shows summaries, not rows linking to Workout/Sleep/Diet, because the segments already do that.)
 8. **At most one chip row** per screen, single line, at most 5 chips.
+9. **Today quick actions (user feedback 2026-11-11).** Today has no Add button; its one-tap grid (`QuickActionGrid`) replaces it. The grid is one region tagged `CLUTTER_EXEMPT` and counts once: at most 8 tiles in 2 rows of 4 (Speak and Type always, then up to 6 modules in Arrange Today's order; modules past the cap stay reachable through Type and their tabs). The rest of Today's first viewport keeps the ≤ 7 budget. Each whiteboard section (Needs attention, Coming up, So far today) is a list region that counts once. This changes a Decided rule; the user's message of 2026-11-11 is the approval.
 
-Counts of the recommended prototype (controls / inputs / primary): Today 5/0/1, Plan 5/0/1, Track 5/0/1, People 5/0/1, Workout 7/0/1, Sleep 6/0/1, Diet 6/0/1, Add menu 2/0/1.
+Counts of the recommended prototype (controls / inputs / primary): Today 5/0/1, Plan 5/0/1, Track 5/0/1, People 5/0/1, Workout 7/0/1, Sleep 6/0/1, Diet 6/0/1, Add menu 2/0/1. Today's whiteboard (2026-11-11): grid 1 + avatar + ⋮ + up to 3 sections = 6/0/1.
 
 ## Copy
 

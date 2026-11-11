@@ -31,20 +31,13 @@
     <string name="new_modules_switch">Use %1$s</string>
     <string name="new_modules_done">Done</string>
     <string name="today_widget_label">Klean Today</string>
-    <string name="today_widget_description">What\'s next today, and one tap to add anything</string>
+    <string name="today_widget_description">Your day at a glance, with one tap to add</string>
     <string name="today_widget_add">Add anything</string>
-    <string name="today_widget_empty">Nothing coming up</string>
-    <plurals name="today_widget_count">
-        <item quantity="one">%d coming up</item>
-        <item quantity="other">%d coming up</item>
-    </plurals>
+    <string name="today_widget_empty">Nothing yet today</string>
     <string name="setup_main_phone_title">Main phone</string>
     <string name="setup_main_phone_body">Is this your main phone? Alarms ring only on your main phone.</string>
     <string name="setup_main_phone_switch">This is my main phone</string>
     <string name="today_empty">Nothing here yet. Turn on a module in Settings.</string>
-    <string name="today_card_next">Next</string>
-    <string name="today_card_clear">Nothing planned</string>
-    <string name="today_card_open">Open %1$s</string>
     <string name="today_capture_saved">Saved</string>
     <string name="today_capture_saved_to">Saved to %1$s</string>
     <string name="today_capture_move">Move to…</string>
@@ -74,4 +67,15 @@
     <string name="shortcut_remind_long">Set a reminder</string>
     <!-- Wear OS: the name of a workout session that didn't start from a saved workout. -->
     <string name="watch_workout_session">Workout</string>
+    <!-- Today at a glance (plan 2026-11-11) -->
+    <string name="today_quick_voice">Speak</string>
+    <string name="today_quick_type">Type</string>
+    <string name="today_quick_type_description">Type something to add</string>
+    <string name="today_attention">Needs attention</string>
+    <string name="today_upcoming">Coming up</string>
+    <string name="today_done">So far today</string>
+    <string name="today_done_empty">Nothing yet</string>
+    <string name="today_upcoming_empty">Nothing else today</string>
+    <string name="today_more">%d more</string>
+    <string name="today_undo">Undo</string>
 </resources>

@@ -79,4 +79,6 @@
     <!-- Today and the status line -->
     <string name="reminders_tile_label">Next reminder</string>
     <string name="reminders_status_next">%1$s %2$s</string>
+    <!-- Today at a glance -->
+    <string name="reminders_glance_quick">Reminder</string>
 </resources>

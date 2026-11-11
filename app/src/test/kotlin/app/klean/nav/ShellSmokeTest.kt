@@ -34,6 +34,14 @@ import app.klean.core.ui.module.DashboardContributions
 import app.klean.core.ui.module.DashboardSummaryProvider
 import app.klean.core.ui.module.DayActivityProvider
 import app.klean.core.ui.module.SummaryItem
+import app.klean.core.ui.module.GlanceContribution
+import app.klean.core.ui.module.GlanceRow
+import app.klean.core.ui.module.QuickAction
+import app.klean.core.ui.module.TodayGlance
+import app.klean.core.ui.module.TodayGlanceProvider
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Star
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import app.klean.feature.diet.ui.MinuteTicker
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -66,6 +74,7 @@ class ShellSmokeTest {
         layout: TodayLayoutStore = InMemoryTodayLayout(),
         newModules: NewModulesStore = InMemoryNewModules(),
         groupMemory: NavGroupMemory = InMemoryNavGroupMemory(),
+        glance: TodayGlance = TodayGlance(emptySet(), gate),
     ): ShellViewModel =
         ShellViewModel(
             ModuleRegistry(modules, gate), UniversalCaptureService(emptySet(), gate, DefaultCaptureRouter(null)), Clock.System,
@@ -75,6 +84,7 @@ class ShellSmokeTest {
             todayLayout = layout,
             newModules = newModules,
             groupMemory = groupMemory,
+            glance = glance,
         )
 
     /** One clock read; the real ticker loops once a minute forever. */
@@ -176,20 +186,27 @@ class ShellSmokeTest {
 
     // Today: one card per group, built from the modules' tiles; a card opens its group.
     @Config(qualifiers = "w411dp-h891dp")
-    @Test fun todayShowsAGroupCardThatOpensItsGroup() {
+    /** Today's whiteboard: a module's foods by name, and its one-tap tile opening the module's own screen. */
+    @Test fun todayShowsTheDayAndATileOpensItsModule() {
         val gate = FakeModuleGate()
-        val tiles = object : DashboardSummaryProvider {
-            override val moduleId = ModuleId.DIET
-            override fun summaries() = flowOf(listOf(SummaryItem("diet.today", "Today", "3 entries", route = NestedStart)))
-        }
-        val vm = shell(setOf(NestedModule()), gate, DashboardContributions(setOf(tiles), emptySet(), gate))
+        val diet = dietGlance(QuickAction.Open(ModuleId.DIET, "Food", Icons.Rounded.Star, NestedStart))
+        val vm = shell(setOf(dietWithCard()), gate, glance = TodayGlance(setOf(diet), gate))
         compose.setContent { KleanTheme { KleanAppUi(vm) } }
         compose.waitForIdle()
-        compose.onNodeWithText("3 entries").assertExists()
-        compose.onNodeWithText("3 entries").performClick()
+        compose.onNodeWithText("shawarma").assertExists()
+        // Today has no Add button: the grid replaces it.
+        compose.onAllNodesWithContentDescription("Add").assertCountEquals(0)
+        compose.onNodeWithText("Food").performClick()
         compose.waitForIdle()
         compose.onNodeWithText("Open inner").assertExists()
         compose.onNode(hasClickAction() and hasText("Track")).assertIsSelected()
+    }
+
+    private fun dietGlance(action: QuickAction? = null) = object : TodayGlanceProvider {
+        override val moduleId = ModuleId.DIET
+        override fun glance() = flowOf(
+            GlanceContribution(done = listOf(GlanceRow("diet:1", ModuleId.DIET, "shawarma", 1L)), quickAction = action),
+        )
     }
 
     @Config(qualifiers = "w411dp-h891dp")
@@ -284,14 +301,10 @@ class ShellSmokeTest {
     @Test fun hidingTheDietCardKeepsTheTrackNavItem() {
         val layout = InMemoryTodayLayout()
         val gate = FakeModuleGate()
-        val tiles = object : DashboardSummaryProvider {
-            override val moduleId = ModuleId.DIET
-            override fun summaries() = flowOf(listOf(SummaryItem("diet.today", "Today", "3 entries")))
-        }
-        val vm = shell(setOf(dietWithCard()), gate, DashboardContributions(setOf(tiles), emptySet(), gate), layout = layout)
+        val vm = shell(setOf(dietWithCard()), gate, layout = layout, glance = TodayGlance(setOf(dietGlance()), gate))
         compose.setContent { KleanTheme { KleanAppUi(vm) } }
         compose.waitForIdle()
-        compose.onNodeWithText("3 entries").assertExists()
+        compose.onNodeWithText("shawarma").assertExists()
         compose.onNodeWithContentDescription("More options").performClick()
         compose.waitForIdle()
         compose.onNodeWithText("Arrange Today").performClick()
@@ -301,7 +314,7 @@ class ShellSmokeTest {
         compose.onNodeWithText("Done").performClick()
         compose.waitForIdle()
         assertEquals(setOf("diet"), layout.hidden.value)
-        compose.onNodeWithText("3 entries").assertDoesNotExist()
+        compose.onNodeWithText("shawarma").assertDoesNotExist()
         compose.onNode(hasClickAction() and hasText("Track")).assertExists()
     }
 
