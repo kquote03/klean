@@ -716,7 +716,7 @@ Plan `.hermes/plans/2026-11-11_090844-today-at-a-glance-voice-back.md`.
 
 ### Lane GLANCE (branch `glance`, worktree `../klean-glance`)
 - [x] A1 `TodayGlanceProvider`, `GlanceContribution`, `QuickAction`, gate-filtered `TodayGlance` (`core/ui`)
-- [ ] A2/A3 `buildGlance` + `GlanceTest`
+- [x] A2/A3 `buildGlance` + `GlanceTest`
 - [ ] B1 Diet glance · [ ] B2 Tasks · [ ] B3 Reminders · [ ] B4 Calendar · [ ] B5 People · [ ] B6 Sleep · [ ] B7 Workout · [ ] B8 Delegation
 - [ ] C1 design components (`QuickActionGrid`, `GlanceSection`, `TimelineRow`)
 - [ ] C2/C3 Today whiteboard screen
