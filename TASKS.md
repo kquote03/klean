@@ -705,8 +705,8 @@ Direction: navigation A (grouped tabs) + Soft cards, the recommended default (no
 NAV lane (branch `nav`, worktree `../klean-nav`):
 - [x] D1–D2 Add menu: the screen's own line last; New contact last in People (left People's overflow)
 - [x] D3 In-process capture sheet (no CaptureActivity from inside the app; `CaptureViewModel.start`, `LocalCaptureLauncher` for module screens)
-- [ ] E1 BackNavigationTest (Waydroid)
-- [ ] E2 Back fixes
+- [x] E1 BackNavigationTest (Waydroid): 15 paths, 15 pass (2026-11-11)
+- [x] E2 Back fixes: none needed beyond D3 (the capture sheet was the zoom); Calendar views stay a choice inside one screen, so Back leaves Plan
 - [ ] E3 Route-aware motion (fade-through / shared axis X / slide up)
 - [ ] E4 Predictive back declared; no direct onBackPressed
 

@@ -77,6 +77,9 @@ dependencies {
     androidTestImplementation(libs.core.ktx)
     androidTestImplementation(libs.datastore.preferences)
     androidTestImplementation(libs.work.testing)
+    // BackNavigationTest drives the real app UI (plan 2026-11-11, E1); Espresso comes with it.
+    androidTestImplementation(platform(libs.compose.bom))
+    androidTestImplementation(libs.compose.ui.test.junit4)
 }
 
 // ForbiddenCopyTest reads every module's res/ and manifest; declare them so the test is never stale.
