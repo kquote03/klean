@@ -94,6 +94,12 @@ This file has every criterion from "Acceptance criteria for Prototype 1" in the 
 | Backend integration: sync, pairing, DAV | ✅ `:backend:test` (62+ tests, M24) plus the Docker e2e scripts. |
 | Wear | ✅ `:wear:testDebugUnitTest` (15 Robolectric tests: tiles, complication), the codec in `:shared:jvmTest` (`WearCodecTest` 7), the phone side in `:app:testDebugUnitTest` (`app.klean.watch.*`, 23). Real-watch checks are in the Watch column. |
 
+## Navigation and Back (plan 2026-11-11)
+
+| # | Criterion | Waydroid | Pixel | Watch | Backend+Browser |
+|---|---|---|---|---|---|
+| N1 | Back works on every screen and overlay and never zooms out inside the app; switching groups fades through, opening a detail slides on the X axis, full-screen menus slide up. | ✅ `BackNavigationTest` 15/15 (every Settings screen, task, event, Diet History › day › entry, workout session, contact › edit, Add menu, ⋮ menu, capture sheet, Arrange Today, setup again, Plan → Today, Today leaves). A back *gesture* (gesture nav switched on for the check) pops detail → Tasks and Plan → Today; Android 13 shows only the arrow mid-swipe, no in-app progress animation (`~/.hermes/cache/scratch/back-shots/e4-*.png`). | ⬜ Gesture nav: swipe slowly from a task's page → the Tasks list peeks behind (our pop transition), not a shrinking window. Plan › + › Task → Back closes only the sheet. People › + → last line is New contact. Tabs fade through; the account menu slides up and down. | — | — |
+
 ## Open before `p1` (from the rows above)
 
 1. ~~**Phone-side Wear OS**~~: built in 27.7 (branch `wear-phone`, docs/wear.md "Phone side"). Still open: the optional on-watch `health` session (27.8), and every Watch-column check on real hardware.

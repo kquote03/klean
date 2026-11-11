@@ -708,7 +708,7 @@ NAV lane (branch `nav`, worktree `../klean-nav`):
 - [x] E1 BackNavigationTest (Waydroid): 15 paths, 15 pass (2026-11-11)
 - [x] E2 Back fixes: none needed beyond D3 (the capture sheet was the zoom); Calendar views stay a choice inside one screen, so Back leaves Plan
 - [x] E3 Route-aware motion (fade-through / shared axis X / slide up); `FULL_SCREEN_ROUTES` in Motion.kt takes VoiceRoute
-- [ ] E4 Predictive back declared; no direct onBackPressed
+- [x] E4 Predictive back declared; no direct onBackPressed (only tests); Waydroid gesture check in `docs/acceptance-p1.md` N1, Pixel check pending
 
 ## Follow-ups (from the user, to do while working nearby)
 - [ ] AI settings: a "Get a free key" button that opens https://aistudio.google.com/apikey, plus a three-line how-to (create key → copy → paste here). The key stays in `SecretStore`. Calm copy; no sign-in-for-quota (Gemini has no consumer OAuth quota path).
