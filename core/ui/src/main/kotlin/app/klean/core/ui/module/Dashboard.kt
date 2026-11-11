@@ -210,4 +210,5 @@ abstract class DashboardMultibindings {
     @Multibinds abstract fun statusSurfaces(): Set<StatusSurface>
     @Multibinds abstract fun todayItems(): Set<TodayItemsProvider>
     @Multibinds abstract fun weekSummaries(): Set<WeekSummaryProvider>
+    @Multibinds abstract fun glance(): Set<TodayGlanceProvider>
 }
