@@ -114,4 +114,9 @@
     <string name="calendar_bucket_earlier">Earlier</string>
     <string name="calendar_bucket_this_week">This week</string>
     <string name="calendar_bucket_later">Later</string>
+    <!-- Today at a glance -->
+    <string name="calendar_glance_quick">Event</string>
+    <string name="calendar_glance_until">Until %1$s</string>
+    <string name="calendar_glance_starts_in">Starts in %1$d min</string>
+    <string name="calendar_glance_range">%1$s – %2$s</string>
 </resources>
