@@ -279,3 +279,5 @@ Only 4 of 20 screens meet the budget outright. The common causes, in order of we
 | People: merge card with Merge / Keep apart per pair and Not now | top of the list | one row "These look like the same people" that opens the choices in a dialog |
 | People: A–Z letter headers | Contacts | one "Everyone" list group with initials; other accounts keep their own group |
 | Contact detail: primary-coloured section labels and plain list items | detail | `SectionHeader`s and list groups; a number calls, an email writes; Edit stays the top bar's one action |
+| Settings: 20 plain rows under small primary labels | Settings | three list groups with an icon per row: Modules (each module, then "Turn modules on or off"), Klean (quiet hours, appearance, AI providers, backup, sync, permissions), Help (About, "Run setup again" with a line saying what it does) |
+| Settings sub-screens: Material top app bar | each sub-screen | `KleanScreen` with a back arrow and no Add button (`SettingsSubScaffold`) |

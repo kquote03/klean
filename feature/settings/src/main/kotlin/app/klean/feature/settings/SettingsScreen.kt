@@ -1,94 +1,94 @@
 package app.klean.feature.settings
 
-import app.klean.feature.settings.ai.AiProviderScreen
-import app.klean.feature.settings.ai.AiProvidersScreen
-import app.klean.feature.settings.ai.OnDeviceScreen
-import app.klean.shared.ai.ProviderId
-
 import androidx.annotation.StringRes
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ListItem
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.HelpOutline
+import androidx.compose.material.icons.rounded.AutoAwesome
+import androidx.compose.material.icons.rounded.Backup
+import androidx.compose.material.icons.rounded.Bedtime
+import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Palette
+import androidx.compose.material.icons.rounded.Security
+import androidx.compose.material.icons.rounded.Sync
+import androidx.compose.material.icons.rounded.ToggleOn
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
+import androidx.navigation.navDeepLink
+import app.klean.core.design.component.CLUTTER_EXEMPT
+import app.klean.core.design.component.KleanScreen
+import app.klean.core.design.component.ListRow
+import app.klean.core.design.component.SectionHeader
+import app.klean.core.design.component.listGroup
+import app.klean.core.notifications.permissions.PermissionChecker
 import app.klean.core.ui.module.KleanModule
 import app.klean.core.ui.module.ModuleRegistry
-import androidx.navigation.navDeepLink
-import app.klean.core.notifications.permissions.PermissionChecker
 import app.klean.feature.settings.about.AboutSettingsScreen
+import app.klean.feature.settings.ai.AiProviderScreen
+import app.klean.feature.settings.ai.AiProvidersScreen
+import app.klean.feature.settings.ai.OnDeviceScreen
 import app.klean.feature.settings.appearance.AppearanceSettingsScreen
 import app.klean.feature.settings.backup.BackupSettingsScreen
 import app.klean.feature.settings.permissions.PermissionsSettingsScreen
 import app.klean.feature.settings.quiet.QuietHoursSettingsScreen
+import app.klean.shared.ai.ProviderId
 import app.klean.core.sync.ui.SyncSettingsRoute
 import app.klean.core.sync.ui.SyncSettingsScreen
 
-private data class GeneralRow(@StringRes val label: Int, val route: Any)
+/** One row of the hub: its label, icon and where it goes. */
+private data class HubRow(val key: String, val label: String, val icon: ImageVector, val supporting: String? = null, val onClick: (() -> Unit)?)
 
-private val generalRows = listOf(
-    GeneralRow(R.string.settings_quiet_hours, QuietHoursSettingsRoute),
-    GeneralRow(R.string.settings_appearance, AppearanceSettingsRoute),
-    GeneralRow(R.string.settings_ai_providers, AiProvidersSettingsRoute),
-    GeneralRow(R.string.settings_backup, BackupSettingsRoute),
-    GeneralRow(R.string.settings_sync, SyncSettingsRoute),
-    GeneralRow(R.string.settings_permissions, PermissionsSettingsRoute),
-    GeneralRow(R.string.settings_about, AboutSettingsRoute),
-)
-
-/** Top-level settings list. Modules section is driven by the registry. */
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * The settings hub, calm and grouped (docs/ui/design-system.md): Modules (each module's own settings, then turning
+ * modules on or off), Klean (quiet hours, appearance, AI, backup, sync, permissions) and Help (about, setup again).
+ * One list, on list-group surfaces with a leading icon per row.
+ */
 @Composable
-fun SettingsScreen(modules: List<KleanModule>, onOpen: (Any) -> Unit, onRunSetup: (() -> Unit)? = null) {
-    Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.settings_title)) }) }) { padding ->
-        LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
-            item { SectionHeader(R.string.settings_section_modules) }
-            items(modules, key = { it.id.value }) { module ->
-                val route = module.settingsRoute
-                SettingsRow(
-                    label = stringResource(module.labelRes),
-                    onClick = route?.let { r -> { onOpen(r) } },
-                )
-            }
-            item {
-                SettingsRow(stringResource(R.string.settings_modules_toggle), onClick = { onOpen(ModulesSettingsRoute) })
-            }
-            item { SectionHeader(R.string.settings_section_general) }
-            items(generalRows, key = { it.label }) { row ->
-                SettingsRow(stringResource(row.label), onClick = { onOpen(row.route) })
-            }
-            if (onRunSetup != null) {
-                item { SettingsRow(stringResource(R.string.settings_run_setup), onClick = onRunSetup) }
-            }
+fun SettingsScreen(modules: List<KleanModule>, onOpen: (Any) -> Unit, onRunSetup: (() -> Unit)? = null, onBack: (() -> Unit)? = null) {
+    val moduleRows = modules.map { m ->
+        HubRow(m.id.value, stringResource(m.labelRes), m.icon, onClick = m.settingsRoute?.let { r -> { onOpen(r) } })
+    } + HubRow("toggle", stringResource(R.string.settings_modules_toggle), Icons.Rounded.ToggleOn, onClick = { onOpen(ModulesSettingsRoute) })
+    val general = listOf(
+        HubRow("quiet", stringResource(R.string.settings_quiet_hours), Icons.Rounded.Bedtime, onClick = { onOpen(QuietHoursSettingsRoute) }),
+        HubRow("appearance", stringResource(R.string.settings_appearance), Icons.Rounded.Palette, onClick = { onOpen(AppearanceSettingsRoute) }),
+        HubRow("ai", stringResource(R.string.settings_ai_providers), Icons.Rounded.AutoAwesome, onClick = { onOpen(AiProvidersSettingsRoute) }),
+        HubRow("backup", stringResource(R.string.settings_backup), Icons.Rounded.Backup, onClick = { onOpen(BackupSettingsRoute) }),
+        HubRow("sync", stringResource(R.string.settings_sync), Icons.Rounded.Sync, onClick = { onOpen(SyncSettingsRoute) }),
+        HubRow("permissions", stringResource(R.string.settings_permissions), Icons.Rounded.Security, onClick = { onOpen(PermissionsSettingsRoute) }),
+    )
+    val help = listOfNotNull(
+        HubRow("about", stringResource(R.string.settings_about), Icons.Rounded.Info, onClick = { onOpen(AboutSettingsRoute) }),
+        onRunSetup?.let { HubRow("setup", stringResource(R.string.settings_run_setup), Icons.AutoMirrored.Rounded.HelpOutline, stringResource(R.string.settings_run_setup_body), onClick = it) },
+    )
+    KleanScreen(title = stringResource(R.string.settings_title), onBack = onBack, showAdd = false) { pad ->
+        LazyColumn(Modifier.fillMaxSize().testTag(CLUTTER_EXEMPT), contentPadding = pad) {
+            item(key = "h_modules") { SectionHeader(stringResource(R.string.settings_section_modules), first = true) }
+            listGroup("modules", moduleRows, { it.key }) { HubListRow(it) }
+            item(key = "h_general") { SectionHeader(stringResource(R.string.settings_section_general)) }
+            listGroup("general", general, { it.key }) { HubListRow(it) }
+            item(key = "h_help") { SectionHeader(stringResource(R.string.settings_section_help)) }
+            listGroup("help", help, { it.key }) { HubListRow(it) }
         }
     }
 }
 
 @Composable
-private fun SectionHeader(@StringRes text: Int) {
-    Text(
-        text = stringResource(text),
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 8.dp),
+private fun HubListRow(row: HubRow) {
+    ListRow(
+        title = row.label,
+        supporting = row.supporting,
+        leading = { Icon(row.icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+        onClick = row.onClick,
     )
-}
-
-@Composable
-private fun SettingsRow(label: String, onClick: (() -> Unit)?) {
-    ListItem(modifier = if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier) { Text(label) }
 }
 
 /** Registers the settings sub-screens under the app's NavHost. */

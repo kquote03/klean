@@ -70,7 +70,7 @@ fun KleanNavHost(
             ArrangeTodayScreen(registry = registry, layout = shell.todayLayout, onDone = { nav.popBackStack() })
         }
         composable<SettingsRoute> {
-            SettingsScreen(modules = enabled, onOpen = { nav.navigate(it) }, onRunSetup = { nav.navigate(OnboardingRoute) })
+            SettingsScreen(modules = enabled, onOpen = { nav.navigate(it) }, onRunSetup = { nav.navigate(OnboardingRoute) }, onBack = { nav.popBackStack() })
         }
         settingsGraph(nav, registry, shell.permissions)
         registry.all.forEach { it.registerGraph(this, nav) }
