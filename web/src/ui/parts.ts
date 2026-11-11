@@ -50,7 +50,7 @@ export function tabs<K extends string>(current: K, options: Record<K, string>, p
   </div>`;
 }
 
-const timeFmt = new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" });
+const timeFmt = new Intl.DateTimeFormat(undefined, { hour: "2-digit", minute: "2-digit" });
 const dayFmt = new Intl.DateTimeFormat(undefined, { weekday: "long", day: "numeric", month: "long" });
 const shortDayFmt = new Intl.DateTimeFormat(undefined, { weekday: "short", day: "numeric", month: "short" });
 const monthFmt = new Intl.DateTimeFormat(undefined, { month: "long", year: "numeric" });
@@ -63,10 +63,17 @@ export const fmtDay = (d: LocalDate) => dayFmt.format(jsDate(d));
 export const fmtShortDay = (d: LocalDate) => shortDayFmt.format(jsDate(d));
 export const fmtMonth = (d: LocalDate) => monthFmt.format(jsDate(d));
 export const fmtWeekday = (d: LocalDate) => wdFmt.format(jsDate(d));
+const weekdayLongFmt = new Intl.DateTimeFormat(undefined, { weekday: "long" });
+const dayMonthFmt = new Intl.DateTimeFormat(undefined, { day: "numeric", month: "long" });
+const shortDayMonthFmt = new Intl.DateTimeFormat(undefined, { weekday: "short", day: "numeric", month: "short" });
+export const fmtWeekdayLong = (d: LocalDate) => weekdayLongFmt.format(jsDate(d));
+export const fmtDayMonth = (d: LocalDate) => dayMonthFmt.format(jsDate(d));
+export const fmtWeekdayShortDate = (d: LocalDate) => shortDayMonthFmt.format(jsDate(d));
+/** Durations as the design system writes them: "7h 10m", "45m". */
 export function fmtDuration(ms: number) {
   const m = Math.round(ms / 60000);
   const h = Math.floor(m / 60);
-  return h ? `${h} h ${m % 60} min` : `${m} min`;
+  return h ? `${h}h ${String(m % 60).padStart(2, "0")}m` : `${m}m`;
 }
 export const hhmm = (m: number) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 export const parseHhmm = (s: string) => { const [h, m] = s.split(":").map(Number); return h * 60 + (m || 0); };

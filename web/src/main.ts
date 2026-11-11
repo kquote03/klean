@@ -1,12 +1,8 @@
 import "./styles.css";
-import "@m3e/web/button";
-import "@m3e/web/icon-button";
 import "@m3e/web/nav-bar";
 import "@m3e/web/nav-rail";
 import "@m3e/web/form-field";
 import "@m3e/web/switch";
-import "@m3e/web/checkbox";
-import "@m3e/web/chips";
 import { App } from "./app";
 import { registerServiceWorker } from "./push";
 

@@ -1,106 +1,100 @@
+// Plan › Tasks: one calm list in list groups (Today, Coming up, Still want these?, No date). Check to finish,
+// tap to open. New task, Lists, Reminders and Finished live in the top-bar overflow; adding is the Add menu.
 import { html, nothing, type TemplateResult } from "lit";
 import type { App } from "../app";
 import { t } from "../copy";
-import { parseNaturalTime, parseIsoDate, isoDate, type LocalDate } from "../capture/natural-time";
+import { isoDate, parseIsoDate } from "../capture/natural-time";
 import { localNow } from "../capture/capture";
-import { atLocal, num, str } from "../model";
+import { num, str } from "../model";
 import type { Row } from "../data/sync-types";
-import { card, field, fmtMinutes, fmtShortDay, fmtTime, formValues, hhmm, parseHhmm, resetForm, tabs, textarea } from "../ui/parts";
 import { icon } from "../ui/icons";
+import { checkButton, closeSheet, emptyState, groupedList, listRow, openSheet, overflowMenu, screen, type MenuItem } from "../ui/kit";
+import { field, fmtMinutes, fmtShortDay, fmtTime, fmtWeekday, formValues, hhmm, parseHhmm, textarea } from "../ui/parts";
+import { openCapture } from "./add";
 
-type Tab = "today" | "upcoming" | "lists" | "reminders" | "done";
+type View = "all" | "lists" | "reminders" | "finished";
 
 export function tasksScreen(app: App): TemplateResult {
   const m = app.model;
-  const tab = (app.ui.tasksTab as Tab) ?? "today";
-  const options: Record<string, string> = { ...t.tasks.tabs };
-  if (!m.isOn("reminders")) delete options.reminders;
-  const pick = (k: string) => { app.ui.tasksTab = k; app.refresh(); };
-  const addTask = (e: Event) => {
-    const { title } = formValues(e);
-    if (!title?.trim()) return;
-    resetForm(e);
-    const p = parseNaturalTime(title, localNow(app.now()));
-    void app.act(() => m.addTask({ title: p.rest || title, dueDate: p.date ?? (tab === "today" ? m.today() : null), dueMinutes: p.minutes }));
-  };
-  const body = tab === "reminders" ? remindersTab(app) : html`
-    <form class="inline" @submit=${addTask} data-testid="add-task-form" style="margin-bottom:var(--s3)">
-      ${field({ label: t.tasks.add, name: "title", placeholder: t.tasks.addPlaceholder, testid: "add-task-input" })}
-      <m3e-button variant="filled" type="submit">${icon("add", { slot: "icon" })}${t.capture.submit}</m3e-button>
-    </form>
-    ${tab === "today" ? todayTab(app) : tab === "upcoming" ? upcomingTab(app) : tab === "lists" ? listsTab(app) : doneTab(app)}`;
-  return html`${app.head(t.nav.tasks)}${tabs(tab, options as Record<Tab, string>, pick, t.nav.tasks)}${body}${editDialog(app)}`;
-}
-
-function todayTab(app: App) {
-  const m = app.model;
-  const still = m.stillWant();
-  const due = m.tasksDueToday();
-  return html`<div class="stack">
-    ${still.length ? card({ title: t.tasks.stillWant, icon: "tasks", tone: "tertiary", testid: "still-want" }, html`
-      <p class="muted">${t.tasks.stillWantLead}</p>
-      <ul class="list">${still.map((x) => html`<li class="item wrap"><span class="text">${str(x.title)} <span class="meta">${fmtShortDay(parseIsoDate(str(x.due_date)!))}</span></span>
-        <m3e-button variant="tonal" @click=${() => app.act(() => m.updateTask(str(x.id)!, { due_date: isoDate(m.today()), status: "OPEN" }))}>${t.tasks.keep}</m3e-button>
-        <m3e-button variant="text" @click=${() => app.act(() => m.updateTask(str(x.id)!, { due_date: null, due_minutes: null, status: "SOMEDAY" }))}>${t.tasks.letGo}</m3e-button></li>`)}</ul>`) : nothing}
-    <section class="card" aria-label=${t.tasks.tabs.today}>
-      ${due.length ? html`<ul class="list" data-testid="tasks-today">${due.map((x) => taskRow(app, x))}</ul>` : html`<p class="empty">${t.tasks.noneToday}</p>`}
-    </section>
-  </div>`;
-}
-
-function upcomingTab(app: App) {
-  const groups = new Map<string, Row[]>();
-  for (const x of app.model.upcoming()) {
-    const k = str(x.due_date)!;
-    groups.set(k, [...(groups.get(k) ?? []), x]);
+  let view = (app.ui.tasksView as View) ?? "all";
+  if (!m.isOn("tasks")) view = "reminders";
+  if (view === "reminders" && !m.isOn("reminders")) view = "all";
+  const pick = (v: View) => () => { app.ui.tasksView = v; app.refresh(); };
+  const menu: MenuItem[] = [];
+  if (m.isOn("tasks")) {
+    menu.push({ label: t.tasks.newTask, run: () => openCapture(app, "task"), testid: "menu-new-task" });
+    if (view !== "all") menu.push({ label: t.tasks.allTasks, run: pick("all"), testid: "menu-all" });
+    menu.push({ label: t.tasks.lists, run: pick("lists"), testid: "menu-lists" });
   }
-  if (!groups.size) return html`<section class="card"><p class="empty">${t.tasks.noneUpcoming}</p></section>`;
-  return html`<div class="stack">${[...groups].map(([d, xs]) => card({ title: fmtShortDay(parseIsoDate(d)) }, html`<ul class="list">${xs.map((x) => taskRow(app, x, false))}</ul>`))}</div>`;
+  if (m.isOn("reminders") && view !== "reminders") menu.push({ label: t.tasks.reminders, run: pick("reminders"), testid: "menu-reminders" });
+  if (m.isOn("tasks")) menu.push({ label: t.tasks.finished, run: pick("finished"), testid: "menu-finished" });
+  menu.push({ label: t.nav.settings, run: () => app.go("/settings") });
+  const body = view === "reminders" ? remindersView(app) : view === "lists" ? listsView(app) : view === "finished" ? finishedView(app) : allView(app);
+  return html`${screen({ title: t.nav.plan, actions: html`${app.status()}${overflowMenu("tasks-menu", t.nav.moreOptions, menu)}`, tabs: app.tabs("plan", "tasks"), testid: "tasks" }, body)}
+    ${editDialog(app)}${reminderDialog(app)}`;
 }
 
-function listsTab(app: App) {
+function allView(app: App) {
   const m = app.model;
-  const lists = m.lists();
+  const today = m.tasksDueToday(), upcoming = m.upcoming(), still = m.stillWant(), undated = m.undated();
+  if (!today.length && !upcoming.length && !still.length && !undated.length) {
+    return emptyState({ icon: "tasks", text: t.tasks.empty, action: { label: t.tasks.newTask, run: () => openCapture(app, "task") } });
+  }
+  const s = t.tasks.sections;
+  return groupedList([
+    { title: s.today, rows: today.map((x) => taskRow(app, x, "time")) },
+    { title: s.comingUp, rows: upcoming.map((x) => taskRow(app, x, "day")) },
+    { title: s.stillWant, rows: still.map((x) => taskRow(app, x, "from")) },
+    { title: s.noDate, rows: undated.map((x) => taskRow(app, x, "none")) },
+  ], "tasks-list");
+}
+
+function listsView(app: App) {
+  const m = app.model;
   const open = m.openTasks();
+  const lists = m.lists();
   const known = new Set(lists.map((l) => str(l.id)));
-  const orphan = open.filter((x) => !known.has(str(x.list_id)));
-  return html`<div class="stack">
-    ${lists.map((l) => {
-      const xs = open.filter((x) => x.list_id === l.id);
-      return card({ title: str(l.name) ?? "" }, xs.length ? html`<ul class="list">${xs.map((x) => taskRow(app, x))}</ul>` : html`<p class="empty">${t.tasks.listEmpty}</p>`);
-    })}
-    ${orphan.length ? card({ title: t.tasks.noDate }, html`<ul class="list">${orphan.map((x) => taskRow(app, x))}</ul>`) : nothing}
-    ${!lists.length && !orphan.length ? html`<section class="card"><p class="empty">${t.tasks.listEmpty}</p></section>` : nothing}
-  </div>`;
+  const sections = lists.map((l) => ({ title: str(l.name) ?? "", rows: open.filter((x) => x.list_id === l.id).map((x) => taskRow(app, x, "day")) }));
+  sections.push({ title: t.tasks.noDate, rows: open.filter((x) => !known.has(str(x.list_id))).map((x) => taskRow(app, x, "day")) });
+  if (!sections.some((x) => x.rows.length)) return emptyState({ icon: "tasks", text: t.tasks.listEmpty });
+  return groupedList(sections, "tasks-lists");
 }
 
-function doneTab(app: App) {
+function finishedView(app: App) {
   const done = app.model.done();
-  return html`<section class="card">${done.length ? html`<ul class="list">${done.map((x) => html`<li class="item done">
-    <span class="text">${str(x.title)}</span>
-    <m3e-button variant="text" @click=${() => app.act(() => app.model.reopenTask(str(x.id)!))}>${t.tasks.reopen}</m3e-button></li>`)}</ul>`
-    : html`<p class="empty">${t.tasks.noneDone}</p>`}</section>`;
+  if (!done.length) return emptyState({ icon: "check", text: t.tasks.emptyFinished });
+  return groupedList([{ title: t.tasks.finished, rows: done.map((x) => listRow({
+    title: str(x.title) ?? "", done: true, lead: icon("check", { size: 20 }),
+    trailing: html`<button type="button" class="btn text" @click=${() => app.act(() => app.model.reopenTask(str(x.id)!))}>${t.tasks.reopen}</button>`,
+  })) }], "tasks-finished");
 }
 
-/** One task: a checkbox that completes it (repeats roll forward), its title and date, and edit. */
-export function taskRow(app: App, x: Row, showDate = true): TemplateResult {
+/** One task: a round check that finishes it (repeats roll forward), its title, and when. Tap opens it. */
+export function taskRow(app: App, x: Row, when: "time" | "day" | "from" | "none"): TemplateResult {
   const id = str(x.id)!;
+  const title = str(x.title) ?? "";
   const subs = app.model.subtasks(id).filter((s) => str(s.status) !== "DONE");
   const due = str(x.due_date);
   const minutes = num(x.due_minutes);
-  const when = [showDate && due && due !== isoDate(app.model.today()) ? fmtShortDay(parseIsoDate(due)) : null, minutes !== null ? fmtMinutes(minutes) : null].filter(Boolean).join(" · ");
-  return html`<li class="item" data-testid="task-row" data-task-id=${id}>
-    <m3e-checkbox aria-label="${t.tasks.done}: ${str(x.title)}" @change=${() => app.act(() => app.model.completeTask(id))}></m3e-checkbox>
-    <span class="text"><span data-testid="task-title">${str(x.title)}</span>
-      ${when || subs.length || x.recurrence ? html`<br /><span class="meta">${[when, subs.length ? t.tasks.subtasks(subs.length) : null, x.recurrence ? t.tasks.repeats : null].filter(Boolean).join(" · ")}</span>` : nothing}</span>
-    <m3e-icon-button aria-label="${t.tasks.edit}: ${str(x.title)}" @click=${() => { app.ui.editTask = id; app.refresh(); queueMicrotask(() => (document.getElementById("task-edit") as HTMLDialogElement | null)?.showModal()); }}>${icon("edit")}</m3e-icon-button>
-  </li>`;
+  const time = minutes !== null ? fmtMinutes(minutes) : null;
+  const meta = when === "time" ? time
+    : when === "day" && due ? [daysAway(app, due) < 7 ? fmtWeekday(parseIsoDate(due)) : fmtShortDay(parseIsoDate(due)), time].filter(Boolean).join(" ")
+    : when === "from" && due ? t.tasks.from(fmtShortDay(parseIsoDate(due))) : null;
+  const supporting = [subs.length ? t.tasks.subtasks(subs.length) : null, x.recurrence ? t.tasks.repeats : null].filter(Boolean).join(" · ");
+  return listRow({
+    leadAction: checkButton(`${t.tasks.done}: ${title}`, () => app.act(() => app.model.completeTask(id))),
+    title: html`<span data-testid="task-title">${title}</span>`, supporting: supporting || undefined, meta: meta ?? undefined,
+    open: () => { app.ui.editTask = id; app.refresh(); openSheet("task-edit"); }, label: t.tasks.open(title),
+    testid: "task-row", attrs: { id },
+  });
 }
+
+const daysAway = (app: App, iso: string) => Math.round((Date.parse(`${iso}T12:00:00`) - Date.parse(`${isoDate(app.model.today())}T12:00:00`)) / 864e5);
 
 function editDialog(app: App) {
   const id = app.ui.editTask as string | undefined;
   const x = id ? app.model.store.get("task", id) : undefined;
-  const close = () => { (document.getElementById("task-edit") as HTMLDialogElement | null)?.close(); app.ui.editTask = undefined; app.refresh(); };
+  const close = () => { closeSheet("task-edit"); app.ui.editTask = undefined; app.refresh(); };
   const save = (e: Event) => {
     const v = formValues(e);
     void app.act(async () => {
@@ -111,43 +105,52 @@ function editDialog(app: App) {
       close();
     });
   };
-  return html`<dialog class="sheet" id="task-edit" @close=${() => { app.ui.editTask = undefined; }}>
+  const past = x && typeof x.due_date === "string" && x.due_date < isoDate(app.model.today());
+  return html`<dialog class="sheet" id="task-edit" aria-labelledby="task-edit-title" @close=${() => { app.ui.editTask = undefined; }}>
     ${x ? html`<form class="stack" @submit=${save}>
-      <h2>${t.tasks.edit}</h2>
+      <h2 id="task-edit-title">${t.tasks.edit}</h2>
+      ${past ? html`<div class="actions"><span class="grow lead-text">${t.tasks.stillWantLeadShort}</span>
+        <button type="button" class="btn tonal" @click=${() => app.act(async () => { await app.model.updateTask(id!, { due_date: isoDate(app.model.today()), status: "OPEN" }); close(); })}>${t.tasks.keep}</button>
+        <button type="button" class="btn text" @click=${() => app.act(async () => { await app.model.updateTask(id!, { due_date: null, due_minutes: null, status: "SOMEDAY" }); close(); })}>${t.tasks.someday}</button></div>` : nothing}
       ${field({ label: t.tasks.title, name: "title", value: str(x.title) ?? "" })}
       ${textarea({ label: t.tasks.notes, name: "notes", value: str(x.notes) ?? "", rows: 3 })}
       <div class="fields">
         ${field({ label: t.tasks.due, name: "due", type: "date", value: str(x.due_date) ?? "" })}
         ${field({ label: t.tasks.time, name: "time", type: "time", value: num(x.due_minutes) !== null ? hhmm(num(x.due_minutes)!) : "" })}
       </div>
-      <div class="actions" style="justify-content:space-between">
-        <m3e-button variant="text" @click=${() => app.act(async () => { await app.model.deleteTask(id!); close(); })}>${icon("delete", { slot: "icon" })}${t.tasks.delete}</m3e-button>
-        <span class="actions"><m3e-button variant="text" @click=${close}>${t.tasks.cancel}</m3e-button><m3e-button variant="filled" type="submit">${t.tasks.save}</m3e-button></span>
+      <div class="actions split">
+        <button type="button" class="btn text" @click=${() => app.act(async () => { await app.model.deleteTask(id!); close(); })}>${t.tasks.delete}</button>
+        <span class="actions"><button type="button" class="btn text" @click=${close}>${t.tasks.cancel}</button><button type="submit" class="btn filled">${t.tasks.save}</button></span>
       </div>
     </form>` : nothing}
   </dialog>`;
 }
 
-function remindersTab(app: App) {
+function remindersView(app: App) {
   const m = app.model;
-  const add = (e: Event) => {
-    const { title } = formValues(e);
-    if (!title?.trim()) return;
-    resetForm(e);
-    const p = parseNaturalTime(title, localNow(app.now()));
-    const at = p.date && p.minutes !== null ? atLocal(p.date as LocalDate, p.minutes) : app.now() + 3_600_000;
-    void app.act(() => m.addReminder(p.rest || title, at));
-  };
   const rs = m.reminders();
-  return html`<form class="inline" @submit=${add} style="margin-bottom:var(--s3)">
-      ${field({ label: t.tasks.addReminder, name: "title", placeholder: t.tasks.reminderPlaceholder })}
-      <m3e-button variant="filled" type="submit">${icon("add", { slot: "icon" })}${t.capture.submit}</m3e-button>
-    </form>
-    <section class="card">${rs.length ? html`<ul class="list">${rs.map((r) => {
-      const at = num(r.snoozed_until) ?? num(r.fire_at)!;
-      return html`<li class="item wrap"><span class="time">${fmtTime(at)}</span>
-        <span class="text">${str(r.title)}<br /><span class="meta">${fmtShortDay(localNow(at).date)}${r.is_alarm ? ` · ${t.tasks.alarm}` : ""}</span></span>
-        <m3e-button variant="tonal" @click=${() => app.act(() => m.setReminderState(str(r.id)!, "DONE"))}>${t.tasks.done}</m3e-button>
-        <m3e-button variant="text" @click=${() => app.act(() => m.setReminderState(str(r.id)!, "DISMISSED"))}>${t.tasks.dismiss}</m3e-button></li>`;
-    })}</ul>` : html`<p class="empty">${t.tasks.noneReminders}</p>`}</section>`;
+  if (!rs.length) return emptyState({ icon: "bell", text: t.tasks.emptyReminders, action: { label: t.add.reminder, run: () => openCapture(app, "reminder") } });
+  return groupedList([{ title: t.tasks.reminders, rows: rs.map((r) => {
+    const at = num(r.snoozed_until) ?? num(r.fire_at)!;
+    const title = str(r.title) ?? "";
+    return listRow({ lead: icon("bell", { size: 20 }), title, supporting: [fmtShortDay(localNow(at).date), r.is_alarm ? t.tasks.alarm : null].filter(Boolean).join(" · "),
+      meta: fmtTime(at), open: () => { app.ui.editReminder = str(r.id); app.refresh(); openSheet("reminder-sheet"); }, label: t.tasks.open(title), testid: "reminder-row" });
+  }) }], "reminders-list");
+}
+
+function reminderDialog(app: App) {
+  const id = app.ui.editReminder as string | undefined;
+  const r = id ? app.model.store.get("reminder", id) : undefined;
+  const done = (state: "DONE" | "DISMISSED") => app.act(async () => { await app.model.setReminderState(id!, state); closeSheet("reminder-sheet"); });
+  return html`<dialog class="sheet" id="reminder-sheet" aria-labelledby="reminder-title">
+    ${r ? html`<div class="stack">
+      <h2 id="reminder-title">${str(r.title)}</h2>
+      <p class="lead-text">${fmtShortDay(localNow(num(r.snoozed_until) ?? num(r.fire_at)!).date)} · ${fmtTime(num(r.snoozed_until) ?? num(r.fire_at)!)}</p>
+      <div class="actions split">
+        <button type="button" class="btn text" @click=${() => done("DISMISSED")}>${t.tasks.dismiss}</button>
+        <span class="actions"><button type="button" class="btn text" @click=${() => closeSheet("reminder-sheet")}>${t.tasks.cancel}</button>
+          <button type="button" class="btn filled" @click=${() => done("DONE")}>${t.tasks.done}</button></span>
+      </div>
+    </div>` : nothing}
+  </dialog>`;
 }
