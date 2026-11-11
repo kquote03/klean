@@ -8,3 +8,6 @@ import kotlinx.serialization.Serializable
 
 /** Reorder and hide Today's cards. */
 @Serializable object ArrangeTodayRoute
+
+/** Track › Week: a neutral summary of the trackers, Track's default until the user picks a module. */
+@Serializable object TrackWeekRoute

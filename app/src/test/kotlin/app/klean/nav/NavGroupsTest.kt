@@ -44,4 +44,19 @@ class NavGroupsTest {
         // A module turned off since: back to the first one still on.
         assertEquals(ModuleId.TASKS, plan.landing(mapOf("plan" to "reminders")))
     }
+
+    @Test fun trackOpensOnWeekUntilAModuleIsPicked() {
+        val track = listOf("workout", "sleep", "diet")
+        assertEquals(WEEK_KEY, landingKey(NavGroup.TRACK, track, emptyMap()))
+        assertEquals("sleep", landingKey(NavGroup.TRACK, track, mapOf("track" to "sleep")))
+        assertEquals(WEEK_KEY, landingKey(NavGroup.TRACK, track, mapOf("track" to WEEK_KEY)))
+        // A tracker turned off since: back to Week.
+        assertEquals(WEEK_KEY, landingKey(NavGroup.TRACK, listOf("workout", "diet"), mapOf("track" to "sleep")))
+    }
+
+    @Test fun onlyTrackWithTwoOrMoreTrackersHasAWeek() {
+        assertEquals("diet", landingKey(NavGroup.TRACK, listOf("diet"), emptyMap()))
+        assertEquals("tasks", landingKey(NavGroup.PLAN, listOf("tasks", "calendar"), emptyMap()))
+        assertEquals("tasks", landingKey(NavGroup.PLAN, listOf("tasks", "calendar"), mapOf("plan" to WEEK_KEY)))
+    }
 }

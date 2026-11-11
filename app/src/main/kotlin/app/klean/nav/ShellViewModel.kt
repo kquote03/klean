@@ -7,6 +7,7 @@ import app.klean.core.common.ZoneProvider
 import app.klean.core.data.module.ModuleGate
 import app.klean.core.ui.module.DashboardContributions
 import app.klean.core.ui.module.TodayItems
+import app.klean.core.ui.module.WeekSummaries
 import app.klean.feature.diet.ui.MinuteTicker
 import app.klean.shared.module.ModuleId
 import app.klean.core.notifications.permissions.PermissionChecker
@@ -45,6 +46,7 @@ class ShellViewModel @Inject constructor(
     val groupMemory: NavGroupMemory = InMemoryNavGroupMemory(),
     val todayItems: TodayItems = TodayItems(emptySet(), NoGate),
     val onboardingSteps: Set<@JvmSuppressWildcards OnboardingStepProvider> = emptySet(),
+    val weekSummaries: WeekSummaries = WeekSummaries(emptySet(), NoGate),
 ) : ViewModel() {
     private val _startWithSetup = MutableStateFlow<Boolean?>(null)
 

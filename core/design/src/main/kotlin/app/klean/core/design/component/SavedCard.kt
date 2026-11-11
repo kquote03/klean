@@ -1,6 +1,8 @@
 package app.klean.core.design.component
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +22,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -28,12 +32,20 @@ import app.klean.core.design.theme.Space
 /**
  * A saved thing that starts with one tap (a workout template): a `large` tonal card with a [title], one [line]
  * and a "Start" affordance (an accent disc with a play icon and [startLabel]). The whole card starts it; there is
- * no separate button. A row of these ends with [NewSavedCard].
+ * no separate button; [onLongClick] opens it for editing. A row of these ends with [NewSavedCard].
  */
 @Composable
-fun SavedCard(title: String, line: String?, startLabel: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    SavedSurface(onClick, modifier, highlighted = true) {
-        Text(title, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+fun SavedCard(
+    title: String,
+    line: String?,
+    startLabel: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    onLongClick: (() -> Unit)? = null,
+    onLongClickLabel: String? = null,
+) {
+    SavedSurface(onClick, modifier, highlighted = true, onLongClick, onLongClickLabel) {
+        Text(title, style = MaterialTheme.typography.titleMedium, maxLines = lineLimit(title, 2), overflow = TextOverflow.Ellipsis)
         if (line != null) Text(line, style = MaterialTheme.typography.bodyMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
         Affordance(Icons.Rounded.PlayArrow, startLabel)
     }
@@ -45,14 +57,23 @@ fun NewSavedCard(label: String, onClick: () -> Unit, modifier: Modifier = Modifi
     SavedSurface(onClick, modifier, highlighted = false) { Affordance(Icons.Rounded.Add, label) }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun SavedSurface(onClick: () -> Unit, modifier: Modifier, highlighted: Boolean, content: @Composable () -> Unit) {
+private fun SavedSurface(
+    onClick: () -> Unit,
+    modifier: Modifier,
+    highlighted: Boolean,
+    onLongClick: (() -> Unit)? = null,
+    onLongClickLabel: String? = null,
+    content: @Composable () -> Unit,
+) {
+    val shape = MaterialTheme.shapes.large
     Surface(
-        onClick = onClick,
-        shape = MaterialTheme.shapes.large,
+        shape = shape,
         color = if (highlighted) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
         contentColor = if (highlighted) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurface,
-        modifier = modifier.width(168.dp).heightIn(min = 136.dp),
+        modifier = modifier.width(168.dp).heightIn(min = 136.dp).clip(shape)
+            .combinedClickable(role = Role.Button, onLongClickLabel = onLongClickLabel, onLongClick = onLongClick, onClick = onClick),
     ) {
         Column(Modifier.padding(Space.cardPadding), verticalArrangement = Arrangement.spacedBy(Space.xxs)) { content() }
     }

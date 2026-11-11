@@ -63,10 +63,25 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 
-/** A group on the bar with its enabled, navigable modules (Reminders and Birthdays live inside Tasks and Contacts). */
+/**
+ * A group on the bar with its enabled, navigable modules (Reminders and Birthdays live inside Tasks and Contacts).
+ * Track with two or more trackers starts its tabs with the Week overview.
+ */
 private data class BarGroup(val group: NavGroup, val modules: List<KleanModule>) {
-    fun landing(last: Map<String, String>): KleanModule? =
-        last[group.key]?.let { k -> modules.firstOrNull { it.id.value == k } } ?: modules.firstOrNull()
+    val overview: Boolean get() = group.hasOverview(modules.size)
+    private val offset: Int get() = if (overview) 1 else 0
+
+    /** The route of tab [i]: the overview first, then the modules. */
+    fun route(i: Int): Any = if (overview && i == 0) TrackWeekRoute else modules[i - offset].startRoute
+
+    /** The tab index of module [i]. */
+    fun tabOf(i: Int): Int = i + offset
+
+    fun landing(last: Map<String, String>): Any? = when (val k = landingKey(group, modules.map { it.id.value }, last)) {
+        null -> null
+        WEEK_KEY -> TrackWeekRoute
+        else -> modules.first { it.id.value == k }.startRoute
+    }
 }
 
 /**
@@ -96,25 +111,32 @@ fun KleanAppUi(vm: ShellViewModel = hiltViewModel(), deepLinks: Flow<Intent> = e
     // Remember the module the user is in, however they got there (tab, Today card, deep link).
     LaunchedEffect(current, groups) {
         for (g in groups) g.modules.firstOrNull { current.isOn(it.graphRoute) }?.let { vm.groupMemory.remember(g.group, it.id.value) }
+        if (current.isOn(TrackWeekRoute)) vm.groupMemory.remember(NavGroup.TRACK, WEEK_KEY)
     }
-    val selectedGroup = groups.firstOrNull { g -> g.modules.any { current.isOn(it.graphRoute) } }?.group ?: NavGroup.TODAY
+    val selectedGroup = groups.firstOrNull { g -> g.modules.any { current.isOn(it.graphRoute) } }?.group
+        ?: NavGroup.TRACK.takeIf { current.isOn(TrackWeekRoute) }
+        ?: NavGroup.TODAY
 
     val settings = MenuAction(stringResource(R.string.nav_settings)) { nav.navigate(SettingsRoute) { launchSingleTop = true } }
     val titles = NavGroup.entries.associateWith { stringResource(it.labelRes) }
     val moduleLabels = enabled.associate { it.id to stringResource(it.labelRes) }
-    fun open(module: KleanModule) = nav.navigateTopLevel(module.startRoute)
+    val weekLabel = stringResource(R.string.track_week)
+    fun open(route: Any) = nav.navigateTopLevel(route)
+
+    /** The group and tab index of a group's start screen (a module's, or Track's Week), or null. */
     fun chromeFor(destination: NavDestination?): Pair<BarGroup, Int>? {
         for (g in groups) {
+            if (g.overview && destination?.hasRoute(TrackWeekRoute::class) == true) return g to 0
             val i = g.modules.indexOfFirst { m -> destination?.hasRoute(m.startRoute::class) == true }
-            if (i >= 0) return g to i
+            if (i >= 0) return g to g.tabOf(i)
         }
         return null
     }
     fun chrome(g: BarGroup, i: Int) = GroupChrome(
         title = titles.getValue(g.group),
-        tabs = g.modules.map { moduleLabels[it.id].orEmpty() },
+        tabs = (if (g.overview) listOf(weekLabel) else emptyList()) + g.modules.map { moduleLabels[it.id].orEmpty() },
         selected = i,
-        onSelect = { j -> open(g.modules[j]) },
+        onSelect = { j -> open(g.route(j)) },
         menu = listOf(settings),
     )
     val resolver = GroupChromeResolver { owner -> (owner as? NavBackStackEntry)?.destination?.let(::chromeFor)?.let { (g, i) -> chrome(g, i) } }
@@ -158,7 +180,10 @@ fun KleanAppUi(vm: ShellViewModel = hiltViewModel(), deepLinks: Flow<Intent> = e
         },
     ) {
         // A module screen not yet built on KleanScreen gets its group's title and tabs from the shell.
-        val legacy = chromeFor(current)?.takeIf { (g, i) -> !g.modules[i].drawsGroupChrome && g.modules.size > 1 }
+        val legacy = chromeFor(current)?.takeIf { (g, i) ->
+            val module = if (g.overview && i == 0) null else g.modules[i - (if (g.overview) 1 else 0)]
+            module != null && !module.drawsGroupChrome && g.modules.size > 1
+        }
         CompositionLocalProvider(LocalGroupChrome provides resolver, LocalAddMenu provides addSpec.takeIf { !inSetup }) {
             Column {
                 if (legacy != null) LegacyGroupHeader(chrome(legacy.first, legacy.second))
@@ -167,7 +192,7 @@ fun KleanAppUi(vm: ShellViewModel = hiltViewModel(), deepLinks: Flow<Intent> = e
                         KleanNavHost(
                             nav = nav, shell = vm, enabled = enabled, startWithSetup = it,
                             // A Today card opens its group where the user left it, like the bar does.
-                            onOpenGroup = { g -> groups.firstOrNull { b -> b.group == g }?.landing(last)?.let(::open) },
+                            onOpenGroup = { g -> groups.firstOrNull { b -> b.group == g }?.landing(last)?.let { open(it) } },
                         )
                     }
                 }
@@ -176,7 +201,7 @@ fun KleanAppUi(vm: ShellViewModel = hiltViewModel(), deepLinks: Flow<Intent> = e
     }
 }
 
-/** Title, Settings and module tabs above a module screen that doesn't draw them itself (Track, People for now). */
+/** Title, Settings and module tabs above a module screen that doesn't draw them itself (none once Phase 3 is done). */
 @Composable
 private fun LegacyGroupHeader(chrome: GroupChrome) {
     Column(Modifier.statusBarsPadding()) {

@@ -67,7 +67,7 @@ fun ListRow(
             Text(
                 title,
                 style = MaterialTheme.typography.bodyLarge,
-                maxLines = titleMaxLines,
+                maxLines = lineLimit(title, titleMaxLines),
                 overflow = TextOverflow.Ellipsis,
                 color = if (muted) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
                 textDecoration = if (muted) TextDecoration.LineThrough else null,
@@ -77,7 +77,7 @@ fun ListRow(
                     supporting,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
+                    maxLines = lineLimit(supporting, 2),
                     overflow = TextOverflow.Ellipsis,
                 )
             }
@@ -87,7 +87,9 @@ fun ListRow(
                 meta,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
+                // A single word ("Yesterday") ends in "…" rather than breaking mid-word at large font scales.
+                maxLines = lineLimit(meta, 2),
+                overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.End,
                 modifier = Modifier.weight(1f, fill = false),
             )

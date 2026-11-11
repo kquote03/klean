@@ -19,11 +19,14 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.longClick
+import androidx.compose.ui.test.performTouchInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.klean.core.design.component.AddMenuItem
 import app.klean.core.design.component.AddMenuSpec
 import app.klean.core.design.component.CardTone
 import app.klean.core.design.component.EmptyState
+import app.klean.core.design.component.FactCard
 import app.klean.core.design.component.GroupChrome
 import app.klean.core.design.component.GroupChromeResolver
 import app.klean.core.design.component.KleanCard
@@ -127,6 +130,30 @@ class ComponentShotsTest {
             }
         }
     }}
+
+    @Test fun heroWithBarsAndFactCards() { compose.shot("fact-cards") {
+        Column(verticalArrangement = Arrangement.spacedBy(Space.cardGap)) {
+            ModuleCard(
+                label = "This week", fact = "7h 05m of sleep", supporting = "on average, over 6 nights", tone = CardTone.SECONDARY,
+                hero = {
+                    WeekBars(listOf(0.7f, 0.8f, null, 0.9f, 0.75f, 0.7f, 0.85f), listOf("W", "T", "F", "S", "S", "M", "T"), 6, "Sleep this week")
+                },
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(Space.cardGap)) {
+                FactCard("Workouts", "2 sessions", Modifier.weight(1f), supporting = "75 min, last on Thursday")
+                FactCard("Food today", "1 entry", Modifier.weight(1f), supporting = "Oatmeal, banana at 8:10")
+            }
+        }
+    }}
+
+    @Test fun savedCardLongPressEdits() {
+        var edited = 0
+        compose.shot("saved-card") {
+            SavedCard("Push day", "Bench, dips, push-ups", "Start", onClick = {}, onLongClick = { edited++ }, onLongClickLabel = "Edit")
+        }
+        compose.onNodeWithText("Push day").performTouchInput { longClick() }
+        assertEquals(1, edited)
+    }
 
     @Test fun screenInAGroupWithTheAddMenu() {
         compose.shot("klean-screen", screen = true) {

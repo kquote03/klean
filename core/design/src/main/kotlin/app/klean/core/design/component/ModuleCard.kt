@@ -39,7 +39,7 @@ fun CardTone.onContainer(): Color = when (this) {
  * The card on Today and at the top of module screens: a tonal hero with a small [label] ("Next", "Last night"),
  * one big [fact] and an optional [supporting] line, then an optional [body] of up to four rows on
  * `surfaceContainerLow`. The whole card is one click target ([onClick]); nothing inside it is separately tappable.
- * An optional single [action] shows as a tonal button (not on Today).
+ * An optional single [action] shows as a tonal button (not on Today). [hero] adds to the tonal hero (a week of bars).
  */
 @Composable
 fun ModuleCard(
@@ -51,6 +51,7 @@ fun ModuleCard(
     onClick: (() -> Unit)? = null,
     onClickLabel: String? = null,
     action: MenuAction? = null,
+    hero: (@Composable ColumnScope.() -> Unit)? = null,
     body: (@Composable ColumnScope.() -> Unit)? = null,
 ) {
     val content: @Composable () -> Unit = {
@@ -58,8 +59,9 @@ fun ModuleCard(
             Surface(color = tone.container(), contentColor = tone.onContainer(), modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(horizontal = Space.cardPadding, vertical = Space.md)) {
                     Text(label, style = MaterialTheme.typography.labelLarge)
-                    Text(fact, style = MaterialTheme.typography.headlineSmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Text(fact, style = MaterialTheme.typography.headlineSmall, maxLines = lineLimit(fact, 2), overflow = TextOverflow.Ellipsis)
                     if (supporting != null) Text(supporting, style = MaterialTheme.typography.bodyMedium)
+                    if (hero != null) Column(Modifier.padding(top = Space.sm)) { hero() }
                 }
             }
             if (body != null) {

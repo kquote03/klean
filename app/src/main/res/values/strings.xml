@@ -5,6 +5,9 @@
     <string name="nav_plan">Plan</string>
     <string name="nav_track">Track</string>
     <string name="nav_people">People</string>
+    <string name="track_week">Week</string>
+    <string name="track_week_hero">This week</string>
+    <string name="track_week_empty">Your week shows up here as you log sleep, workouts or food.</string>
     <string name="add_task">Task</string>
     <string name="add_event">Event</string>
     <string name="add_reminder">Reminder</string>

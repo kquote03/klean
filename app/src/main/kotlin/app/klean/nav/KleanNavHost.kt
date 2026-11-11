@@ -13,6 +13,7 @@ import app.klean.feature.settings.SettingsScreen
 import app.klean.feature.settings.settingsGraph
 import app.klean.today.ArrangeTodayScreen
 import app.klean.today.TodayScreen
+import app.klean.track.TrackWeekScreen
 import app.klean.widget.TodayWidgetReceiver
 
 /**
@@ -61,6 +62,9 @@ fun KleanNavHost(
                 onSettings = { nav.navigate(SettingsRoute) { launchSingleTop = true } },
             )
             NewModulesSheet(registry, shell.newModules)
+        }
+        composable<TrackWeekRoute> {
+            TrackWeekScreen(summaries = shell.weekSummaries, clock = shell.clock, zone = shell.zone, ticks = { shell.ticker.ticks() })
         }
         composable<ArrangeTodayRoute> {
             ArrangeTodayScreen(registry = registry, layout = shell.todayLayout, onDone = { nav.popBackStack() })

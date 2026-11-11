@@ -253,3 +253,4 @@ Only 4 of 20 screens meet the budget outright. The common causes, in order of we
 | Calendar: "New event" extended FAB | bottom right | Add menu → Event (capture sheet); full form: Calendar overflow → New event |
 | Calendar: "Your phone's calendars" banner (Not now / Show them) | above the agenda | Calendar overflow → Show phone calendars, the empty agenda's action, Settings › Calendar |
 | Calendar: a header per day | agenda | four calm sections: Earlier, Today, This week, Later (rows carry the weekday) |
+| Track: opened on Workout | Track tab | Track › **Week** first (a neutral summary of sleep, workouts and food; no links, the segments lead on), until a tracker is picked; then the last one |

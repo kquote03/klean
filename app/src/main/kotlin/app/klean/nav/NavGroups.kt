@@ -35,3 +35,21 @@ fun navGroups(enabled: List<ModuleId>): List<NavGroupEntry> = NavGroup.entries.m
         g.members.filter { it in enabled }.takeIf { it.isNotEmpty() }?.let { NavGroupEntry(g, it) }
     }
 }
+
+/** The key Track remembers while its Week overview is open. */
+const val WEEK_KEY = "week"
+
+/**
+ * Track opens on a neutral Week overview of its trackers until the user picks a module (docs/ui/design-system.md),
+ * so Diet is one module among equals rather than a default. With a single tracker there is nothing to overview.
+ */
+fun NavGroup.hasOverview(moduleCount: Int): Boolean = this == NavGroup.TRACK && moduleCount > 1
+
+/**
+ * Where a group's tab lands, as a key: the one used last if it's still there; else the overview ([WEEK_KEY]) when
+ * the group has one, else the first module.
+ */
+fun landingKey(group: NavGroup, modules: List<String>, last: Map<String, String>): String? {
+    val keys = (if (group.hasOverview(modules.size)) listOf(WEEK_KEY) else emptyList()) + modules
+    return last[group.key]?.takeIf { it in keys } ?: keys.firstOrNull()
+}

@@ -49,6 +49,7 @@ import app.klean.core.ui.module.DashboardSlot
 import app.klean.today.InMemoryTodayLayout
 import app.klean.today.TodayLayoutStore
 import androidx.compose.material3.Text
+import androidx.navigation.compose.composable
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
@@ -229,6 +230,35 @@ class ShellSmokeTest {
         compose.waitForIdle()
         compose.onNodeWithText("Screen of Cut").assertIsDisplayed()
         compose.onAllNodes(hasClickAction() and hasText("Cut")).assertCountEquals(0)
+    }
+
+    /** Track opens on its Week overview until a tracker is picked, then remembers it (and Week, once picked again). */
+    @Test fun trackOpensOnWeekThenRemembersTheTracker() {
+        val memory = InMemoryNavGroupMemory()
+        val trackers = setOf<KleanModule>(
+            FakeScreenModule(ModuleId.WORKOUT, 60, android.R.string.cut, FakeRoute5) { composable<FakeRoute5> { Text("Screen of Cut") } },
+            FakeScreenModule(ModuleId.SLEEP, 70, android.R.string.copy, FakeRoute3) { composable<FakeRoute3> { Text("Screen of Copy") } },
+        )
+        val vm = shell(trackers, groupMemory = memory)
+        compose.setContent { KleanTheme { KleanAppUi(vm) } }
+        compose.waitForIdle()
+        compose.onNode(hasClickAction() and hasText("Track")).performClick()
+        compose.waitForIdle()
+        compose.onNodeWithText("Your week shows up here as you log sleep, workouts or food.").assertIsDisplayed()
+        compose.onNode(hasClickAction() and hasText("Week")).assertIsSelected()
+        compose.onNode(hasClickAction() and hasText("Track")).assertIsSelected()
+        compose.onNode(hasClickAction() and hasText("Cut")).performClick()
+        compose.waitForIdle()
+        compose.onNodeWithText("Screen of Cut").assertIsDisplayed()
+        assertEquals("workout", memory.last.value["track"])
+        compose.onNode(hasClickAction() and hasText("Today")).performClick()
+        compose.waitForIdle()
+        compose.onNode(hasClickAction() and hasText("Track")).performClick()
+        compose.waitForIdle()
+        compose.onNodeWithText("Screen of Cut").assertIsDisplayed()
+        compose.onNode(hasClickAction() and hasText("Week")).performClick()
+        compose.waitForIdle()
+        assertEquals(WEEK_KEY, memory.last.value["track"])
     }
 
     @Test fun aGroupWithEveryModuleOffLeavesTheBar() {
