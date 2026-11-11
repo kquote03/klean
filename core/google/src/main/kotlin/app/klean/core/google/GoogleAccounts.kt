@@ -50,10 +50,27 @@ interface AccountSource {
     suspend fun switchBy(step: Int): Boolean
 }
 
-/** No Google (tests, previews): a neutral avatar and nothing to switch. */
-object NoAccounts : AccountSource {
-    override val state: Flow<AccountsState> = kotlinx.coroutines.flow.flowOf(AccountsState.None)
+/**
+ * What the account menu does, behind an interface so the app shell (and its tests) can build the menu without Hilt.
+ * Every [AuthStep.Granted] is followed by [completeGrant].
+ */
+interface AccountActions : AccountSource {
+    /** Connect, "Add another account" ([pick]: Google's account picker), "Show your Google photo". */
+    suspend fun connect(pick: Boolean): AuthStep
+    suspend fun switchTo(email: String): AuthStep
+    suspend fun finishConsent(data: android.content.Intent?): AuthStep
+    /** After a grant: which account it was (switching to it), the photo, then a sync. */
+    suspend fun completeGrant(): AdoptResult
+}
+
+/** No Google (tests, previews): a neutral avatar, nothing to switch or connect. */
+object NoAccounts : AccountActions {
+    override val state: Flow<AccountsState> = kotlinx.coroutines.flow.flowOf(AccountsState(available = false))
     override suspend fun switchBy(step: Int) = false
+    override suspend fun connect(pick: Boolean): AuthStep = AuthStep.Unavailable("no Google")
+    override suspend fun switchTo(email: String): AuthStep = AuthStep.Unavailable("no Google")
+    override suspend fun finishConsent(data: android.content.Intent?): AuthStep = AuthStep.Declined
+    override suspend fun completeGrant(): AdoptResult = AdoptResult.Failed
 }
 
 /**

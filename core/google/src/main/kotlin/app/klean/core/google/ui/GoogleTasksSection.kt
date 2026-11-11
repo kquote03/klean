@@ -26,12 +26,16 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import app.klean.core.data.db.KleanDatabase
 import app.klean.core.data.db.entity.TaskListEntity
+import app.klean.core.google.AccountsState
 import app.klean.core.google.AuthStep
+import app.klean.core.google.GoogleAccount
+import app.klean.core.google.GoogleAccounts
 import app.klean.core.google.GoogleAuth
 import app.klean.core.google.GoogleLocalState
 import app.klean.core.google.GoogleSyncResult
 import app.klean.core.google.GoogleTasksScheduler
 import app.klean.core.google.GoogleTasksSync
+import app.klean.core.design.component.AccountAvatar
 import app.klean.core.google.R
 import app.klean.core.google.TaskOrigin
 import android.content.Intent
@@ -57,6 +61,10 @@ data class GoogleTasksUi(
     val note: Int? = null,
     /** Consent screen to launch once. */
     val consent: IntentSender? = null,
+    /** The current account, when Klean knows its profile ("Connected as …"). */
+    val account: GoogleAccount? = null,
+    /** Its downloaded photo. */
+    val photo: java.io.File? = null,
 )
 
 @HiltViewModel
@@ -64,6 +72,7 @@ class GoogleTasksViewModel @Inject constructor(
     private val auth: GoogleAuth,
     private val sync: GoogleTasksSync,
     private val scheduler: GoogleTasksScheduler,
+    private val accounts: GoogleAccounts,
     state: GoogleLocalState,
     db: KleanDatabase,
 ) : ViewModel() {
@@ -71,8 +80,11 @@ class GoogleTasksViewModel @Inject constructor(
 
     val ui: StateFlow<GoogleTasksUi> = combine(
         local, auth.connected, state.lastSyncAt,
-        db.taskListDao().observeAll().map { l -> l.filter { it.source == TaskOrigin.GOOGLE } },
-    ) { l, connected, last, lists -> l.copy(connected = connected, lastSyncAt = last, lists = lists) }
+        db.taskListDao().observeAll().map { l -> l.filter { it.source == TaskOrigin.GOOGLE && !it.sync.deleted } },
+        accounts.state,
+    ) { l, connected, last, lists, acc: AccountsState ->
+        l.copy(connected = connected, lastSyncAt = last, lists = lists, account = acc.current, photo = acc.current?.let { acc.photos[it.email] })
+    }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), local.value)
 
     fun connect() = viewModelScope.launch {
@@ -89,6 +101,8 @@ class GoogleTasksViewModel @Inject constructor(
         when (step) {
             AuthStep.Granted -> {
                 scheduler.schedulePeriodic()
+                local.update { it.copy(busy = true) }
+                accounts.adoptGranted()
                 runSync()
             }
             is AuthStep.NeedsConsent -> local.update { it.copy(consent = step.intentSender) }
@@ -118,6 +132,7 @@ class GoogleTasksViewModel @Inject constructor(
         scheduler.cancel()
         auth.disconnect()
         sync.forget()
+        accounts.forgetAll()
         local.update { it.copy(note = R.string.google_disconnected) }
     }
 }
@@ -161,8 +176,14 @@ fun GoogleTasksContent(
                 },
             )
             else -> {
+                val account = s.account
                 ListItem(
-                    headlineContent = { Text(stringResource(R.string.google_connected)) },
+                    leadingContent = account?.let { a ->
+                        { AccountAvatar(photo = rememberAccountPhoto(s.photo), initial = a.initial) }
+                    },
+                    headlineContent = {
+                        Text(account?.let { stringResource(R.string.google_connected_as, it.email) } ?: stringResource(R.string.google_connected))
+                    },
                     supportingContent = { Text(stringResource(R.string.google_connected_body)) },
                     trailingContent = {
                         TextButton(onClick = onSync, enabled = !s.busy, modifier = Modifier.heightIn(min = 48.dp)) {

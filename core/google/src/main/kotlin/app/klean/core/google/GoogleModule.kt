@@ -149,5 +149,5 @@ object GoogleProvides {
 abstract class GoogleBinds {
     @Binds abstract fun auth(impl: PlayGoogleAuth): GoogleAuth
     @Binds @IntoSet abstract fun edits(impl: OutboxGoogleTaskEdits): GoogleTaskEdits
-    @Binds abstract fun accountSource(impl: GoogleAccounts): AccountSource
+    @Binds abstract fun accountActions(impl: GoogleAccountActions): AccountActions
 }

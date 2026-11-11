@@ -16,4 +16,30 @@
     <string name="google_sync_later">Couldn\'t reach Google. Your changes are kept and will be sent later.</string>
     <string name="google_chip">G</string>
     <string name="google_chip_desc">From Google Tasks</string>
+    <string name="google_connected_as">Connected as %1$s</string>
+
+    <!-- Account menu (Today's avatar). -->
+    <string name="account_avatar_desc">Account and settings</string>
+    <string name="account_next">Next account</string>
+    <string name="account_previous">Previous account</string>
+    <string name="account_close">Close</string>
+    <string name="account_menu_title">Klean</string>
+    <string name="account_hi">Hi, %1$s</string>
+    <string name="account_manage_google">Manage your Google Account</string>
+    <string name="account_switch">Switch account</string>
+    <string name="account_current">Current account</string>
+    <string name="account_add">Add another account</string>
+    <string name="account_manage_device">Manage accounts on this device</string>
+    <string name="account_more_from">More from Klean</string>
+    <string name="account_settings">Settings</string>
+    <string name="account_help">Help</string>
+    <string name="account_privacy">Privacy policy</string>
+    <string name="account_terms">Terms</string>
+    <string name="account_connect">Connect Google Tasks</string>
+    <string name="account_connect_body">See your Google lists next to Klean\'s own.</string>
+    <string name="account_no_google">Klean works fully on this phone, without an account.</string>
+    <string name="account_connected_unknown">Google Tasks is connected</string>
+    <string name="account_show_photo">Show your Google photo</string>
+    <string name="account_show_photo_body">Your name and photo stay on this phone.</string>
+    <string name="account_switched">Showing %1$s</string>
 </resources>
