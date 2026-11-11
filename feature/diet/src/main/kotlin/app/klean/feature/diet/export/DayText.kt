@@ -25,7 +25,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.toJavaLocalDate
 
 /** One food in the copied text. */
-data class DayLine(val eatenAt: Long, val text: String, val kcal: EntryKcal?)
+data class DayLine(val eatenAt: Long, val text: String, val kcal: EntryKcal?, val grams: Int? = null)
 
 /** The words of the copied text (English defaults; the app passes its string resources). */
 data class DayTextWords(
@@ -65,7 +65,8 @@ fun dayText(
     }
     entries.sortedBy { it.eatenAt }.forEach { e ->
         val k = e.kcal?.takeIf { showCalories }
-        lines += "${time(e.eatenAt)}  ${e.text}" + (k?.let { ": " + kcal(it.kcal, it.estimated) } ?: "")
+        val amount = e.grams?.let { " (${nf.format(it)} g)" }.orEmpty()
+        lines += "${time(e.eatenAt)}  ${e.text}$amount" + (k?.let { ": " + kcal(it.kcal, it.estimated) } ?: "")
     }
     if (showCalories) {
         val head = words.total(kcal(total.total, total.estimated)) + (if (goal > 0) " " + words.goal(kcal(goal, false)) else "")
@@ -95,7 +96,7 @@ class AndroidDayTextProvider @Inject constructor(
         val timeFmt = DateTimeFormatter.ofPattern(pattern).withZone(zoneId)
         val dayLabel = DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy").format(date.toJavaLocalDate())
         return dayText(
-            entries = entries.map { DayLine(it.eatenAt, it.rawText, entryKcal(it, byEntry[it.id].orEmpty())) },
+            entries = entries.map { DayLine(it.eatenAt, it.rawText, entryKcal(it, byEntry[it.id].orEmpty()), it.grams) },
             total = dayCalories(entries, items),
             goal = prefs.calorieGoal,
             showCalories = prefs.showCalories,

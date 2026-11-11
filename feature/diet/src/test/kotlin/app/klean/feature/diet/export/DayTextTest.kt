@@ -47,4 +47,13 @@ class DayTextTest {
         val t = dayText(lines.take(2).drop(1), DayCalories(150, false, 0), goal = 0, showCalories = true, time = time, dayLabel = label)
         assertEquals("Total: 150 kcal", t.lines().last())
     }
+
+    /** The amount travels with the food, calories or not: an assistant can't estimate "rice" without it. */
+    @Test fun theAmountIsPartOfTheLine() {
+        val t = dayText(
+            listOf(DayLine(540L, "rice", null, grams = 200)),
+            DayCalories(0, false, 1), goal = 0, showCalories = false, time = time, dayLabel = label,
+        )
+        assertEquals("09:00  rice (200 g)", t.lines()[1])
+    }
 }
