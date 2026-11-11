@@ -717,4 +717,4 @@ Direction: navigation A (grouped tabs) + Soft cards, the recommended default (no
 - [x] V1 — `VoiceEngineTest`: engine order and error mapping (red first; 10 cases)
 - [x] V2 — `VoiceEngine` (system → on-device → system dialog), real error reasons, language-pack download
 - [x] V3 — `VoiceCaptureScreen` + `VoiceRoute` (`klean://voice`, shortcut `voice`); the capture sheet's mic opens it
-- [ ] V4 — Waydroid voice check; acceptance row V5
+- [x] V4 — Waydroid voice check (shots in `~/.hermes/cache/scratch/voice-shots/`); acceptance row V5

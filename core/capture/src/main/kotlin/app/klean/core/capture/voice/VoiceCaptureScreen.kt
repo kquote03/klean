@@ -56,6 +56,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.DialogWindowProvider
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.runtime.SideEffect
+import androidx.core.view.WindowCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.klean.core.capture.R
@@ -112,6 +117,17 @@ fun VoiceCaptureScreen(vm: VoiceCaptureViewModel, onClose: () -> Unit, onSaved: 
 @Composable
 fun VoiceCaptureOverlay(target: ModuleId?, onClose: () -> Unit, onSaved: () -> Unit) {
     Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
+        // The dialog has its own window: give its status and navigation bars icons that show on the surface.
+        val window = (LocalView.current.parent as? DialogWindowProvider)?.window
+        val lightBars = MaterialTheme.colorScheme.surface.luminance() > 0.5f
+        SideEffect {
+            window?.let { w ->
+                WindowCompat.getInsetsController(w, w.decorView).apply {
+                    isAppearanceLightStatusBars = lightBars
+                    isAppearanceLightNavigationBars = lightBars
+                }
+            }
+        }
         // A fresh view model per opening: the host activity's store outlives this overlay.
         val key = remember { "voice-${System.nanoTime()}" }
         val vm: VoiceCaptureViewModel = hiltViewModel(key = key)
