@@ -70,7 +70,8 @@ fun ModuleCard(
             if (action != null) {
                 FilledTonalButton(
                     onClick = action.onClick,
-                    modifier = Modifier.padding(start = Space.cardPadding, end = Space.cardPadding, bottom = Space.cardPadding)
+                    // Top padding too, so the button never sits flush against the tinted hero.
+                    modifier = Modifier.padding(start = Space.cardPadding, top = Space.md, end = Space.cardPadding, bottom = Space.cardPadding)
                         .heightIn(min = Space.touchTarget),
                 ) { Text(action.label) }
             }
