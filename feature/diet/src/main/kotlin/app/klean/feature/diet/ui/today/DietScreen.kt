@@ -43,12 +43,14 @@ fun DietScreen(
     val snackbar = remember { SnackbarHostState() }
     backStackEntry?.let { RemovedEntrySnackbar(it, snackbar, onUndo = vm::undoRemove) }
     val state by vm.uiState.collectAsStateWithLifecycle()
+    val copy = app.klean.feature.diet.export.rememberCopyText(snackbar)
     DietScreenContent(
         state = state,
         onOpenEntry = onOpenEntry,
         onOpenHistory = onOpenHistory,
         onAddForGap = onAddForGap,
         onFillCalories = vm::fillMissing,
+        onCopyToday = { vm.copyToday(copy) },
         snackbar = snackbar,
         offer = { DeliveryOfferCard() },
     )
@@ -68,8 +70,10 @@ fun DietScreenContent(
     /** A one-time, dismissible card (the delivery offer); nothing once answered. */
     offer: @Composable () -> Unit = {},
     onFillCalories: () -> Unit = {},
+    onCopyToday: () -> Unit = {},
 ) {
     val menu = listOfNotNull(
+        MenuAction(stringResource(R.string.diet_copy_today), onClick = onCopyToday),
         state.withoutCalories?.let { MenuAction(stringResource(R.string.diet_fill_calories), onClick = onFillCalories) },
         MenuAction(stringResource(R.string.diet_history_open), onClick = onOpenHistory),
     )

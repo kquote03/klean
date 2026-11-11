@@ -21,6 +21,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -52,6 +58,8 @@ fun DietDayScreen(
     val current = vm.dateForPage(pager.currentPage)
     val titleFlow = remember(current) { vm.day(current) }
     val titleState by titleFlow.collectAsState(initial = null)
+    val copy = app.klean.feature.diet.export.rememberCopyText(snackbar)
+    var menuOpen by remember { mutableStateOf(false) }
     Scaffold(
         snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
@@ -60,6 +68,22 @@ fun DietDayScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.diet_back))
+                    }
+                },
+                actions = {
+                    Box {
+                        IconButton(onClick = { menuOpen = true }) {
+                            Icon(Icons.Rounded.MoreVert, contentDescription = stringResource(app.klean.core.design.R.string.design_more_options))
+                        }
+                        DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.diet_copy_day)) },
+                                onClick = {
+                                    menuOpen = false
+                                    vm.copyDay(current, copy)
+                                },
+                            )
+                        }
                     }
                 },
             )

@@ -43,7 +43,13 @@ class DietDayViewModel @Inject constructor(
     private val fmt: DietFormatter,
     private val ticker: MinuteTicker,
     photos: PhotoStorage,
+    private val dayText: app.klean.feature.diet.export.DayTextProvider = app.klean.feature.diet.export.DayTextProvider { "" },
 ) : ViewModel() {
+    /** "Copy this day": the day's food (with calories when shown) as text for [onText]. */
+    fun copyDay(date: LocalDate, onText: (String) -> Unit) {
+        viewModelScope.launch { onText(dayText.forDay(date)) }
+    }
+
     private val rowBuilder = DietRowBuilder(repo, fmt, photos)
     private val today: LocalDate = repo.todayDate()
 

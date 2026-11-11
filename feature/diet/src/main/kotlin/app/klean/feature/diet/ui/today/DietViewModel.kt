@@ -91,6 +91,7 @@ class DietViewModel @Inject constructor(
     private val ticker: MinuteTicker,
     recognizer: VoiceRecognizer,
     private val photos: PhotoStorage,
+    private val dayText: app.klean.feature.diet.export.DayTextProvider = app.klean.feature.diet.export.DayTextProvider { "" },
 ) : ViewModel() {
     private val rows = DietRowBuilder(repo, fmt, photos)
     private val _field = MutableStateFlow("")
@@ -148,6 +149,11 @@ class DietViewModel @Inject constructor(
         val clean = text.trim()
         if (clean.isEmpty()) return
         viewModelScope.launch { repo.logEntry(clean, CaptureSource.MODULE_SCREEN) }
+    }
+
+    /** "Copy today": today's food (with calories when shown) as text for [onText]. */
+    fun copyToday(onText: (String) -> Unit) {
+        viewModelScope.launch { onText(dayText.forDay(repo.todayDate())) }
     }
 
     /** "Fill in calories": history, then the assigned AI, for today's entries without calories. */

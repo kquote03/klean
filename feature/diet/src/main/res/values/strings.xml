@@ -21,6 +21,17 @@
     <string name="diet_settings_goal_unit">kcal</string>
     <string name="diet_settings_fill_explainer">Leave calories empty and Klean fills them in from what you logged before. With an AI set for Calorie estimates (Settings › AI), it estimates the rest.</string>
     <string name="diet_fill_calories">Fill in calories</string>
+    <string name="diet_copy_today">Copy today</string>
+    <string name="diet_copy_day">Copy this day</string>
+    <string name="diet_copied">Copied</string>
+    <string name="diet_copy_heading">What I ate on %1$s</string>
+    <string name="diet_copy_nothing">(nothing logged)</string>
+    <string name="diet_copy_total">Total: %1$s</string>
+    <string name="diet_copy_goal">(goal %1$s)</string>
+    <plurals name="diet_copy_without">
+        <item quantity="one">%d food without calories</item>
+        <item quantity="other">%d foods without calories</item>
+    </plurals>
     <string name="diet_debug_title">Debug</string>
     <string name="diet_debug_fire">Fire a check-in now</string>
     <string name="diet_debug_show_next">Show next check-in</string>

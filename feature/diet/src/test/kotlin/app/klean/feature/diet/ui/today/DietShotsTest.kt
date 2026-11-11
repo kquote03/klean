@@ -108,6 +108,16 @@ class DietShotsTest {
         assertEquals(1, filled)
     }
 
+    @Test fun copyTodayIsInTheMenu() {
+        var copied = 0
+        val state = DietUiState(rows = listOf(entry("t1", "8:10", "Salad")), loaded = true)
+        compose.setContent { DietScreenContent(state = state, onOpenEntry = {}, onOpenHistory = {}, onAddForGap = {}, onCopyToday = { copied++ }) }
+        compose.onNodeWithContentDescription("More options").performClick()
+        compose.onNodeWithText("Fill in calories").assertDoesNotExist()
+        compose.onNodeWithText("Copy today").performClick()
+        assertEquals(1, copied)
+    }
+
     @Test fun historyIsInTheOverflow() {
         val shot = render("diet-menu", DietUiState(rows = listOf(entry("t1", "8:10", "Oatmeal, banana")), loaded = true))
         compose.onNodeWithContentDescription("More options").performClick()
