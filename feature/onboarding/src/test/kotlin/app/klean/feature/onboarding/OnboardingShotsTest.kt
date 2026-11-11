@@ -28,32 +28,49 @@ class OnboardingShotsTest {
         override fun current() = PermissionStatus(true, true, false, false, false)
     }
 
-    // No modules: Welcome, Sleep schedule, Permissions, AI help.
-    private fun render() = compose.shot("onboarding-welcome", screen = true) {
-        OnboardingScreen(
-            registry = ModuleRegistry(emptySet(), FakeModuleGate()),
-            quietHours = FakeQuietHoursStore(),
-            onboarding = FakeOnboardingState(),
-            permissions = checker,
-            onFinished = {},
-            onOpenAiSettings = {},
-        )
+    private val registry = ModuleRegistry(emptySet(), FakeModuleGate())
+    private val quiet = FakeQuietHoursStore()
+    private val state = FakeOnboardingState()
+
+    // No modules: Welcome, Sleep schedule, Permissions, AI help. [steps] Next taps happen in the view model, so no
+    // pressed button is left in the picture.
+    private fun render(name: String, steps: Int = 0) {
+        val vm = OnboardingViewModel(registry, quiet, state, emptyList(), emptyList())
+        repeat(steps) { vm.next() }
+        compose.shot(name, screen = true) {
+            OnboardingScreen(
+                registry = registry, quietHours = quiet, onboarding = state, permissions = checker,
+                onFinished = {}, onOpenAiSettings = {}, vm = vm,
+            )
+        }
     }
 
-    @Test fun pagesKeepOnePrimaryAction() {
-        val shot = render()
+    @Test fun welcome() {
+        render("onboarding-welcome")
         compose.onNodeWithText("Welcome to Klean").assertExists()
         compose.assertClutterBudget()
-        compose.onNodeWithText("Set up").performClick()
+    }
+
+    @Test fun sleepSchedule() {
+        render("onboarding-sleep", steps = 1)
         compose.onNodeWithText("Sleep schedule").assertExists()
-        shot.capture("onboarding-sleep")
         compose.assertClutterBudget()
-        compose.onNodeWithText("Next").performClick()
-        compose.onNodeWithText("Permissions").assertExists()
-        compose.onNodeWithText("Next").performClick()
+    }
+
+    @Test fun aiHelp() {
+        render("onboarding-ai", steps = 3)
         compose.onNodeWithText("AI help").assertExists()
         compose.onNodeWithText("Set up AI providers").assertExists()
-        shot.capture("onboarding-ai")
         compose.assertClutterBudget()
+    }
+
+    @Test fun nextWalksThePages() {
+        compose.setContent {
+            OnboardingScreen(registry = registry, quietHours = quiet, onboarding = state, permissions = checker, onFinished = {}, onOpenAiSettings = {})
+        }
+        compose.onNodeWithText("Set up").performClick()
+        compose.onNodeWithText("Sleep schedule").assertExists()
+        compose.onNodeWithText("Next").performClick()
+        compose.onNodeWithText("Permissions").assertExists()
     }
 }
