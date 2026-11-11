@@ -33,7 +33,16 @@ fun KleanNavHost(
     onOpenGroup: (NavGroup) -> Unit = {},
 ) {
     val registry = shell.registry
-    NavHost(navController = nav, startDestination = if (startWithSetup) OnboardingRoute else TodayRoute) {
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    val motion = androidx.compose.runtime.remember(ctx) { KleanMotion.from(ctx) }
+    NavHost(
+        navController = nav,
+        startDestination = if (startWithSetup) OnboardingRoute else TodayRoute,
+        enterTransition = motion.enterTransition,
+        exitTransition = motion.exitTransition,
+        popEnterTransition = motion.popEnterTransition,
+        popExitTransition = motion.popExitTransition,
+    ) {
         composable<OnboardingRoute> {
             OnboardingScreen(
                 registry = registry,
