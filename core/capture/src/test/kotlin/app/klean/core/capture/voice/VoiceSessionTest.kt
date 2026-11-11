@@ -1,5 +1,8 @@
 package app.klean.core.capture.voice
 
+import android.content.Intent
+import android.speech.RecognizerIntent
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.klean.core.capture.R
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
@@ -11,8 +14,10 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
 
 @OptIn(ExperimentalCoroutinesApi::class)
+@RunWith(AndroidJUnit4::class)
 class VoiceSessionTest {
     private val rec = FakeVoiceRecognizer()
     private val saved = mutableListOf<String>()
@@ -57,21 +62,83 @@ class VoiceSessionTest {
         assertEquals(1, undone.size)
     }
 
-    @Test fun noRecogniserShowsCalmOfflineMessageWithoutStarting() = runTest {
+    @Test fun noRecogniserSaysSoWithoutStarting() = runTest {
         rec.mode = VoiceMode.NONE
         val s = session()
         s.onMic()
         assertEquals(0, rec.starts)
         assertFalse(s.state.value.listening)
-        assertEquals(R.string.voice_unavailable_offline, s.state.value.messageRes)
+        assertEquals(R.string.voice_no_service, s.state.value.messageRes)
     }
 
-    @Test fun offlineErrorShowsTheSameMessage() = runTest {
+    @Test fun offlineWithoutPackSaysSo() = runTest {
         val s = session()
         s.onMic()
-        rec.error(VoiceError.UNAVAILABLE_OFFLINE)
+        rec.error(VoiceError.OfflineNoPack)
         assertFalse(s.state.value.listening)
-        assertEquals(R.string.voice_unavailable_offline, s.state.value.messageRes)
+        assertEquals(R.string.voice_offline_no_pack, s.state.value.messageRes)
+        assertTrue(saved.isEmpty())
+    }
+
+    @Test fun missingPackNamesTheLanguageAndDownloads() = runTest {
+        val s = session()
+        s.onMic()
+        rec.error(VoiceError.NeedsLanguagePack("en-US", canDownload = true))
+        assertEquals(R.string.voice_needs_pack, s.state.value.messageRes)
+        assertEquals("English", s.state.value.messageArg)
+        s.downloadPack()
+        assertEquals(listOf("en-US"), rec.downloads)
+        assertEquals(R.string.voice_pack_downloading, s.state.value.messageRes)
+        assertNull(s.state.value.error)
+    }
+
+    @Test fun systemDialogStepThenItsResultSaves() = runTest {
+        val s = session()
+        s.onMic()
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+        rec.step(VoiceStep.LaunchSystemDialog(intent))
+        assertFalse(s.state.value.listening)
+        assertEquals(intent, s.state.value.dialog)
+        s.onDialogLaunched()
+        assertNull(s.state.value.dialog)
+        s.onDialogResult("tea")
+        runCurrent()
+        assertEquals(listOf("tea"), saved)
+    }
+
+    @Test fun dismissedDialogIsCalm() = runTest {
+        val s = session()
+        s.onDialogResult(null)
+        assertEquals(R.string.voice_no_match, s.state.value.messageRes)
+        assertTrue(saved.isEmpty())
+    }
+
+    @Test fun useSystemDialogOnlyWhenItResolves() = runTest {
+        val s = session()
+        s.onMic()
+        rec.error(VoiceError.Network)
+        assertFalse(s.state.value.systemDialogAvailable)
+        s.useSystemDialog()
+        assertNull(s.state.value.dialog)
+        rec.dialog = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+        s.onMic()
+        rec.error(VoiceError.Network)
+        assertEquals(R.string.voice_network, s.state.value.messageRes)
+        assertTrue(s.state.value.systemDialogAvailable)
+        s.useSystemDialog()
+        assertEquals(rec.dialog, s.state.value.dialog)
+    }
+
+    /** The voice screen reviews the text first: a session without [save] only reports what it heard. */
+    @Test fun withoutSaveKeepsWhatWasHeard() = runTest {
+        val s = VoiceSession(backgroundScope, rec, save = null)
+        s.onMic()
+        rec.level(10f)
+        assertEquals(1f, s.state.value.level)
+        rec.final(" a banana and coffee ")
+        runCurrent()
+        assertEquals("a banana and coffee", s.state.value.heard)
+        assertFalse(s.state.value.listening)
         assertTrue(saved.isEmpty())
     }
 
@@ -121,7 +188,7 @@ class VoiceSessionTest {
     @Test fun startingAgainClearsOldMessage() = runTest {
         val s = session()
         s.onMic()
-        rec.error(VoiceError.NO_MATCH)
+        rec.error(VoiceError.NoMatch)
         assertEquals(R.string.voice_no_match, s.state.value.messageRes)
         s.onMic()
         assertNull(s.state.value.messageRes)
@@ -134,7 +201,7 @@ class VoiceSessionTest {
         s.onMic()
         advanceTimeBy(VoiceSession.START_TIMEOUT_MS + 1)
         assertFalse(s.state.value.listening)
-        assertEquals(R.string.voice_unavailable_offline, s.state.value.messageRes)
+        assertEquals(R.string.voice_no_response, s.state.value.messageRes)
         assertEquals(1, rec.cancels)
     }
 

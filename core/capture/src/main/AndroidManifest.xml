@@ -2,11 +2,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Voice entries. Requested just in time, the first time the mic is tapped. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- Voice picks the on-device recogniser only when offline (VoiceEngine). -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <!-- Package visibility (API 30+): lets SpeechRecognizer find the system recognition service. -->
     <queries>
         <intent>
             <action android:name="android.speech.RecognitionService" />
+        </intent>
+        <!-- The system voice dialog, the voice chain's last step; hidden when nothing handles it. -->
+        <intent>
+            <action android:name="android.speech.action.RECOGNIZE_SPEECH" />
         </intent>
     </queries>
 

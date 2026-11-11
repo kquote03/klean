@@ -19,7 +19,14 @@
     <string name="voice_listening_heard">Listening… %1$s</string>
     <string name="voice_permission_rationale">Klean uses the mic only while you tap it to speak an entry.</string>
     <string name="voice_permission_off">Mic access is off. You can type instead, or allow it in system settings.</string>
-    <string name="voice_unavailable_offline">Voice isn\'t available offline on this phone</string>
+    <string name="voice_needs_pack">Voice needs the %1$s pack to work offline</string>
+    <string name="voice_download">Download</string>
+    <string name="voice_pack_downloading">Downloading the %1$s pack. Voice works offline once it\'s done.</string>
+    <string name="voice_network">Couldn\'t reach the voice service. Try again</string>
+    <string name="voice_offline_no_pack">No connection and no offline voice pack</string>
+    <string name="voice_no_service">This phone has no speech recognition</string>
+    <string name="voice_no_response">Voice didn\'t start. Try again, or type it.</string>
+    <string name="voice_other">Voice stopped. Try again, or type it.</string>
     <string name="voice_no_match">Didn\'t catch that. Tap the mic to try again, or type it.</string>
     <string name="voice_try_again">Voice is busy right now. You can type instead.</string>
     <string name="voice_saved_undo">Saved by voice · Undo</string>
