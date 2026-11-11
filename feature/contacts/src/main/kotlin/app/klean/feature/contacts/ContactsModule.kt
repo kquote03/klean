@@ -84,14 +84,7 @@ class ContactsKleanModule @Inject constructor(
                     navDeepLink { uriPattern = ContactsLinks.CONTACTS },
                     navDeepLink { uriPattern = "${ContactsLinks.CONTACTS}/{tab}" },
                 ),
-            ) { entry ->
-                ContactsScreen(
-                    initialTab = entry.arguments?.getString("tab"),
-                    onOpen = { id, raw -> nav.navigate(ContactDetailRoute(id, raw ?: -1L)) },
-                    onNew = { nav.navigate(ContactEditRoute()) },
-                    onSettings = { nav.navigate(ContactsSettingsRoute) },
-                )
-            }
+            ) { entry -> StartScreen(nav, entry.arguments) }
             composable<ContactDetailRoute>(deepLinks = listOf(navDeepLink { uriPattern = ContactsLinks.CONTACT })) {
                 ContactDetailScreen(
                     onBack = { nav.popBackStack() },
@@ -103,6 +96,16 @@ class ContactsKleanModule @Inject constructor(
         // Reached from Settings, so they stay outside the contacts graph (the bar keeps Settings selected).
         composable<ContactsSettingsRoute> { ContactsSettingsScreen(onBack = { nav.popBackStack() }) }
         composable<BirthdaysSettingsRoute> { BirthdaysSettingsScreen(onBack = { nav.popBackStack() }) }
+    }
+
+    @Composable
+    override fun StartScreen(nav: NavController, args: android.os.Bundle?) {
+        ContactsScreen(
+            initialTab = args?.getString("tab"),
+            onOpen = { id, raw -> nav.navigate(ContactDetailRoute(id, raw ?: -1L)) },
+            onNew = { nav.navigate(ContactEditRoute()) },
+            onSettings = { nav.navigate(ContactsSettingsRoute) },
+        )
     }
 
     /** Off: the phone's copy under the Klean account goes. On: it comes back. Then the surfaces follow. */

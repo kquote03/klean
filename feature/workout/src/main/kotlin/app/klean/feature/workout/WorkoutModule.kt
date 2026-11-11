@@ -115,14 +115,7 @@ class WorkoutKleanModule @Inject constructor(
 
     override fun registerGraph(builder: NavGraphBuilder, nav: NavController) = with(builder) {
         navigation<WorkoutGraph>(startDestination = WorkoutRoute) {
-            composable<WorkoutRoute>(deepLinks = listOf(navDeepLink { uriPattern = DEEP_LINK })) {
-                WorkoutScreen(
-                    onOpenSession = { nav.navigate(SessionRoute(it)) },
-                    onEditTemplate = { nav.navigate(TemplateEditRoute(it)) },
-                    onExercises = { nav.navigate(ExercisesRoute) },
-                    onSettings = { nav.navigate(WorkoutSettingsRoute) },
-                )
-            }
+            composable<WorkoutRoute>(deepLinks = listOf(navDeepLink { uriPattern = DEEP_LINK })) { entry -> StartScreen(nav, entry.arguments) }
             composable<TemplateEditRoute> { TemplateEditScreen(onBack = { nav.popBackStack() }) }
             composable<SessionRoute> { SessionScreen(onBack = { nav.popBackStack() }, onDeleted = { nav.popBackStack() }) }
             composable<ExercisesRoute> { ExercisesScreen(onBack = { nav.popBackStack() }, onOpen = { nav.navigate(ExerciseHistoryRoute(it)) }) }
@@ -147,6 +140,16 @@ class WorkoutKleanModule @Inject constructor(
                 onRunStarted = { nav.navigate(WorkoutRoute) { popUpTo<WorkoutStartSheetRoute> { inclusive = true } } },
             )
         }
+    }
+
+    @Composable
+    override fun StartScreen(nav: NavController, args: android.os.Bundle?) {
+        WorkoutScreen(
+            onOpenSession = { nav.navigate(SessionRoute(it)) },
+            onEditTemplate = { nav.navigate(TemplateEditRoute(it)) },
+            onExercises = { nav.navigate(ExercisesRoute) },
+            onSettings = { nav.navigate(WorkoutSettingsRoute) },
+        )
     }
 
     @Composable

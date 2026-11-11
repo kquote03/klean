@@ -83,13 +83,8 @@ class CalendarKleanModule @Inject constructor(
 
     override fun registerGraph(builder: NavGraphBuilder, nav: NavController) = with(builder) {
         navigation<CalendarGraph>(startDestination = CalendarRoute) {
-            composable<CalendarRoute>(deepLinks = listOf(navDeepLink { uriPattern = CalendarRoutes.DEEP_LINK })) {
-                CalendarScreen(
-                    onOpenEvent = { id, at -> nav.navigate(EventEditRoute(eventId = id, occurrenceStart = at)) },
-                    onNewEvent = { day -> nav.navigate(EventEditRoute(isoDate = day?.toString())) },
-                    onOpenSettings = { nav.navigate(CalendarSettingsRoute) },
-                    onOpenLink = { link -> runCatching { nav.navigate(android.net.Uri.parse(link)) } },
-                )
+            composable<CalendarRoute>(deepLinks = listOf(navDeepLink { uriPattern = CalendarRoutes.DEEP_LINK })) { entry ->
+                StartScreen(nav, entry.arguments)
             }
             composable<CalendarDayRoute>(deepLinks = listOf(navDeepLink { uriPattern = CalendarRoutes.DEEP_LINK_DAY })) {
                 CalendarScreen(
@@ -103,6 +98,16 @@ class CalendarKleanModule @Inject constructor(
         }
         // Reached from Settings, so it stays outside the calendar graph (the bar keeps Settings selected).
         composable<CalendarSettingsRoute> { CalendarSettingsScreen(onBack = { nav.popBackStack() }) }
+    }
+
+    @Composable
+    override fun StartScreen(nav: NavController, args: android.os.Bundle?) {
+        CalendarScreen(
+            onOpenEvent = { id, at -> nav.navigate(EventEditRoute(eventId = id, occurrenceStart = at)) },
+            onNewEvent = { day -> nav.navigate(EventEditRoute(isoDate = day?.toString())) },
+            onOpenSettings = { nav.navigate(CalendarSettingsRoute) },
+            onOpenLink = { link -> runCatching { nav.navigate(android.net.Uri.parse(link)) } },
+        )
     }
 
     @Composable

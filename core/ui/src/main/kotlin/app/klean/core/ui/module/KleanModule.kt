@@ -45,6 +45,15 @@ interface KleanModule {
      */
     val drawsGroupChrome: Boolean get() = false
     fun registerGraph(builder: NavGraphBuilder, nav: NavController)
+
+    /**
+     * The module's start screen ([startRoute]) as a page: the app shell shows it in its pager, and [registerGraph]'s
+     * start composable calls it too, so there is one code path. [args] are the start route's arguments when a link
+     * or a route asked for something in particular (Tasks' `tab`), else null. Modules without a page (Reminders,
+     * Birthdays) keep the empty default.
+     */
+    @Composable fun StartScreen(nav: NavController, args: android.os.Bundle?) {}
+
     @Composable fun DashboardCard(onOpen: () -> Unit, modifier: Modifier) {}
 
     /** Title of this module's page in the setup wizard, or null for no page. */

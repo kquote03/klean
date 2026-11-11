@@ -118,15 +118,7 @@ class TasksKleanModule @Inject constructor(
                     navDeepLink { uriPattern = DEEP_LINK_TASKS },
                     navDeepLink { uriPattern = "$DEEP_LINK_TASKS/{tab}" },
                 ),
-            ) { entry ->
-                val tab = entry.arguments?.getString("tab")
-                TasksScreen(
-                    initialTab = tab,
-                    onOpenTask = { nav.navigate(TaskEditRoute(it)) },
-                    onNewTask = { nav.navigate(TaskEditRoute()) },
-                    onEditReminder = { nav.navigate(ReminderEditRoute(it)) },
-                )
-            }
+            ) { entry -> StartScreen(nav, entry.arguments) }
             composable<TaskEditRoute> {
                 TaskEditScreen(
                     onBack = { nav.popBackStack() },
@@ -136,6 +128,16 @@ class TasksKleanModule @Inject constructor(
             }
         }
         composable<TasksSettingsRoute> { TasksSettingsScreen(onBack = { nav.popBackStack() }) }
+    }
+
+    @Composable
+    override fun StartScreen(nav: NavController, args: android.os.Bundle?) {
+        TasksScreen(
+            initialTab = args?.getString("tab"),
+            onOpenTask = { nav.navigate(TaskEditRoute(it)) },
+            onNewTask = { nav.navigate(TaskEditRoute()) },
+            onEditReminder = { nav.navigate(ReminderEditRoute(it)) },
+        )
     }
 
     @Composable

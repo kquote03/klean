@@ -67,13 +67,7 @@ class DietKleanModule @Inject constructor(private val enablement: DietEnablement
     override fun registerGraph(builder: NavGraphBuilder, nav: NavController) = with(builder) {
         navigation<DietGraph>(startDestination = DietRoute) {
             composable<DietRoute>(deepLinks = listOf(navDeepLink { uriPattern = DietStatusActions.DEEP_LINK_DIET })) { entry ->
-                val capture = rememberCaptureLauncher()
-                DietScreen(
-                    onOpenEntry = { nav.navigate(FoodEntryRoute(it)) },
-                    onOpenHistory = { nav.navigate(DietHistoryRoute) },
-                    onAddForGap = { gap -> capture.openForGap(gap) },
-                    backStackEntry = entry,
-                )
+                StartScreen(nav, entry.arguments)
             }
             composable<DietHistoryRoute> {
                 DietHistoryScreen(onBack = { nav.popBackStack() }, onOpenDay = { nav.navigate(DietDayRoute(it.toString())) })
@@ -102,6 +96,21 @@ class DietKleanModule @Inject constructor(private val enablement: DietEnablement
         composable<DeliveryAppsRoute> { DeliveryAppsScreen(onBack = { nav.popBackStack() }) }
         composable<PlacesRoute> { PlacesScreen(onBack = { nav.popBackStack() }, onOpen = { nav.navigate(PlaceEditRoute(it)) }) }
         composable<PlaceEditRoute> { PlaceEditScreen(onBack = { nav.popBackStack() }) }
+    }
+
+    /**
+     * The "entry removed · Undo" result lands on the entry under the entry screen: this page's own back-stack entry
+     * in the graph, or the shell's pages entry when Diet shows as a page (both are the lifecycle owner here).
+     */
+    @Composable
+    override fun StartScreen(nav: NavController, args: android.os.Bundle?) {
+        val capture = rememberCaptureLauncher()
+        DietScreen(
+            onOpenEntry = { nav.navigate(FoodEntryRoute(it)) },
+            onOpenHistory = { nav.navigate(DietHistoryRoute) },
+            onAddForGap = { gap -> capture.openForGap(gap) },
+            backStackEntry = androidx.lifecycle.compose.LocalLifecycleOwner.current as? androidx.navigation.NavBackStackEntry,
+        )
     }
 
     @Composable

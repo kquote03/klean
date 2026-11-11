@@ -112,9 +112,7 @@ class SleepKleanModule @Inject constructor(
 
     override fun registerGraph(builder: NavGraphBuilder, nav: NavController) = with(builder) {
         navigation<SleepGraph>(startDestination = SleepRoute) {
-            composable<SleepRoute>(deepLinks = listOf(navDeepLink { uriPattern = DEEP_LINK })) {
-                SleepScreen(onEdit = { nav.navigate(SleepEditRoute(it)) }, onSettings = { nav.navigate(SleepSettingsRoute) })
-            }
+            composable<SleepRoute>(deepLinks = listOf(navDeepLink { uriPattern = DEEP_LINK })) { entry -> StartScreen(nav, entry.arguments) }
             composable<SleepEditRoute> { SleepEditScreen(onBack = { nav.popBackStack() }) }
             composable<SleepToggleRoute>(deepLinks = listOf(navDeepLink { uriPattern = DEEP_LINK_TOGGLE })) {
                 val vm: SleepToggleViewModel = hiltViewModel()
@@ -125,6 +123,11 @@ class SleepKleanModule @Inject constructor(
             }
         }
         composable<SleepSettingsRoute> { SleepSettingsScreen(onBack = { nav.popBackStack() }) }
+    }
+
+    @Composable
+    override fun StartScreen(nav: NavController, args: android.os.Bundle?) {
+        SleepScreen(onEdit = { nav.navigate(SleepEditRoute(it)) }, onSettings = { nav.navigate(SleepSettingsRoute) })
     }
 
     @Composable
