@@ -38,13 +38,22 @@ data class AddMenuSpec(val items: List<AddMenuItem>, val onCapture: () -> Unit)
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun AddMenu(spec: AddMenuSpec, expanded: Boolean, onExpandedChange: (Boolean) -> Unit, modifier: Modifier = Modifier) {
+fun AddMenu(
+    spec: AddMenuSpec,
+    expanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    /** Where the items line up: the end, or the start when the button sits on the left (left-handed). */
+    horizontalAlignment: Alignment.Horizontal = Alignment.End,
+    /** On the button itself (not the menu), e.g. to find where it sits. */
+    buttonModifier: Modifier = Modifier,
+) {
     val addLabel = stringResource(R.string.design_add)
     val closeLabel = stringResource(R.string.design_add_close)
     FloatingActionButtonMenu(
         expanded = expanded,
         modifier = modifier,
-        horizontalAlignment = Alignment.End,
+        horizontalAlignment = horizontalAlignment,
         button = {
             ToggleFloatingActionButton(
                 checked = expanded,
@@ -53,7 +62,7 @@ fun AddMenu(spec: AddMenuSpec, expanded: Boolean, onExpandedChange: (Boolean) ->
                     MaterialTheme.colorScheme.primaryContainer,
                     MaterialTheme.colorScheme.primary,
                 ),
-                modifier = Modifier.semantics {
+                modifier = buttonModifier.semantics {
                     contentDescription = if (expanded) closeLabel else addLabel
                     stateDescription = ""
                 },

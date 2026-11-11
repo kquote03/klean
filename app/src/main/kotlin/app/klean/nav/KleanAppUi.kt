@@ -53,6 +53,7 @@ import app.klean.core.design.component.GroupChrome
 import app.klean.core.design.component.GroupChromeResolver
 import app.klean.core.design.component.LocalAddMenu
 import app.klean.core.design.component.LocalGroupChrome
+import app.klean.core.design.component.LocalLeftHanded
 import app.klean.core.design.component.MenuAction
 import app.klean.core.design.component.OverflowMenu
 import app.klean.core.design.component.SegmentedTabs
@@ -104,6 +105,9 @@ fun KleanAppUi(
     val enabled by registry.enabled.collectAsStateWithLifecycle(initialValue = emptyList())
     val startWithSetup by vm.startWithSetup.collectAsStateWithLifecycle()
     val last by vm.groupMemory.last.collectAsStateWithLifecycle(initialValue = emptyMap())
+    // Left-handed (Settings › Appearance) mirrors the Add button and the group toolbar on every module screen.
+    val leftHandedFlow = remember(vm) { vm.devicePrefs?.leftHanded ?: kotlinx.coroutines.flow.flowOf(false) }
+    val leftHanded by leftHandedFlow.collectAsStateWithLifecycle(initialValue = false)
     val nav = rememberNavController()
     val backStack by nav.currentBackStackEntryAsState()
     val current = backStack?.destination
@@ -220,6 +224,7 @@ fun KleanAppUi(
             LocalGroupChrome provides resolver,
             LocalAddMenu provides addSpec.takeIf { !inSetup },
             LocalCaptureLauncher provides sheets.launcher,
+            LocalLeftHanded provides leftHanded,
         ) {
             Column {
                 if (legacy != null) LegacyGroupHeader(chrome(legacy.first, legacy.second))

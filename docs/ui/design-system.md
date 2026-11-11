@@ -16,7 +16,7 @@ Every value here maps to a Kotlin token in Phase 2 (`Space`, `KleanShapes`, `Mat
 
 - **Bar:** Material 3 short navigation bar, 4 destinations with icon and label: **Today, Plan, Track, People**. Icons (rounded): `Today`, `EventNote`, `Insights`, `People`. Active item: `primaryContainer` pill indicator.
 - **Groups:** Plan = Tasks, Calendar (Reminders stay a tab inside Tasks). Track = Workout, Sleep, Diet. People = Contacts (Birthdays stay a tab inside Contacts).
-- **Inside a group:** `SegmentedTabs` under the top bar switches modules; the last choice per group is remembered. A group with one enabled module shows no segmented control; a group with none disappears from the bar.
+- **Inside a group:** `SegmentedTabs` in a floating toolbar at the bottom (a raised pill above the navigation bar, user feedback 2026-11-11) switches modules, with the Add button at the end of the same row (the start when Left-handed is on); the last choice per group is remembered. A group with one enabled module shows no toolbar, only the Add button; a group with none disappears from the bar. A sideways swipe moves between pages: Today, then each group's tabs in bar order.
 - **Track opens on "Week"**, a neutral overview of all three trackers, until the user picks a module; after that, the last choice. This keeps Diet one module among equals rather than a default.
 - **Settings:** an icon button in Today's top bar (`Tune` icon, label "Settings"). Group screens with real secondary actions (Plan: lists, sort, show finished; People: new contact, import) put them in a top-bar overflow menu. Track has no overflow; per-item actions live in long-press menus and detail screens.
 - **Today's cards are entry points:** each card opens its group (Plan, Track, People) with a container transform.
@@ -87,7 +87,7 @@ By how the two screens relate (`Motion.kt`, `MotionKindTest`; user feedback 2026
 
 | From → to | Motion |
 |---|---|
-| Top level ↔ top level (Today, a group's module tabs, Track › Week, switching bar groups) | **fade-through**: 90 ms out, 210 ms in with a 0.92 → 1 scale |
+| Top level ↔ top level (Today, a group's module tabs, Track › Week, switching bar groups) | **page slide**: full width, 300 ms, emphasized easing; the direction follows the page order (Today, Plan, Track, People and their tabs), for Back too, so Back to Today slides Today in from the left |
 | Parent → child, and Back | **shared axis X**, 250 ms, emphasized easing |
 | Into a full-screen page (account menu, voice screen) | **slide up**; Back slides it down over the screen it came from |
 | Any, with reduced motion (system animator scale 0 or "remove animations") | cross-fade at 100 ms, no movement |

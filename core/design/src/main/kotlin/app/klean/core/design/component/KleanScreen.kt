@@ -40,6 +40,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Surface
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -85,12 +95,13 @@ val LocalAddMenu = staticCompositionLocalOf<AddMenuSpec?> { null }
 
 /**
  * The one screen scaffold (docs/ui/design-system.md). A top bar with a `titleLarge` title, optional [subtitle],
- * icon [actions] and an overflow [menu]; the group's segmented tabs when the screen is a module inside a group;
- * the Add button (from [LocalAddMenu]) and a snackbar host. [header] replaces the title row (Today's weekday).
- * A detail screen passes [onBack] for a back arrow (and usually `showAdd = false`).
+ * icon [actions] and an overflow [menu]; when the screen is a module inside a group, the group's segmented tabs in a
+ * floating toolbar at the bottom, with the Add button (from [LocalAddMenu]) at its end; and a snackbar host.
+ * [header] replaces the title row (Today's weekday). A detail screen passes [onBack] for a back arrow (and usually
+ * `showAdd = false`). With [LocalLeftHanded] the Add button sits at the left end instead.
  *
  * [content] gets padding that already holds the top bar, the screen edge on both sides, and room under the last
- * item for the Add button; pass it to a lazy list's `contentPadding` so rows scroll edge to edge.
+ * item for the toolbar and the Add button; pass it to a lazy list's `contentPadding` so rows scroll edge to edge.
  */
 @Composable
 fun KleanScreen(
@@ -107,9 +118,23 @@ fun KleanScreen(
 ) {
     val group = LocalGroupChrome.current.chromeFor(LocalLifecycleOwner.current)
     val addSpec = LocalAddMenu.current?.takeIf { showAdd }
+    val leftHanded = LocalLeftHanded.current
     var addOpen by rememberSaveable { mutableStateOf(false) }
     val allMenu = menu + group?.menu.orEmpty()
-    Box(modifier.fillMaxSize()) {
+    // The group's tabs move to a floating toolbar at the bottom, by the thumb, with Add at the end of the same row.
+    val tabs = group?.takeIf { it.tabs.size > 1 }
+    val density = LocalDensity.current
+    // Where things sit, in root pixels: the screen, the Add button (collapsed or not, it stays put) and the toolbar.
+    var screenRect by remember { mutableStateOf<Rect?>(null) }
+    var fabRect by remember { mutableStateOf<Rect?>(null) }
+    var toolbarRect by remember { mutableStateOf<Rect?>(null) }
+    val fab = fabRect?.takeIf { addSpec != null }
+    // Room under the last row: the measured height of whatever floats at the bottom, plus Space.md.
+    val floating = listOfNotNull(fab, toolbarRect?.takeIf { tabs != null })
+    val clearance: Dp? = screenRect?.let { s ->
+        floating.takeIf { it.isNotEmpty() }?.let { r -> with(density) { (s.bottom - r.minOf { it.top }).coerceAtLeast(0f).toDp() } }
+    }
+    Box(modifier.fillMaxSize().onGloballyPositioned { screenRect = it.boundsInRoot() }) {
         Scaffold(
             topBar = {
                 Column(Modifier.statusBarsPadding()) {
@@ -118,26 +143,48 @@ fun KleanScreen(
                     } else {
                         TopBar(group?.title ?: title, subtitle.takeIf { group == null }, actions, allMenu, onBack.takeIf { group == null })
                     }
-                    if (group != null && group.tabs.size > 1) {
-                        SegmentedTabs(
-                            labels = group.tabs,
-                            selected = group.selected,
-                            onSelect = group.onSelect,
-                            modifier = Modifier.padding(horizontal = Space.screenEdge).padding(bottom = Space.xs),
-                        )
-                    }
                 }
             },
             snackbarHost = { snackbarHostState?.let { SnackbarHost(it) } },
         ) { inner ->
+            val bottom = when {
+                clearance != null -> maxOf(clearance, inner.calculateBottomPadding()) + Space.md
+                addSpec != null || tabs != null -> inner.calculateBottomPadding() + FLOATING_FALLBACK
+                else -> inner.calculateBottomPadding() + Space.md
+            }
             content(
                 PaddingValues(
                     top = inner.calculateTopPadding(),
-                    bottom = inner.calculateBottomPadding() + if (addSpec != null) AddButtonClearance else Space.md,
+                    bottom = bottom,
                     start = Space.screenEdge,
                     end = Space.screenEdge,
                 ),
             )
+        }
+        if (tabs != null) {
+            val s = screenRect
+            val place = if (addSpec != null && fab != null && s != null) {
+                // One row with the Add button: as tall as the button, centred on it, a small gap before (or after) it.
+                with(density) {
+                    val beside = if (leftHanded) (fab.right - s.left).toDp() + Space.sm else (s.right - fab.left).toDp() + Space.sm
+                    Modifier.padding(
+                        start = if (leftHanded) beside else Space.screenEdge,
+                        end = if (leftHanded) Space.screenEdge else beside,
+                        bottom = (s.bottom - fab.bottom).coerceAtLeast(0f).toDp(),
+                    ).heightIn(min = fab.height.toDp())
+                }
+            } else {
+                Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal))
+                    .padding(start = Space.screenEdge, end = Space.screenEdge, bottom = Space.md)
+            }
+            Box(
+                Modifier.align(Alignment.BottomStart).fillMaxWidth().then(place)
+                    // Hidden for the first frame, until the Add button it lines up with has been placed.
+                    .alpha(if (addSpec != null && fab == null) 0f else 1f),
+                contentAlignment = Alignment.Center,
+            ) {
+                GroupToolbar(tabs, Modifier.onGloballyPositioned { toolbarRect = it.boundsInRoot() })
+            }
         }
         if (addSpec != null) {
             if (addOpen) {
@@ -149,19 +196,52 @@ fun KleanScreen(
                         .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { addOpen = false },
                 )
             }
+            val side = if (leftHanded) WindowInsetsSides.Start else WindowInsetsSides.End
             AddMenu(
                 spec = addSpec,
                 expanded = addOpen,
                 onExpandedChange = { addOpen = it },
-                modifier = Modifier.align(Alignment.BottomEnd)
-                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom + WindowInsetsSides.End)),
+                modifier = Modifier.align(if (leftHanded) Alignment.BottomStart else Alignment.BottomEnd)
+                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom + side)),
+                horizontalAlignment = if (leftHanded) Alignment.Start else Alignment.End,
+                buttonModifier = Modifier.onGloballyPositioned { fabRect = it.boundsInRoot() },
             )
         }
     }
 }
 
-/** Room under a list's last row so the Add button never covers it. */
-val AddButtonClearance = 96.dp
+/**
+ * The floating toolbar holding a group's tabs: a raised pill on `surfaceContainer` whose segmented tabs fill it. The
+ * tabs are navigation, so for the clutter budget the toolbar is one exempt region (like the navigation bar).
+ */
+@Composable
+private fun GroupToolbar(group: GroupChrome, modifier: Modifier = Modifier) {
+    Surface(
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        tonalElevation = ToolbarElevation,
+        shadowElevation = ToolbarElevation,
+        modifier = modifier.fillMaxWidth().testTag(CLUTTER_EXEMPT),
+    ) {
+        SegmentedTabs(
+            labels = group.tabs,
+            selected = group.selected,
+            onSelect = group.onSelect,
+            modifier = Modifier.padding(Space.xxs),
+        )
+    }
+}
+
+/**
+ * Whether the user holds the phone in the left hand (Settings › Appearance › Left-handed). The shell provides it; the
+ * Add button and the group toolbar then mirror, with Add on the left.
+ */
+val LocalLeftHanded = compositionLocalOf { false }
+
+/** Room under a list's last row before the floating Add button and toolbar have been measured (one frame). */
+private val FLOATING_FALLBACK = 96.dp
+
+private val ToolbarElevation = 3.dp
 
 @Composable
 private fun TopBar(title: String, subtitle: String?, actions: @Composable RowScope.() -> Unit, menu: List<MenuAction>, onBack: (() -> Unit)?) {

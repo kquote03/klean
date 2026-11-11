@@ -65,8 +65,8 @@ class TrackWeekShotsTest {
         compose.onNodeWithText("This week").assertExists()
         compose.onNodeWithText("7h 05m of sleep").assertExists()
         compose.onNodeWithText("2 sessions").assertExists()
-        // Overflow, four segments, Add: the cards only inform.
-        assertEquals(6, compose.clutterCount().tappable)
+        // Overflow, the tab toolbar (one region, like the bar), Add: the cards only inform.
+        assertEquals(3, compose.clutterCount().tappable)
         compose.assertClutterBudget()
     }
 
