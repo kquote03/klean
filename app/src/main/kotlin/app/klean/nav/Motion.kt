@@ -9,7 +9,6 @@ import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
@@ -21,8 +20,8 @@ import kotlin.reflect.KClass
 
 /** How two screens relate, which decides how one replaces the other (docs/ui/design-system.md, Motion). */
 enum class MotionKind {
-    /** Between top-level destinations (Today, the bottom-bar groups, a group's module tabs): fade through. */
-    FADE_THROUGH,
+    /** Between top-level pages (Today, the bottom-bar groups, a group's module tabs): a full-width slide, by page order. */
+    PAGE,
 
     /** Parent → child and back: shared axis X. */
     AXIS_X,
@@ -47,24 +46,34 @@ fun motionKind(
 
 private fun motionKind(fromTop: Boolean, toTop: Boolean, fromFull: Boolean, toFull: Boolean): MotionKind = when {
     fromFull || toFull -> MotionKind.SLIDE_UP
-    fromTop && toTop -> MotionKind.FADE_THROUGH
+    fromTop && toTop -> MotionKind.PAGE
     else -> MotionKind.AXIS_X
 }
 
 /**
+ * Whether the motion runs forward (the new screen comes in from the right). A [MotionKind.PAGE] follows the page
+ * [order] whether it is a push or a pop, so Back from Track to Today brings Today in from the left; everything else
+ * follows [push]. A page outside the order (a module that is off) falls back to [push].
+ */
+fun motionForward(order: List<KClass<*>>, from: KClass<*>?, to: KClass<*>?, kind: MotionKind, push: Boolean): Boolean =
+    if (kind == MotionKind.PAGE) pageForward(order, from, to) ?: push else push
+
+/**
  * Screen-to-screen motion, picked by how the two screens relate ([MotionKind], plan 2026-11-11 E3):
- * - fade-through between top-level destinations: 90 ms out, 210 ms in with a 0.92 → 1 scale;
+ * - a full-width horizontal slide between top-level pages, 300 ms with emphasized easing, its direction from
+ *   [pageOrder] (the swipe order: Today, Plan's tabs, Track's tabs, People's tabs);
  * - Material's shared axis X into a detail and back: 250 ms, emphasized easing;
  * - full-screen pages slide up, and down on the way out.
  *
  * With reduced motion (the system animator scale at 0, "Remove animations"), a 100 ms cross-fade and no movement
  * for all of them. NavHost also plays the pop transitions under predictive back, so a Back gesture inside the app
- * shows the screen underneath, never the system's shrinking window (that is right only on Today, leaving the app).
+ * shows the screen underneath sliding in, never a zoom (the fade-through's scale read as one under predictive back).
  */
 class KleanMotion(
     private val reduced: Boolean,
     private val topLevel: Set<KClass<*>> = emptySet(),
     private val fullScreen: Set<KClass<*>> = FULL_SCREEN_ROUTES,
+    private val pageOrder: () -> List<KClass<*>> = { emptyList() },
 ) {
     private val emphasized = CubicBezierEasing(0.2f, 0f, 0f, 1f)
 
@@ -73,12 +82,11 @@ class KleanMotion(
 
     fun exit(forward: Boolean): ExitTransition = exit(MotionKind.AXIS_X, forward)
 
-    /** The incoming screen's motion; [forward] = a push, not a pop. */
+    /** The incoming screen's motion; [forward] = a push (for a page: towards the right in page order). */
     fun enter(kind: MotionKind, forward: Boolean): EnterTransition = when {
         reduced -> fadeIn(tween(FADE_MS))
-        kind == MotionKind.FADE_THROUGH ->
-            fadeIn(tween(FADE_IN_MS, delayMillis = FADE_OUT_MS)) +
-                scaleIn(tween(FADE_IN_MS, delayMillis = FADE_OUT_MS), initialScale = FADE_SCALE)
+        kind == MotionKind.PAGE ->
+            slideInHorizontally(tween(PAGE_MS, easing = emphasized)) { w -> if (forward) w else -w }
         // The page rises over the screen; on the way back the screen is simply there under it.
         kind == MotionKind.SLIDE_UP ->
             if (forward) slideInVertically(tween(AXIS_MS, easing = emphasized)) { it } + fadeIn(tween(AXIS_MS / 2)) else EnterTransition.None
@@ -87,10 +95,11 @@ class KleanMotion(
                 fadeIn(tween(AXIS_MS / 2, delayMillis = AXIS_MS / 5))
     }
 
-    /** The outgoing screen's motion; [forward] = a push, not a pop. */
+    /** The outgoing screen's motion; [forward] = a push (for a page: towards the right in page order). */
     fun exit(kind: MotionKind, forward: Boolean): ExitTransition = when {
         reduced -> fadeOut(tween(FADE_MS))
-        kind == MotionKind.FADE_THROUGH -> fadeOut(tween(FADE_OUT_MS))
+        kind == MotionKind.PAGE ->
+            slideOutHorizontally(tween(PAGE_MS, easing = emphasized)) { w -> if (forward) -w else w }
         // Under a rising page the screen stays put; the page itself slides back down.
         kind == MotionKind.SLIDE_UP ->
             if (forward) {
@@ -106,6 +115,8 @@ class KleanMotion(
 
     private fun NavDestination.isIn(set: Set<KClass<*>>) = set.any { hasRoute(it) }
 
+    private fun NavDestination.pageIn(order: List<KClass<*>>): KClass<*>? = order.firstOrNull { hasRoute(it) }
+
     private fun AnimatedContentTransitionScope<NavBackStackEntry>.kind(): MotionKind {
         val from = initialState.destination
         val to = targetState.destination
@@ -115,17 +126,22 @@ class KleanMotion(
         )
     }
 
-    val enterTransition: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition = { enter(kind(), forward = true) }
-    val exitTransition: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition = { exit(kind(), forward = true) }
-    val popEnterTransition: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition = { enter(kind(), forward = false) }
-    val popExitTransition: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition = { exit(kind(), forward = false) }
+    /** [push] for a push, adjusted to the page order for a page slide. */
+    private fun AnimatedContentTransitionScope<NavBackStackEntry>.forward(kind: MotionKind, push: Boolean): Boolean {
+        if (kind != MotionKind.PAGE) return push
+        val order = pageOrder()
+        return motionForward(order, initialState.destination.pageIn(order), targetState.destination.pageIn(order), kind, push)
+    }
+
+    val enterTransition: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition = { kind().let { enter(it, forward(it, push = true)) } }
+    val exitTransition: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition = { kind().let { exit(it, forward(it, push = true)) } }
+    val popEnterTransition: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition = { kind().let { enter(it, forward(it, push = false)) } }
+    val popExitTransition: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition = { kind().let { exit(it, forward(it, push = false)) } }
 
     companion object {
         const val AXIS_MS = 250
+        const val PAGE_MS = 300
         const val FADE_MS = 100
-        const val FADE_OUT_MS = 90
-        const val FADE_IN_MS = 210
-        const val FADE_SCALE = 0.92f
 
         /** The incoming screen starts this fraction of the width away (Material uses 30 dp; a tenth reads the same). */
         private const val SHIFT = 10
@@ -133,11 +149,17 @@ class KleanMotion(
         /** Reduced motion is the system animator duration scale set to 0. */
         fun isReduced(animatorScale: Float): Boolean = animatorScale == 0f
 
-        fun from(context: Context, topLevel: Set<KClass<*>> = emptySet(), fullScreen: Set<KClass<*>> = FULL_SCREEN_ROUTES): KleanMotion =
+        fun from(
+            context: Context,
+            topLevel: Set<KClass<*>> = emptySet(),
+            fullScreen: Set<KClass<*>> = FULL_SCREEN_ROUTES,
+            pageOrder: () -> List<KClass<*>> = { emptyList() },
+        ): KleanMotion =
             KleanMotion(
                 isReduced(Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f)),
                 topLevel,
                 fullScreen,
+                pageOrder,
             )
     }
 }
