@@ -11,3 +11,6 @@ import kotlinx.serialization.Serializable
 
 /** Track › Week: a neutral summary of the trackers, Track's default until the user picks a module. */
 @Serializable object TrackWeekRoute
+
+/** The account menu (Today's avatar): the Google account, switching accounts, then Settings and Help. */
+@Serializable object AccountRoute

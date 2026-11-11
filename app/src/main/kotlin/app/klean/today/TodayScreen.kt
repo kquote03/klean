@@ -14,14 +14,20 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
-import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -32,6 +38,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.klean.R
 import app.klean.core.common.ZoneProvider
+import app.klean.core.design.component.AccountAvatar
 import app.klean.core.design.component.CardTone
 import app.klean.core.design.component.EmptyState
 import app.klean.core.design.component.KleanScreen
@@ -40,6 +47,9 @@ import app.klean.core.design.component.MenuAction
 import app.klean.core.design.component.ModuleCard
 import app.klean.core.design.component.OverflowMenu
 import app.klean.core.design.theme.Space
+import app.klean.core.google.AccountSource
+import app.klean.core.google.NoAccounts
+import app.klean.core.google.ui.rememberAccountPhoto
 import app.klean.core.ui.module.DashboardContributions
 import app.klean.core.ui.module.KleanModule
 import app.klean.core.ui.module.ModuleRegistry
@@ -52,9 +62,13 @@ import kotlin.time.Clock
 import kotlinx.coroutines.flow.combine
 import kotlinx.datetime.LocalDate
 
+/** What Today's top-bar avatar shows: the current Google account's photo or initial, or a neutral person. */
+data class TodayAvatar(val photo: ImageBitmap? = null, val initial: String? = null, val canSwitch: Boolean = false)
+
 /**
  * Today (Soft cards): the weekday, then one card per group (Plan, Track, People) that opens the group. Adding is the
- * Add button; Settings is the top-bar button; "Arrange Today" is in the overflow menu. Lives in :app.
+ * Add button; the top-bar avatar opens the account menu (with Settings in it); "Arrange Today" is in the overflow
+ * menu. Lives in :app.
  */
 @Composable
 fun TodayScreen(
@@ -68,6 +82,8 @@ fun TodayScreen(
     layout: TodayLayoutStore = InMemoryTodayLayout(),
     onArrange: () -> Unit = {},
     onSettings: () -> Unit = {},
+    account: AccountSource = NoAccounts,
+    onAccount: () -> Unit = onSettings,
 ) {
     val visibleFlow = remember(registry, layout) {
         combine(registry.enabled, registry.dashboardCards, layout.order, layout.hidden) { on, cards, order, hidden ->
@@ -80,12 +96,20 @@ fun TodayScreen(
     }
     val state by vm.state.collectAsStateWithLifecycle()
     val hasCards by registry.dashboardCards.collectAsStateWithLifecycle(initialValue = emptyList())
+    val accounts by account.state.collectAsStateWithLifecycle(initialValue = app.klean.core.google.AccountsState.None)
+    val current = accounts.current
+    val photo = rememberAccountPhoto(current?.let { accounts.photos[it.email] })
+    val scope = rememberCoroutineScope()
     TodayContent(
         state = state,
         canArrange = hasCards.isNotEmpty(),
         onOpenGroup = onOpenGroup,
         onArrange = onArrange,
         onSettings = onSettings,
+        avatar = TodayAvatar(photo, current?.initial, canSwitch = accounts.accounts.size > 1),
+        onAccount = onAccount,
+        // Gmail's gesture: swipe the avatar to switch accounts. Needing consent opens the menu instead.
+        onSwitchAccount = { step -> scope.launch { if (!account.switchBy(step)) onAccount() } },
     )
 }
 
@@ -97,6 +121,9 @@ fun TodayContent(
     onOpenGroup: (NavGroup) -> Unit,
     onArrange: () -> Unit,
     onSettings: () -> Unit,
+    avatar: TodayAvatar = TodayAvatar(),
+    onAccount: () -> Unit = onSettings,
+    onSwitchAccount: (Int) -> Unit = {},
 ) {
     val arrange = stringResource(R.string.today_arrange)
     KleanScreen(
@@ -105,7 +132,9 @@ fun TodayContent(
             TodayHeader(
                 state = state,
                 menu = if (canArrange) listOf(MenuAction(arrange, onClick = onArrange)) else emptyList(),
-                onSettings = onSettings,
+                avatar = avatar,
+                onAccount = onAccount,
+                onSwitchAccount = onSwitchAccount,
             )
         },
     ) { pad ->
@@ -126,7 +155,7 @@ fun TodayContent(
 private fun ApprovalsCard(module: KleanModule) = module.DashboardCard(onOpen = {}, modifier = Modifier)
 
 @Composable
-private fun TodayHeader(state: TodayState, menu: List<MenuAction>, onSettings: () -> Unit) {
+private fun TodayHeader(state: TodayState, menu: List<MenuAction>, avatar: TodayAvatar, onAccount: () -> Unit, onSwitchAccount: (Int) -> Unit) {
     Row(
         Modifier.fillMaxWidth().padding(start = Space.screenEdge, end = Space.xxs, top = Space.md, bottom = Space.lg),
         verticalAlignment = Alignment.Top,
@@ -135,11 +164,48 @@ private fun TodayHeader(state: TodayState, menu: List<MenuAction>, onSettings: (
             Text(weekday(state.today), style = MaterialTheme.typography.displaySmall)
             Text(dayAndMonth(state.today), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        IconButton(onClick = onSettings, modifier = Modifier.size(Space.touchTarget)) {
-            Icon(Icons.Rounded.Tune, contentDescription = stringResource(R.string.nav_settings))
-        }
+        TopBarAvatar(avatar, onAccount, onSwitchAccount)
         OverflowMenu(menu)
     }
+}
+
+/**
+ * The account avatar where Google's apps put it (top right): tap for the account menu; with two or more accounts,
+ * swipe it down or up for the next or previous one (also offered as accessibility actions).
+ */
+@Composable
+private fun TopBarAvatar(avatar: TodayAvatar, onAccount: () -> Unit, onSwitch: (Int) -> Unit) {
+    val threshold = with(LocalDensity.current) { Space.lg.toPx() }
+    val next = stringResource(R.string.today_account_next)
+    val previous = stringResource(R.string.today_account_previous)
+    val swipe = if (avatar.canSwitch) {
+        Modifier
+            .pointerInput(Unit) {
+                var travel = 0f
+                detectVerticalDragGestures(
+                    onDragStart = { travel = 0f },
+                    onDragEnd = { if (kotlin.math.abs(travel) >= threshold) onSwitch(if (travel > 0) 1 else -1) },
+                ) { change, dy ->
+                    change.consume()
+                    travel += dy
+                }
+            }
+            .semantics {
+                customActions = listOf(
+                    CustomAccessibilityAction(next) { onSwitch(1); true },
+                    CustomAccessibilityAction(previous) { onSwitch(-1); true },
+                )
+            }
+    } else {
+        Modifier
+    }
+    AccountAvatar(
+        photo = avatar.photo,
+        initial = avatar.initial,
+        onClick = onAccount,
+        contentDescription = stringResource(R.string.today_account),
+        modifier = swipe,
+    )
 }
 
 @Composable

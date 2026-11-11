@@ -16,6 +16,9 @@
     <string name="add_sleep">Log sleep</string>
     <string name="today_capture_placeholder">Add anything: a task, a time, a meal…</string>
     <string name="today_arrange">Arrange Today</string>
+    <string name="today_account">Account and settings</string>
+    <string name="today_account_next">Next account</string>
+    <string name="today_account_previous">Previous account</string>
     <string name="today_arrange_up">Move %1$s up</string>
     <string name="today_arrange_down">Move %1$s down</string>
     <string name="today_arrange_show">Show %1$s</string>

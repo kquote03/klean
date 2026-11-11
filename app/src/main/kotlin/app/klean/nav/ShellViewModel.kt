@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.klean.core.capture.UniversalCaptureService
 import app.klean.core.common.ZoneProvider
+import app.klean.core.google.AccountActions
+import app.klean.core.google.NoAccounts
 import app.klean.core.data.module.ModuleGate
 import app.klean.core.ui.module.DashboardContributions
 import app.klean.core.ui.module.TodayItems
@@ -47,6 +49,8 @@ class ShellViewModel @Inject constructor(
     val todayItems: TodayItems = TodayItems(emptySet(), NoGate),
     val onboardingSteps: Set<@JvmSuppressWildcards OnboardingStepProvider> = emptySet(),
     val weekSummaries: WeekSummaries = WeekSummaries(emptySet(), NoGate),
+    /** Today's avatar: the current Google account, if any. */
+    val account: AccountActions = NoAccounts,
 ) : ViewModel() {
     private val _startWithSetup = MutableStateFlow<Boolean?>(null)
 

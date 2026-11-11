@@ -87,8 +87,12 @@ class ShellSmokeTest {
         @Composable override fun DashboardCard(onOpen: () -> Unit, modifier: Modifier) {}
     }
 
+    /** Today's avatar opens the account menu; Settings is its first "More from Klean" row. */
     private fun openSettings() {
-        compose.onNodeWithContentDescription("Settings").performClick()
+        compose.onNodeWithContentDescription("Account and settings").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithText("More from Klean").assertExists()
+        compose.onNodeWithText("Settings").performClick()
         compose.waitForIdle()
     }
 

@@ -239,7 +239,7 @@ Only 4 of 20 screens meet the budget outright. The common causes, in order of we
 | Today: eight summary tiles | under the capture field | inside the three group cards (Plan, Track, People), one fact each in the hero, up to 3 rows |
 | Today: week strip with previous/next | Today | removed (it repeated the cards); days live in Plan › Calendar (week, month) |
 | Today: module cards' buttons ("Going to bed", "Start a workout", card capture fields) | each module card | Add menu → Log sleep / Log workout; the module opens from its group card |
-| Today: Settings | More | Today's top bar (Tune icon) |
+| Today: Settings | More | Today's top bar (Tune icon); since the account menu, the top-bar **avatar** (Google's pattern) opens the account menu, whose "More from Klean" holds Settings and Help. The avatar replaced the Tune button, so Today's first-viewport tappable count is unchanged |
 | Tasks: Today and Upcoming tabs | Tasks tab row | one list: Today, Coming up, Still want these? |
 | Tasks: Lists, Reminders, Done tabs | Tasks tab row | Tasks overflow → Lists, Reminders, Finished; "All tasks" brings the list back |
 | Tasks: "Add a task" field, mic, send, FAB | every Tasks tab | Add menu → Task (capture sheet); full form: Tasks overflow → New task |
@@ -284,3 +284,14 @@ Only 4 of 20 screens meet the budget outright. The common causes, in order of we
 | Onboarding: "1 of 10" as plain text | top of each page | a thin progress bar with "1 of 4" under it |
 | Onboarding: "Set up AI providers", "Add widget" tonal buttons | AI and widget pages | outlined buttons, so Next stays each page's one primary action (Skip is outlined, same width) |
 | Widgets: 20 dp corners on `surfaceContainer`, 13–16 sp ad-hoc sizes | Klean Today, Diet | Soft-card tokens (`WidgetTokens`): `large` 24 dp corners on `surfaceContainerLow`, card padding, a full pill a touch target tall, type sizes from the scale (titleMedium, bodyLarge, bodyMedium, labelLarge) |
+
+## Account menu (Today's avatar)
+
+Google's full-screen account menu pattern, in the Soft-cards look (`core/google/ui/AccountMenu.kt`, route `AccountRoute`).
+
+- **Entry:** the avatar at the top right of Today (48 dp target, "Account and settings"). It replaced the Settings (Tune) button one for one: Today still counts the same tappables (avatar + overflow + group cards + Add) and passes `assertClutterBudget()`.
+- **Layout:** ✕ and the email in the top row; the large avatar, "Hi, {first name}", the Manage your Google Account pill; Switch account (collapsed: one row; expanded: every account with a tick on the current one, Add another account, Manage accounts on this device); More from Klean (Settings, Help); Privacy policy · Terms only once their URLs exist.
+- **Without Google:** a neutral avatar, one calm line, and one "Connect Google Tasks" row.
+- **Clutter:** the expanded account list and the More from Klean group each count once (`CLUTTER_EXEMPT` lists), so the menu stays within budget with two accounts expanded and at font scale 1.5 (`AccountMenuShotsTest`).
+- **Moved:** Settings is reached through the menu (one more tap than the Tune button); Disconnect stays in Settings › Tasks, which now says "Connected as name@gmail.com" with the small avatar.
+

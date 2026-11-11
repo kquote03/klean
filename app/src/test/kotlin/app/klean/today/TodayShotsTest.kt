@@ -15,6 +15,14 @@ import app.klean.core.design.component.AddMenuSpec
 import app.klean.core.design.component.LocalAddMenu
 import app.klean.core.testing.PHONE
 import app.klean.core.testing.assertClutterBudget
+import androidx.compose.ui.test.assertHeightIsAtLeast
+import androidx.compose.ui.test.assertWidthIsAtLeast
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Canvas
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.Paint
 import app.klean.core.testing.shot
 import app.klean.nav.NavGroup
 import kotlinx.datetime.LocalDate
@@ -61,7 +69,13 @@ class TodayShotsTest {
         TodayCard(NavGroup.PEOPLE, "Next birthday", "Sara, in 3 days", null, emptyList()),
     )
 
-    private fun render(name: String, cards: List<TodayCard>, opened: MutableList<NavGroup> = mutableListOf()) =
+    private fun render(
+        name: String,
+        cards: List<TodayCard>,
+        opened: MutableList<NavGroup> = mutableListOf(),
+        avatar: TodayAvatar = TodayAvatar(),
+        onAccount: () -> Unit = {},
+    ) =
         compose.shot(name, screen = true) {
             CompositionLocalProvider(LocalAddMenu provides add) {
                 TodayContent(
@@ -70,6 +84,8 @@ class TodayShotsTest {
                     onOpenGroup = { opened += it },
                     onArrange = {},
                     onSettings = {},
+                    avatar = avatar,
+                    onAccount = onAccount,
                 )
             }
         }
@@ -78,7 +94,7 @@ class TodayShotsTest {
         val opened = mutableListOf<NavGroup>()
         render("today-typical", typical, opened)
         compose.onNodeWithText("Tuesday").assertExists()
-        compose.onNodeWithContentDescription("Settings").assertExists()
+        compose.onNodeWithContentDescription("Account and settings").assertExists()
         compose.assertClutterBudget()
         compose.onNodeWithText("Sara, in 3 days").performClick()
         assertEquals(listOf(NavGroup.PEOPLE), opened)
@@ -101,11 +117,35 @@ class TodayShotsTest {
         compose.assertClutterBudget()
     }
 
+    @Test fun avatarWithAPhotoOpensTheAccountMenu() {
+        var opened = 0
+        render("today-avatar-photo", typical, avatar = TodayAvatar(photo = testPhoto(), initial = "A", canSwitch = true), onAccount = { opened++ })
+        compose.onNodeWithContentDescription("Account and settings").assertHeightIsAtLeast(48.dp).assertWidthIsAtLeast(48.dp).performClick()
+        assertEquals(1, opened)
+        compose.assertClutterBudget()
+    }
+
+    @Test fun avatarWithoutAPhotoShowsTheInitial() {
+        render("today-avatar-initial", typical, avatar = TodayAvatar(initial = "A"))
+        compose.onNodeWithText("A").assertExists()
+        compose.assertClutterBudget()
+    }
+
     @Test fun addMenuOpen() {
         val shot = render("today-add", typical)
         compose.onNodeWithContentDescription("Add").performClick()
         compose.waitForIdle()
         compose.onNodeWithText("Type or speak…").assertExists()
         shot.capture("add-menu-on-today")
+    }
+
+    /** A stand-in profile photo: two soft circles, so the crop and clip are visible in the reference. */
+    private fun testPhoto(): ImageBitmap {
+        val img = ImageBitmap(192, 192)
+        val c = Canvas(img)
+        c.drawRect(0f, 0f, 192f, 192f, Paint().apply { color = Color(0xFF9DB8A0) })
+        c.drawCircle(Offset(96f, 76f), 40f, Paint().apply { color = Color(0xFFF2D7C9) })
+        c.drawCircle(Offset(96f, 200f), 80f, Paint().apply { color = Color(0xFF6E7FA8) })
+        return img
     }
 }

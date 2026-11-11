@@ -118,8 +118,9 @@ class OnboardingFlowTest {
 
     @Test fun setupCanBeRunAgainFromSettings() {
         start(show = false)
-        compose.onNodeWithContentDescription("Settings").performClick()
+        compose.onNodeWithContentDescription("Account and settings").performClick()
         compose.waitForIdle()
+        tap("Settings")
         compose.onNode(hasScrollAction()).performScrollToNode(hasText("Run setup again"))
         tap("Run setup again")
         compose.onNodeWithText("Welcome to Klean").assertExists()

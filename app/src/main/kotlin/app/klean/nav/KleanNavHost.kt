@@ -8,6 +8,8 @@ import androidx.navigation.navDeepLink
 import app.klean.core.ui.module.KleanModule
 import app.klean.feature.onboarding.OnboardingRoute
 import app.klean.feature.onboarding.OnboardingScreen
+import app.klean.core.google.ui.AccountMenuScreen
+import app.klean.feature.settings.AboutSettingsRoute
 import app.klean.feature.settings.AiProvidersSettingsRoute
 import app.klean.feature.settings.SettingsScreen
 import app.klean.feature.settings.settingsGraph
@@ -69,8 +71,23 @@ fun KleanNavHost(
                 layout = shell.todayLayout,
                 onArrange = { nav.navigate(ArrangeTodayRoute) },
                 onSettings = { nav.navigate(SettingsRoute) { launchSingleTop = true } },
+                account = shell.account,
+                onAccount = { nav.navigate(AccountRoute) { launchSingleTop = true } },
             )
             NewModulesSheet(registry, shell.newModules)
+        }
+        composable<AccountRoute> {
+            // Settings and Help replace the menu, so Back from them returns to Today (as in Google's apps).
+            val leaveMenu: androidx.navigation.NavOptionsBuilder.() -> Unit = {
+                popUpTo<TodayRoute>()
+                launchSingleTop = true
+            }
+            AccountMenuScreen(
+                actions = shell.account,
+                onClose = { nav.popBackStack() },
+                onSettings = { nav.navigate(SettingsRoute, leaveMenu) },
+                onHelp = { nav.navigate(AboutSettingsRoute, leaveMenu) },
+            )
         }
         composable<TrackWeekRoute> {
             TrackWeekScreen(summaries = shell.weekSummaries, clock = shell.clock, zone = shell.zone, ticks = { shell.ticker.ticks() })
