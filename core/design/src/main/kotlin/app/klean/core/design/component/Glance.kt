@@ -23,6 +23,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -98,6 +101,7 @@ private fun QuickActionTile(a: QuickActionUi, primary: Boolean, modifier: Modifi
             maxLines = 1,
             // No wrapping: a label too wide shrinks (auto-size measures width only when it can't wrap).
             softWrap = false,
+            overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.labelLarge,
             autoSize = TextAutoSize.StepBased(minFontSize = 8.sp, maxFontSize = MaterialTheme.typography.labelLarge.fontSize),
@@ -142,8 +146,9 @@ fun GlanceSection(
     }
 }
 
-/** The time column's width: Tiimo's gutter, wide enough for "12:45 PM". */
+/** The time column's least width: Tiimo's gutter, wide enough for "12:45 PM" at normal text size. */
 val TimeGutter = 64.dp
+private const val WIDEST_TIME = "12:45 PM"
 
 /**
  * A whiteboard row: the [time] in a fixed gutter on the left (blank when there is none), the [icon], then the
@@ -163,6 +168,14 @@ fun TimelineRow(
     onClick: (() -> Unit)? = null,
 ) {
     val sub = MaterialTheme.colorScheme.onSurfaceVariant
+    val timeStyle = MaterialTheme.typography.labelLarge.copy(fontFeatureSettings = "tnum")
+    // The gutter fits the widest common time ("12:45 PM") at the current text size, so large text never clips it
+    // and every row's title still starts at the same place.
+    val measurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    val gutter = remember(timeStyle, density) {
+        maxOf(TimeGutter, with(density) { measurer.measure(WIDEST_TIME, timeStyle).size.width.toDp() })
+    }
     Row(
         modifier.fillMaxWidth()
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
@@ -172,11 +185,12 @@ fun TimelineRow(
     ) {
         Text(
             time.orEmpty(),
-            modifier = Modifier.width(TimeGutter),
-            style = MaterialTheme.typography.labelLarge.copy(fontFeatureSettings = "tnum"),
+            modifier = Modifier.width(gutter),
+            style = timeStyle,
             color = sub,
             maxLines = 1,
             softWrap = false,
+            overflow = TextOverflow.Ellipsis,
             autoSize = TextAutoSize.StepBased(minFontSize = 9.sp, maxFontSize = MaterialTheme.typography.labelLarge.fontSize),
         )
         Spacer(Modifier.width(Space.xxs))
