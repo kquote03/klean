@@ -8,6 +8,8 @@ data class CaptureInput(
     val viaVoice: Boolean = false, val photoFile: String? = null, val targetModule: ModuleId? = null,
     /** When the thing happened, if not now (e.g. "Add something" on a gap). UTC ms. */
     val eatenAt: Long? = null,
+    /** Module-specific extra fields from the capture sheet (e.g. diet's calorie slot, `diet.kcal`). */
+    val extras: Map<String, String> = emptyMap(),
 )
 data class ActionSpec(val type: String, val description: String)
 data class CaptureOption(val moduleId: ModuleId, val action: ActionSpec)

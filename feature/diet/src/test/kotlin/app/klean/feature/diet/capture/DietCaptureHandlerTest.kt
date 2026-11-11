@@ -32,6 +32,13 @@ class DietCaptureHandlerTest {
         )
     }
 
+    @Test fun theCalorieSlotReachesTheRepository() = runBlocking {
+        val input = CaptureInput("chips", CaptureSource.MODULE_SCREEN, clock.nowMs, extras = mapOf(DietCaptureHandler.EXTRA_KCAL to "150x100x200"))
+        handler.execute(input, handler.defaultAction(input))
+        assertEquals("150x100x200", repo.logs.single().calories)
+        assertEquals("diet.kcal", DietCaptureHandler.EXTRA_KCAL)
+    }
+
     @Test fun suggestionsAreQuickRepeats() = runBlocking {
         repo.repeats = listOf("tea", "toast")
         assertEquals(listOf("tea", "toast"), handler.suggestions())

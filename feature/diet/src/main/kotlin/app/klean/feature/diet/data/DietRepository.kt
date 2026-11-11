@@ -11,7 +11,10 @@ import app.klean.core.data.settings.SettingsRepository
 import app.klean.core.data.settings.SyncedKeys
 import app.klean.core.data.sync.SyncStamper
 import app.klean.shared.ai.AiTask
+import app.klean.feature.diet.calories.CalorieFill
+import app.klean.shared.diet.CalorieInput
 import app.klean.shared.diet.CaptureSource
+import app.klean.shared.diet.KcalSource
 import app.klean.shared.diet.EnrichmentStatus
 import app.klean.shared.diet.FoodItemState
 import app.klean.shared.diet.QuickRepeatRanker
@@ -38,6 +41,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 
 data class TodaySummary(val count: Int, val lastText: String?, val lastAt: Long?)
@@ -59,7 +63,15 @@ interface DietRepository {
         eatenAt: Long? = null,
         photoFile: String? = null,
         viaVoice: Boolean = false,
+        /** The calorie slot (`300`, `200g`, `150x100x200`). Wins over a calorie token at the end of [text]. */
+        calories: String? = null,
     ): String
+
+    /**
+     * Sets an entry's calories from the slot syntax. Empty clears them (and lets Klean fill them in again).
+     * Returns false when [input] can't be read; nothing changes then.
+     */
+    suspend fun setCalories(id: String, input: String): Boolean
 
     /** Changes only the given fields. `raw_text` changes only when [text] is passed. */
     suspend fun edit(id: String, text: String? = null, eatenAt: Long? = null, photoFile: String? = null, clearPhoto: Boolean = false)
@@ -104,7 +116,9 @@ class DefaultDietRepository @Inject constructor(
     private val dispatcher: DietChangeDispatcher,
     private val enrichmentPolicy: EnrichmentPolicy,
     @ApplicationScope scope: CoroutineScope,
+    private val filler: CalorieFill = CalorieFill.None,
 ) : DietRepository {
+    private val appScope = scope
 
     override val quietHours: StateFlow<QuietHours> =
         settings.observe(SyncedKeys.QuietHoursKey).stateIn(scope, SharingStarted.Eagerly, QuietHours.DEFAULT)
@@ -114,23 +128,59 @@ class DefaultDietRepository @Inject constructor(
     private suspend fun initialEnrichment() =
         if (enrichmentPolicy.hasProviderFor(AiTask.ENTRY_PARSE)) EnrichmentStatus.PENDING else EnrichmentStatus.NOT_REQUESTED
 
-    override suspend fun logEntry(text: String, source: CaptureSource, eatenAt: Long?, photoFile: String?, viaVoice: Boolean): String {
+    override suspend fun logEntry(
+        text: String, source: CaptureSource, eatenAt: Long?, photoFile: String?, viaVoice: Boolean, calories: String?,
+    ): String {
         val clean = text.trim()
         require(clean.isNotEmpty()) { "text required" }
+        // "rice 200g" → "rice" + 200 g. A slot value wins; an unreadable slot is ignored, never an error.
+        val (food, fromText) = CalorieInput.splitTrailing(clean)
+        val input = calories?.let(CalorieInput::parse)?.takeIf { it.isUsable() } ?: fromText
+        val kcal = input.toKcal()
         val now = now()
         val id = UuidV7.generate(now)
         val enrichment = initialEnrichment()
         db.transact {
             db.foodEntryDao().upsert(
                 FoodEntryEntity(
-                    id = id, rawText = clean, eatenAt = eatenAt ?: now, eatenAtZone = zone.current().id,
+                    id = id, rawText = food, eatenAt = eatenAt ?: now, eatenAtZone = zone.current().id,
                     photoFile = photoFile, source = source, viaVoice = viaVoice, mealType = null,
-                    mealTypeProvider = null, enrichment = enrichment, sync = stamper.stamp(),
+                    mealTypeProvider = null, enrichment = enrichment,
+                    kcal = kcal.kcal, kcalSource = kcal.source, grams = kcal.grams, sync = stamper.stamp(),
                 ),
             )
         }
-        dispatcher.dispatch(DietChange.Logged(id, clean))
+        dispatcher.dispatch(DietChange.Logged(id, food))
+        if (kcal.kcal == null) requestFill(id)
         return id
+    }
+
+    override suspend fun setCalories(id: String, input: String): Boolean {
+        val parsed = CalorieInput.parse(input)
+        if (parsed == CalorieInput.Invalid) return false
+        val k = parsed.toKcal()
+        val changed = db.transact {
+            val prev = db.foodEntryDao().get(id)?.takeIf { !it.sync.deleted } ?: return@transact false
+            val next = when (parsed) {
+                is CalorieInput.Kcal -> prev.copy(kcal = k.kcal, kcalSource = k.source)
+                is CalorieInput.PerAmount -> prev.copy(kcal = k.kcal, kcalSource = k.source, grams = k.grams)
+                is CalorieInput.Grams -> prev.copy(kcal = null, kcalSource = null, grams = k.grams)
+                else -> prev.copy(kcal = null, kcalSource = null, grams = null)
+            }
+            if (next == prev) return@transact false
+            db.foodEntryDao().upsert(next.copy(sync = stamper.stamp(prev.sync)))
+            true
+        }
+        if (changed) {
+            dispatcher.dispatch(DietChange.Edited(id))
+            if (k.kcal == null) requestFill(id)
+        }
+        return true
+    }
+
+    /** Fills calories in the background (history, then the assigned AI). Never blocks or fails a log. */
+    private fun requestFill(id: String) {
+        appScope.launch { runCatching { filler.fill(id) } }
     }
 
     override suspend fun edit(id: String, text: String?, eatenAt: Long?, photoFile: String?, clearPhoto: Boolean) {
@@ -278,8 +328,25 @@ class DefaultDietRepository @Inject constructor(
     }
 }
 
+/** What a [CalorieInput] stores on an entry. */
+internal data class KcalFields(val kcal: Int?, val source: String?, val grams: Int?)
+
+internal fun CalorieInput.isUsable() = this is CalorieInput.Kcal || this is CalorieInput.Grams || this is CalorieInput.PerAmount
+
+internal fun CalorieInput.toKcal(): KcalFields = when (this) {
+    is CalorieInput.Kcal -> KcalFields(kcal, KcalSource.USER.name, null)
+    is CalorieInput.PerAmount -> KcalFields(total, KcalSource.USER.name, ateGrams)
+    is CalorieInput.Grams -> KcalFields(null, null, grams)
+    else -> KcalFields(null, null, null)
+}
+
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class DietDataModule {
     @Binds abstract fun repository(impl: DefaultDietRepository): DietRepository
+
+    companion object {
+        /** Phase 3 wiring: no filling yet. Replaced by CalorieFiller. */
+        @dagger.Provides fun calorieFill(): CalorieFill = CalorieFill.None
+    }
 }

@@ -21,7 +21,10 @@ import kotlinx.datetime.LocalDate
 
 /** In-memory [DietRepository] that records calls. */
 class FakeDietRepository(private val clock: FakeClock) : DietRepository {
-    data class LogCall(val text: String, val source: CaptureSource, val eatenAt: Long?, val viaVoice: Boolean = false, val photoFile: String? = null)
+    data class LogCall(
+        val text: String, val source: CaptureSource, val eatenAt: Long?, val viaVoice: Boolean = false,
+        val photoFile: String? = null, val calories: String? = null,
+    )
     data class EditCall(val id: String, val text: String?, val eatenAt: Long?, val photoFile: String?, val clearPhoto: Boolean)
 
     val entries = MutableStateFlow<List<FoodEntryEntity>>(emptyList())
@@ -36,11 +39,31 @@ class FakeDietRepository(private val clock: FakeClock) : DietRepository {
 
     fun entry(id: String, text: String, eatenAt: Long, photo: String? = null) = FoodEntryEntity(
         id, text, eatenAt, "Asia/Dubai", photo, CaptureSource.MODULE_SCREEN, false, null, null,
-        EnrichmentStatus.NOT_REQUESTED, SyncColumns(eatenAt, eatenAt, "dev", false, 1),
+        EnrichmentStatus.NOT_REQUESTED, sync = SyncColumns(eatenAt, eatenAt, "dev", false, 1),
     )
 
-    override suspend fun logEntry(text: String, source: CaptureSource, eatenAt: Long?, photoFile: String?, viaVoice: Boolean): String {
-        logs += LogCall(text, source, eatenAt, viaVoice, photoFile)
+    val calorieSets = mutableListOf<Pair<String, String>>()
+    val fills = mutableListOf<kotlinx.datetime.LocalDate>()
+
+    override suspend fun setCalories(id: String, input: String): Boolean {
+        calorieSets += id to input
+        val p = app.klean.shared.diet.CalorieInput.parse(input)
+        if (p == app.klean.shared.diet.CalorieInput.Invalid) return false
+        entries.value = entries.value.map {
+            if (it.id != id) it else when (p) {
+                is app.klean.shared.diet.CalorieInput.Kcal -> it.copy(kcal = p.kcal, kcalSource = "USER")
+                is app.klean.shared.diet.CalorieInput.PerAmount -> it.copy(kcal = p.total, kcalSource = "USER", grams = p.ateGrams)
+                is app.klean.shared.diet.CalorieInput.Grams -> it.copy(kcal = null, kcalSource = null, grams = p.grams)
+                else -> it.copy(kcal = null, kcalSource = null, grams = null)
+            }
+        }
+        return true
+    }
+
+    override suspend fun logEntry(
+        text: String, source: CaptureSource, eatenAt: Long?, photoFile: String?, viaVoice: Boolean, calories: String?,
+    ): String {
+        logs += LogCall(text, source, eatenAt, viaVoice, photoFile, calories)
         val id = "id${logs.size}"
         entries.value = (entries.value + entry(id, text.trim(), eatenAt ?: clock.nowMs, photoFile)).sortedBy { it.eatenAt }
         return id

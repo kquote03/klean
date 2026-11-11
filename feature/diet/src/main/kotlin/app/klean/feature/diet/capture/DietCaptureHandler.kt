@@ -21,7 +21,10 @@ class DietCaptureHandler @Inject constructor(private val repo: DietRepository) :
     override fun defaultAction(input: CaptureInput) = CandidateAction(moduleId, LOG_FOOD, 1f)
 
     override suspend fun execute(input: CaptureInput, action: CandidateAction): String =
-        repo.logEntry(input.text, input.source, eatenAt = input.eatenAt, photoFile = input.photoFile, viaVoice = input.viaVoice)
+        repo.logEntry(
+            input.text, input.source, eatenAt = input.eatenAt, photoFile = input.photoFile, viaVoice = input.viaVoice,
+            calories = input.extras[EXTRA_KCAL],
+        )
 
     override suspend fun undo(recordId: String) = repo.delete(recordId)
 
@@ -29,6 +32,8 @@ class DietCaptureHandler @Inject constructor(private val repo: DietRepository) :
 
     companion object {
         const val LOG_FOOD = "log_food"
+        /** The capture sheet's calorie slot. */
+        const val EXTRA_KCAL = app.klean.shared.diet.CalorieInput.EXTRA_KEY
     }
 }
 
