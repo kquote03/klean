@@ -737,3 +737,24 @@ Plan `.hermes/plans/2026-11-11_090844-today-at-a-glance-voice-back.md`.
 - [x] V2 — `VoiceEngine` (system → on-device → system dialog), real error reasons, language-pack download
 - [x] V3 — `VoiceCaptureScreen` + `VoiceRoute` (`klean://voice`, shortcut `voice`); the capture sheet's mic opens it
 - [x] V4 — Waydroid voice check (shots in `~/.hermes/cache/scratch/voice-shots/`); acceptance row V5
+
+## Calories (plan 2026-11-11)
+
+Plan `.hermes/plans/2026-11-11_171941-diet-calories.md`, branch `calories` (worktree `../klean-kcal`). Docs: `docs/diet-calories.md`.
+
+- [x] 1.1/1.2 `CalorieInput` syntax (`300`, `200g`, `150x100x200` = KCAL x PER x ATE) + `CalorieInputTest`
+- [x] 2.1/2.2 schema v4: `food_entry.kcal`, `kcal_source`, `grams` (AutoMigration 3→4, `4.json`, `MigrationV4Test`)
+- [x] 2.3 sync round trip of the calorie columns (`SyncEngineTest.foodEntryCaloriesRoundTrip`)
+- [x] 2.4 web: nothing to change (rows are untyped maps; new columns stay null)
+- [x] 3.1/3.2 calories ride along when logging (text tail or slot; `CaptureInput.extras`), `setCalories` (`LogCaloriesTest`)
+- [x] 4.1 history fill (`HistoryCaloriesTest`)
+- [x] 4.2 `FoodEntryDao.withCaloriesSince` (`FoodEntryDaoTest`)
+- [x] 4.3/4.4 `CalorieFiller` + `CalorieFillWorker` + scheduler, `fillMissing`, enrichment sets `kcal` from items (`CalorieFillerTest`, `FoodEnrichmentWorkerTest`)
+- [x] 5 kcal slot in the capture sheet with live preview and ⓘ tooltip (`CaptureSheetCaloriesTest`, `CaptureViewModelTest`)
+- [x] 6 calories on rows, entry screen (slot + source) and Today (`DayCaloriesTest`, `FoodEntryViewModelTest`, `DietGlanceProviderTest`)
+- [x] 7 daily goal setting + `CalorieProgress` + Diet hero + "Fill in calories" (`DietSettingsViewModelTest`, `CalorieProgressShotsTest`, `DietShotsTest`)
+- [x] 8 Copy today / Copy this day (`DayTextTest`)
+- [x] 9.1 `docs/diet-calories.md`; acceptance row D6
+- [ ] 9.2 full gate · [ ] 9.3 Waydroid check · [ ] 9.4 AI path on the Pixel (M29, acceptance D6)
+
+Follow-ups: web shows/sets no calories yet; the AI calorie path is untested on a device (needs a provider).
