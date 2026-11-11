@@ -83,6 +83,9 @@ class CaptureViewModel @Inject constructor(
     savedState: SavedStateHandle,
 ) : ViewModel() {
     private val target: ModuleId? = savedState.get<String>(CaptureActivity.EXTRA_TARGET_MODULE)?.let(::ModuleId)
+
+    /** The module this sheet is aimed at, for the voice screen its mic opens. */
+    val targetModule: ModuleId? get() = target
     private val source: CaptureSource = savedState.get<String>(CaptureActivity.EXTRA_SOURCE)
         ?.let { runCatching { CaptureSource.valueOf(it) }.getOrNull() }
         ?: CaptureActivity.DEFAULT_SOURCE

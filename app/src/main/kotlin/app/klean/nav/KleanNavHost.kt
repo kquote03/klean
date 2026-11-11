@@ -9,6 +9,7 @@ import app.klean.core.ui.module.KleanModule
 import app.klean.feature.onboarding.OnboardingRoute
 import app.klean.feature.onboarding.OnboardingScreen
 import app.klean.core.google.ui.AccountMenuScreen
+import app.klean.core.capture.voice.voiceScreen
 import app.klean.feature.settings.AboutSettingsRoute
 import app.klean.feature.settings.AiProvidersSettingsRoute
 import app.klean.feature.settings.SettingsScreen
@@ -99,6 +100,7 @@ fun KleanNavHost(
             SettingsScreen(modules = enabled, onOpen = { nav.navigate(it) }, onRunSetup = { nav.navigate(OnboardingRoute) }, onBack = { nav.popBackStack() })
         }
         settingsGraph(nav, registry, shell.permissions)
+        voiceScreen(nav)
         registry.all.forEach { it.registerGraph(this, nav) }
     }
 }

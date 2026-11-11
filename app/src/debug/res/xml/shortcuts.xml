@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- GENERATED twin: src/main (app.klean) and src/debug (app.klean.debug) differ only in targetPackage;
      ShortcutsXmlTest checks they stay in step. See docs/assistant.md. Every entry opens the capture sheet
-     (CaptureActivity), prefilled at most; nothing is saved until the person taps Save. -->
+     (CaptureActivity), prefilled at most; nothing is saved until the person taps Save. The one exception is
+     "voice": it opens the in-app voice screen (klean://voice, plan 2026-11-11 V3), which also saves only on Save. -->
 <shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
     <capability android:name="actions.intent.CREATE_THING">
         <intent
@@ -85,6 +86,18 @@
             android:action="android.intent.action.VIEW"
             android:data="klean://capture?module=reminders"
             android:targetClass="app.klean.core.capture.CaptureActivity"
+            android:targetPackage="app.klean.debug" />
+    </shortcut>
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_tile"
+        android:shortcutId="voice"
+        android:shortcutLongLabel="@string/voice_shortcut_long"
+        android:shortcutShortLabel="@string/voice_shortcut_short">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="klean://voice"
+            android:targetClass="app.klean.MainActivity"
             android:targetPackage="app.klean.debug" />
     </shortcut>
 </shortcuts>
