@@ -80,8 +80,8 @@ export function workoutScreen(app: App): TemplateResult {
         <span class="title-m">${t.workout.inProgress}</span><span class="body-m">${t.workout.since(fmtTime(num(active.started_at)!))} · ${t.workout.sets(m.sets(str(active.id)!).length)}</span>
         <span class="go"><span class="disc">${icon("add", { size: 20 })}</span>${t.workout.logSet}</span></button>`
     : html`<button type="button" class="saved" data-testid="start-workout" @click=${() => start(app)}>
-        <span class="title-m">${t.workout.start}</span><span class="body-m">${t.workout.thisWeek(m.sessionsThisWeek())}</span>
-        <span class="go"><span class="disc">${icon("play", { size: 20 })}</span>${t.workout.start.split(" ")[0]}</span></button>`;
+        <span class="title-m">${t.workout.start}</span><span class="body-m">${t.workout.startLead}</span>
+        <span class="go"><span class="disc">${icon("play", { size: 20 })}</span>${t.workout.startShort}</span></button>`;
   const rows = history.map((s) => {
     const sets = m.sets(str(s.id)!);
     const names = [...new Set(sets.map((x) => str(x.exercise)))].filter(Boolean) as string[];

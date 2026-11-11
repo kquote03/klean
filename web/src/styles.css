@@ -121,7 +121,7 @@ main.content { min-width: 0; padding: var(--s8) var(--s32) calc(var(--s48) * 2);
   box-shadow: 0 1px 3px rgb(0 0 0 / .12);
   animation: pop 250ms var(--ease) both;
 }
-.add-items button.type { background: var(--c-lowest); color: var(--on-surface); min-width: 280px; margin-bottom: var(--s8); box-shadow: 0 2px 8px rgb(0 0 0 / .14); }
+.add-items button.type { background: var(--c-lowest); color: var(--on-surface); min-width: 280px; margin-bottom: var(--s8); box-shadow: 0 2px 8px rgb(0 0 0 / .14); border: 1px solid var(--outline-v); }
 .add-items button:nth-child(2) { animation-delay: 20ms; } .add-items button:nth-child(3) { animation-delay: 40ms; }
 .add-items button:nth-child(4) { animation-delay: 60ms; } .add-items button:nth-child(5) { animation-delay: 80ms; }
 .add-items button:nth-child(6) { animation-delay: 100ms; } .add-items button:nth-child(7) { animation-delay: 120ms; }
@@ -186,7 +186,7 @@ button.mcard:hover .hero { filter: brightness(.98); }
 
 /* SectionHeader + ListGroup + ListRow */
 .section { margin-top: var(--section-gap); }
-.grouped > .section:first-child { margin-top: var(--s8); }
+.screen-body > .grouped:first-child > .section:first-child { margin-top: var(--s8); }
 .section-head { display: flex; align-items: center; gap: var(--s8); margin-bottom: var(--s8); min-height: 24px; }
 .section-head h2 { flex: 1 1 auto; }
 .list-group { background: var(--c-low); border-radius: var(--r-l); overflow: hidden; }

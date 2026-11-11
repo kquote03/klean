@@ -50,7 +50,7 @@ export function tabs<K extends string>(current: K, options: Record<K, string>, p
   </div>`;
 }
 
-const timeFmt = new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" });
+const timeFmt = new Intl.DateTimeFormat(undefined, { hour: "2-digit", minute: "2-digit" });
 const dayFmt = new Intl.DateTimeFormat(undefined, { weekday: "long", day: "numeric", month: "long" });
 const shortDayFmt = new Intl.DateTimeFormat(undefined, { weekday: "short", day: "numeric", month: "short" });
 const monthFmt = new Intl.DateTimeFormat(undefined, { month: "long", year: "numeric" });

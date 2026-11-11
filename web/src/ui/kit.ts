@@ -9,7 +9,7 @@ export type Tone = "plan" | "track" | "people" | "neutral";
 
 /** The screen scaffold: top bar (title or a custom header, actions), optional segmented tabs, then content. */
 export function screen(o: { title?: string; header?: TemplateResult; actions?: Content; tabs?: Content; width?: "narrow" | "wide"; testid?: string }, body: Content) {
-  return html`<div class="screen ${o.width === "wide" ? "wide" : ""}" data-testid=${o.testid ?? nothing}>
+  return html`<div class="screen ${o.width === "wide" ? "wide" : ""}" data-testid=${o.testid ? `screen-${o.testid}` : nothing}>
     ${o.header ?? html`<header class="topbar"><h1 class="title-l grow">${o.title}</h1>${o.actions ?? nothing}</header>`}
     ${o.tabs ?? nothing}
     <div class="screen-body">${body}</div>

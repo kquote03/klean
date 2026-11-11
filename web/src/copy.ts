@@ -180,6 +180,8 @@ export const t = {
   },
   workout: {
     start: "Start a workout",
+    startShort: "Start",
+    startLead: "Log sets as you go",
     end: "Finish",
     inProgress: "In progress",
     addSet: "+1 set",

@@ -1,13 +1,14 @@
-// Visual regression: Today, Tasks and Calendar in light and dark, laptop and phone, with seeded data and a fixed
-// clock. Baselines live in e2e/__screenshots__/; refresh with `pnpm visual --update-snapshots` after a reviewed change.
+// Visual regression: Today, Plan › Tasks and Plan › Calendar in light and dark, laptop and phone, with seeded data
+// and a fixed clock. Baselines live in e2e/__screenshots__/; refresh with `pnpm visual --update-snapshots` after a
+// reviewed change.
 import { expect, test } from "@playwright/test";
 import { mockBackend, signIn } from "./mock";
 
 const sizes = { laptop: { width: 1440, height: 900 }, phone: { width: 390, height: 844 } } as const;
 const screens = [
   { name: "today", path: "/" },
-  { name: "tasks", path: "/tasks" },
-  { name: "calendar", path: "/calendar" },
+  { name: "tasks", path: "/plan/tasks" },
+  { name: "calendar", path: "/plan/calendar" },
 ] as const;
 
 for (const scheme of ["light", "dark"] as const) {
@@ -20,6 +21,7 @@ for (const scheme of ["light", "dark"] as const) {
           await signIn(page);
           await page.evaluate((p) => (window as unknown as { klean: { go(path: string): void } }).klean.go(p), s.path);
           await page.waitForTimeout(400);
+          await page.mouse.move(0, 0);
           await expect(page).toHaveScreenshot(`${s.name}-${scheme}-${size}.png`);
         });
       }

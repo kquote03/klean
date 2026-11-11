@@ -81,8 +81,8 @@ export function settingsScreen(app: App): TemplateResult {
     listRow({ lead: icon("download", { size: 20 }), title: ui.backupBusy ? t.settings.backupWorking : t.settings.backupDownload, supporting: t.settings.backupLead, open: () => void backup(), testid: "backup" }),
   ];
   return html`${screen({ title: t.nav.settings, actions: app.status(), testid: "settings" }, html`
-    <div data-testid="settings-modules">${groupedList([{ title: t.settings.modules, rows: modules }])}</div>
-    <div data-testid="settings-devices">${groupedList([{ title: t.settings.devices, rows: devices }])}</div>
+    ${groupedList([{ title: t.settings.modules, rows: modules }], "settings-modules")}
+    ${groupedList([{ title: t.settings.devices, rows: devices }], "settings-devices")}
     ${groupedList([{ title: t.settings.preferences, rows: prefs }])}
     <div class="actions section"><button type="button" class="btn text" @click=${() => app.act(() => app.signOut())} data-testid="sign-out">${t.settings.signOut}</button></div>`)}
     ${pairSheet(app, ui)}${quietSheet(app)}`;

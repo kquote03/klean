@@ -41,7 +41,7 @@ function contacts(app: App, searching: boolean) {
     <input id="contact-search" type="search" placeholder=${t.contacts.search} .value=${app.ui.contactsQuery ?? ""} @input=${(e: Event) => { app.ui.contactsQuery = (e.target as HTMLInputElement).value; app.refresh(); }} /></label>` : nothing;
   if (!all.length) return emptyState({ icon: "people", text: t.contacts.emptyContacts, action: { label: t.contacts.newContact, run: () => openSheet("contact-new") } });
   return html`${search}
-    ${next && !q ? moduleCard({ tone: "people", label: t.contacts.comingUp, big: str(next.contact.display_name) ?? "", sub: t.contacts.turnsOn(next.turns, whenLabel(next).toLowerCase()), testid: "people-next" }) : nothing}
+    ${next && !q ? moduleCard({ tone: "people", label: t.contacts.comingUp, big: str(next.contact.display_name) ?? "", sub: next.turns ? t.contacts.turnsOn(next.turns, whenLabel(next).toLowerCase()) : whenLabel(next), testid: "people-next" }) : nothing}
     ${shown.length ? groupedList([{ title: t.contacts.everyone, rows: shown.map((c, i) => contactRow(app, c, i)) }], "contacts-list") : html`<p class="empty-state body-l">${t.contacts.none}</p>`}`;
 }
 

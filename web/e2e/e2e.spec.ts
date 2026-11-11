@@ -38,10 +38,10 @@ test.describe.configure({ mode: "serial" });
 test("sign in, see the pairing QR, create a task, see a phone's task, approve a request", async ({ page }) => {
   // 1. Sign in with the admin password: this browser becomes a WEB device.
   await signIn(page);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/Good (night|morning|afternoon|evening)/);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/^(Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day$/);
 
-  // 2. The pairing QR is drawn in the browser from /pair/start.
-  await page.locator('m3e-nav-rail m3e-nav-item[data-path="/settings"]').click();
+  // 2. The pairing QR is drawn in the browser from /pair/start. Settings opens from Today's top bar.
+  await page.getByTestId("settings").click();
   await page.getByTestId("pair-start").click();
   const qr = page.getByTestId("pair-qr");
   await expect(qr.locator("svg")).toBeVisible();
@@ -52,13 +52,15 @@ test("sign in, see the pairing QR, create a task, see a phone's task, approve a 
   const phone = curl("POST", "/pair/claim", undefined, { code, deviceName: "E2E phone", platform: "ANDROID", deviceId: "e2e-phone" });
   expect(phone.token).toBeTruthy();
   await page.reload();
-  await page.locator('m3e-nav-rail m3e-nav-item[data-path="/settings"]').click();
   await expect(page.getByTestId("settings-devices")).toContainText("E2E phone");
 
-  // 3. Create a task on the web; it reaches the server and the phone.
-  await page.locator('m3e-nav-rail m3e-nav-item[data-path="/tasks"]').click();
-  await page.getByTestId("add-task-input").fill("Water the plants from the web");
-  await page.getByTestId("add-task-input").press("Enter");
+  // 3. Create a task on the web through the Add menu; it shows in Plan › Tasks and reaches the server and the phone.
+  await page.getByTestId("add").click();
+  await page.getByTestId("add-task").click();
+  await page.getByTestId("capture-input").fill("Water the plants from the web");
+  await page.getByTestId("capture-input").press("Enter");
+  await page.locator('m3e-nav-rail m3e-nav-item[data-group="plan"]').click();
+  await page.locator('[data-tab="tasks"]').click();
   await expect(page.getByTestId("task-title").filter({ hasText: "Water the plants from the web" })).toBeVisible();
   await expect(page.getByTestId("sync-status")).toHaveText(/Up to date/, { timeout: 20_000 });
   await expect.poll(() => {
@@ -91,11 +93,14 @@ test("sign in, see the pairing QR, create a task, see a phone's task, approve a 
     ],
   });
   await page.evaluate(() => (window as any).klean.syncNow());
-  await page.locator('m3e-nav-rail m3e-nav-item[data-path="/approvals"]').click();
-  const card = page.locator('[data-approval-id="e2e-approval-1"]');
-  await expect(card).toBeVisible({ timeout: 20_000 });
-  await card.getByTestId("approval-draft").fill("Hello, please call me back after 4.");
-  await card.getByTestId("approve").click();
+  await page.locator('m3e-nav-rail m3e-nav-item[data-group="today"]').click();
+  await page.getByTestId("card-approvals").click({ timeout: 20_000 });
+  const request = page.locator('[data-id="e2e-approval-1"]');
+  await expect(request).toBeVisible({ timeout: 20_000 });
+  await request.locator(".row-main").click();
+  const sheet = page.getByTestId("approval-sheet");
+  await sheet.getByTestId("approval-draft").fill("Hello, please call me back after 4.");
+  await sheet.getByTestId("approve").click();
   await expect(page.getByTestId("approvals-empty")).toBeVisible();
   await expect.poll(() => {
     const pulled = curl("GET", "/sync/pull?cursor=0&limit=1000", phone.token);

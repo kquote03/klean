@@ -15,7 +15,7 @@ export function approvalsScreen(app: App): TemplateResult {
   const m = app.model;
   const pending = m.approvals();
   const body = pending.length
-    ? html`<p class="muted" style="margin-bottom:var(--s8)">${t.approvals.lead}</p>${groupedList([{ title: t.approvals.waiting(pending.length), rows: pending.map((a) => {
+    ? html`<p class="muted">${t.approvals.lead}</p>${groupedList([{ title: t.approvals.waiting(pending.length), rows: pending.map((a) => {
         const d = m.delegationFor(a);
         const task = d ? m.store.get("task", str(d.task_id) ?? "") : undefined;
         const title = humanAction(str(a.action) ?? "");
