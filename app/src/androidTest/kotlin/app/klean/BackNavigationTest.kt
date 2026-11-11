@@ -18,6 +18,9 @@ import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeLeft
+import androidx.compose.ui.test.isDisplayed
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
@@ -101,7 +104,16 @@ class BackNavigationTest {
     private val MORE = hasContentDescription("More options")
     private val TEXT_FIELD = hasSetTextAction()
 
-    private fun exists(m: SemanticsMatcher) = compose.onAllNodes(m).fetchSemanticsNodes().isNotEmpty()
+    /**
+     * On screen, not merely composed: the pager keeps each neighbour page composed off screen (Today beside Plan), so a
+     * node that exists may sit outside the viewport.
+     */
+    private fun exists(m: SemanticsMatcher) = shownIndex(m) >= 0
+
+    private fun shownIndex(m: SemanticsMatcher): Int {
+        val nodes = compose.onAllNodes(m)
+        return (0 until nodes.fetchSemanticsNodes().size).firstOrNull { nodes[it].isDisplayed() } ?: -1
+    }
 
     private fun await(m: SemanticsMatcher, why: String = m.description) {
         try {
@@ -127,7 +139,7 @@ class BackNavigationTest {
 
     private fun tap(m: SemanticsMatcher) {
         await(m)
-        compose.onAllNodes(m).onFirst().performClick()
+        compose.onAllNodes(m)[shownIndex(m)].performClick()
         compose.waitForIdle()
     }
 
@@ -348,6 +360,17 @@ class BackNavigationTest {
     }
 
     // --- 13, 14, 15 -------------------------------------------------------------------------------------------------
+
+    /** The pager: a swipe from Today shows Plan; Back slides back to Today, and Back there leaves the app. */
+    @Test fun swipeToPlanBackIsToday() {
+        launch()
+        compose.onAllNodes(isRoot()).onFirst().performTouchInput { swipeLeft() }
+        compose.waitForIdle()
+        awaitGone(TODAY, "Today (swiped to Plan)")
+        back()
+        await(TODAY)
+        assertStillOpen()
+    }
 
     @Test fun planBackIsTodayAndTodayBackLeaves() {
         launch()
