@@ -121,6 +121,24 @@ class FoodEnrichmentWorkerTest {
         return id to db.foodEntryDao().get(id)!!.sync.updatedAt
     }
 
+    @Test fun itemCaloriesBecomeTheEntrysCaloriesUnlessTheUserGaveSome() = runBlocking {
+        ai.assigned[AiTask.ENTRY_PARSE] = local
+        ai.answers[AiTask.ENTRY_PARSE] = { AiOutcome.Success(itemsJson, ProviderId.OPENAI_COMPAT, "llama3.2") }
+        val (id, at) = logged()
+        worker(id, at).doWork()
+        db.foodEntryDao().get(id)!!.let {
+            assertEquals(770, it.kcal)
+            assertEquals("AI", it.kcalSource)
+        }
+
+        val (own, ownAt) = logged("shawarma and fries 900 kcal")
+        worker(own, ownAt).doWork()
+        db.foodEntryDao().get(own)!!.let {
+            assertEquals(900, it.kcal)
+            assertEquals("USER", it.kcalSource)
+        }
+    }
+
     @Test fun successWritesItemsAndDoneWithoutTouchingRawText() = runBlocking {
         ai.assigned[AiTask.ENTRY_PARSE] = local
         ai.answers[AiTask.ENTRY_PARSE] = { AiOutcome.Success(itemsJson, ProviderId.OPENAI_COMPAT, "llama3.2") }

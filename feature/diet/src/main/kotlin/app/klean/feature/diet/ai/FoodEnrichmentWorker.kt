@@ -124,12 +124,17 @@ class FoodEnrichmentWorker @AssistedInject constructor(
                 )
             }
             db.foodItemDao().upsertAll(tombstones + fresh)
+            // The entry's calories become the items' sum when nobody gave any (plan 2026-11-11 calories).
+            val itemsKcal = parsed.items.sumOf { it.calories ?: 0 }.takeIf { it > 0 }
+            val fillKcal = now.kcal == null && itemsKcal != null
             val meal = parsed.mealType?.let { m -> MealType.entries.firstOrNull { it.name.equals(m, ignoreCase = true) } }
             db.foodEntryDao().upsert(
                 now.copy(
                     mealType = meal ?: now.mealType,
                     mealTypeProvider = if (meal != null) outcome.provider.wire else now.mealTypeProvider,
                     enrichment = EnrichmentStatus.DONE,
+                    kcal = if (fillKcal) itemsKcal else now.kcal,
+                    kcalSource = if (fillKcal) app.klean.shared.diet.KcalSource.AI.name else now.kcalSource,
                     sync = stamper.stamp(now.sync),
                 ),
             )

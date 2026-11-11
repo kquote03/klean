@@ -45,6 +45,10 @@ class FakeDietRepository(private val clock: FakeClock) : DietRepository {
     val calorieSets = mutableListOf<Pair<String, String>>()
     val fills = mutableListOf<kotlinx.datetime.LocalDate>()
 
+    override suspend fun fillMissing(date: kotlinx.datetime.LocalDate) {
+        fills += date
+    }
+
     override suspend fun setCalories(id: String, input: String): Boolean {
         calorieSets += id to input
         val p = app.klean.shared.diet.CalorieInput.parse(input)

@@ -46,6 +46,10 @@ interface FoodEntryDao {
     @Query("SELECT id FROM food_entry WHERE deleted = 0 AND created_at >= :since AND enrichment IN ('NOT_REQUESTED','NO_PROVIDER','FAILED')")
     suspend fun awaitingEnrichment(since: Long): List<String>
 
+    /** Entries whose calories came from the user or AI (never from history), newest first: calorie history. */
+    @Query("SELECT * FROM food_entry WHERE deleted = 0 AND kcal IS NOT NULL AND kcal_source != 'HISTORY' AND eaten_at >= :since ORDER BY eaten_at DESC LIMIT 2000")
+    suspend fun withCaloriesSince(since: Long): List<FoodEntryEntity>
+
     @Query("SELECT photo_file FROM food_entry WHERE photo_file IS NOT NULL")
     suspend fun allPhotoFiles(): List<String>
 }

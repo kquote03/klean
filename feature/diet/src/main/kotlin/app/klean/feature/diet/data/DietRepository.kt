@@ -73,6 +73,9 @@ interface DietRepository {
      */
     suspend fun setCalories(id: String, input: String): Boolean
 
+    /** Tries to fill every entry of [date] that has no calories (history, then the assigned AI). */
+    suspend fun fillMissing(date: LocalDate)
+
     /** Changes only the given fields. `raw_text` changes only when [text] is passed. */
     suspend fun edit(id: String, text: String? = null, eatenAt: Long? = null, photoFile: String? = null, clearPhoto: Boolean = false)
 
@@ -176,6 +179,11 @@ class DefaultDietRepository @Inject constructor(
             if (k.kcal == null) requestFill(id)
         }
         return true
+    }
+
+    override suspend fun fillMissing(date: LocalDate) {
+        val w = windowFor(date)
+        db.foodEntryDao().range(w.start, w.end).filter { it.kcal == null }.forEach { runCatching { filler.fill(it.id) } }
     }
 
     /** Fills calories in the background (history, then the assigned AI). Never blocks or fails a log. */
@@ -344,9 +352,4 @@ internal fun CalorieInput.toKcal(): KcalFields = when (this) {
 @InstallIn(SingletonComponent::class)
 abstract class DietDataModule {
     @Binds abstract fun repository(impl: DefaultDietRepository): DietRepository
-
-    companion object {
-        /** Phase 3 wiring: no filling yet. Replaced by CalorieFiller. */
-        @dagger.Provides fun calorieFill(): CalorieFill = CalorieFill.None
-    }
 }
