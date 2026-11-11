@@ -39,6 +39,7 @@ class OnboardingFlowTest {
     // The real card and setup page need Hilt; the shell only needs the module's metadata and routes.
     private fun diet(): KleanModule = object : KleanModule by DietKleanModule(DietEnablement { }) {
         @Composable override fun DashboardCard(onOpen: () -> Unit, modifier: Modifier) {}
+        @Composable override fun StartScreen(nav: androidx.navigation.NavController, args: android.os.Bundle?) {}
         @Composable override fun OnboardingContent(modifier: Modifier) {}
     }
 

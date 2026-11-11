@@ -1,27 +1,39 @@
 package app.klean.nav
 
-import kotlin.math.abs
+import kotlin.reflect.KClass
 
 /**
- * The page a horizontal swipe of [dx] pixels leads to from [current], in the left-to-right [pages] order (Today, then
- * Plan's tabs, Track's tabs, People's tabs). A swipe to the left (negative [dx]) shows the next page, to the right the
- * previous one. Null at either end, for no movement, or when [current] isn't a page (a detail screen).
+ * One page of the shell's pager: a top-level screen ([route]: Today, Track's Week, a module's start route), the bar
+ * [group] it belongs to and its [tab] index within that group's tabs.
  */
-fun <T> pageAfter(pages: List<T>, current: T?, dx: Float): T? {
-    val i = pages.indexOf(current)
-    if (i < 0 || dx == 0f) return null
-    return pages.getOrNull(if (dx < 0f) i + 1 else i - 1)
-}
+data class Page(val route: Any, val group: NavGroup, val tab: Int) {
+    /** Stable across modules turning on and off: the route's class name. */
+    val key: String get() = keyOf(route::class)
 
-/** A finished gesture is a page swipe when it travelled at least [minPx] sideways and more than twice as far as up or down. */
-fun isPageSwipe(dx: Float, dy: Float, minPx: Float): Boolean = abs(dx) >= minPx && abs(dx) > 2 * abs(dy)
+    companion object {
+        fun keyOf(route: KClass<*>): String = route.java.name
+    }
+}
 
 /**
- * Whether going from page [from] to page [to] moves right through [order] (the new page comes in from the right). Null
- * when either isn't a page.
+ * The pages left to right: Today, then each group's tabs in bar order ([tabs]: a group and the start routes of its
+ * tabs, modules that are off already left out). Today comes first whether or not [tabs] lists it.
  */
-fun <T> pageForward(order: List<T>, from: T?, to: T?): Boolean? {
-    val a = order.indexOf(from)
-    val b = order.indexOf(to)
-    return if (a < 0 || b < 0 || a == b) null else b > a
-}
+fun pageList(tabs: List<Pair<NavGroup, List<Any>>>): List<Page> =
+    listOf(Page(TodayRoute, NavGroup.TODAY, 0)) +
+        tabs.filter { it.first != NavGroup.TODAY }.flatMap { (g, routes) -> routes.mapIndexed { i, r -> Page(r, g, i) } }
+
+/** The index of the page showing [route] (a route class), or -1 when it isn't a page (a detail, a module that is off). */
+fun List<Page>.indexOfRoute(route: KClass<*>): Int = indexOfFirst { it.route::class == route }
+
+/** The index of [group]'s tab [tab], or -1. */
+fun List<Page>.indexOfTab(group: NavGroup, tab: Int): Int = indexOfFirst { it.group == group && it.tab == tab }
+
+/** How many tabs [group] has among the pages. */
+fun List<Page>.tabCount(group: NavGroup): Int = count { it.group == group }
+
+/**
+ * How the pager gets from page [from] to page [to] when a bar item or a tab asks: a neighbour slides over; anything
+ * further jumps with a short cross-fade rather than flying past every page between.
+ */
+fun slidesTo(from: Int, to: Int): Boolean = kotlin.math.abs(to - from) <= 1

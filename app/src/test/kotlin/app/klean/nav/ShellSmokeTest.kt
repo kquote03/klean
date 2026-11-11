@@ -2,6 +2,7 @@ package app.klean.nav
 
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertIsSelected
@@ -101,6 +102,7 @@ class ShellSmokeTest {
     // The real dashboard card needs Hilt; the shell only needs the module's metadata and routes.
     private fun diet(): KleanModule = object : KleanModule by DietKleanModule(DietEnablement { }) {
         @Composable override fun DashboardCard(onOpen: () -> Unit, modifier: Modifier) {}
+        @Composable override fun StartScreen(nav: androidx.navigation.NavController, args: android.os.Bundle?) {}
     }
 
     /** Today's avatar opens the account menu; Settings is its first "More from Klean" row. */
@@ -209,8 +211,8 @@ class ShellSmokeTest {
         // Today in the bar comes back from a page a tile opened.
         compose.onNode(hasClickAction() and hasText("Today")).performClick()
         compose.waitForIdle()
-        compose.onNodeWithText("Open inner").assertDoesNotExist()
-        compose.onNodeWithText("shawarma").assertExists()
+        assertNotShown("Open inner")
+        compose.onNodeWithText("shawarma").assertIsDisplayed()
     }
 
     private fun dietGlance(action: QuickAction? = null) = object : TodayGlanceProvider {
@@ -270,8 +272,8 @@ class ShellSmokeTest {
     @Test fun trackOpensOnWeekThenRemembersTheTracker() {
         val memory = InMemoryNavGroupMemory()
         val trackers = setOf<KleanModule>(
-            FakeScreenModule(ModuleId.WORKOUT, 60, android.R.string.cut, FakeRoute5) { composable<FakeRoute5> { Text("Screen of Cut") } },
-            FakeScreenModule(ModuleId.SLEEP, 70, android.R.string.copy, FakeRoute3) { composable<FakeRoute3> { Text("Screen of Copy") } },
+            fakeModule(ModuleId.WORKOUT, 60, android.R.string.cut, FakeRoute5) { Text("Screen of Cut") },
+            fakeModule(ModuleId.SLEEP, 70, android.R.string.copy, FakeRoute3) { Text("Screen of Copy") },
         )
         val vm = shell(trackers, groupMemory = memory)
         compose.setContent { KleanTheme { KleanAppUi(vm) } }
@@ -295,6 +297,12 @@ class ShellSmokeTest {
         assertEquals(WEEK_KEY, memory.last.value["track"])
     }
 
+    /** Not on screen: gone, or off the pager's viewport (a neighbour page stays composed). */
+    private fun assertNotShown(text: String) {
+        val nodes = compose.onAllNodesWithText(text)
+        repeat(nodes.fetchSemanticsNodes().size) { k -> org.junit.Assert.assertFalse("$text is on screen", nodes[k].isDisplayed()) }
+    }
+
     private fun todayHeader() = app.klean.today.weekday(Clock.System.todayIn(TimeZone.currentSystemDefault()))
 
     /** Seen on device: Today in the bar did nothing from another page (its saved state was the page being left). */
@@ -308,7 +316,7 @@ class ShellSmokeTest {
         compose.onNode(hasClickAction() and hasText("Today")).performClick()
         compose.waitForIdle()
         compose.onAllNodesWithText(todayHeader()).onFirst().assertIsDisplayed()
-        compose.onNodeWithText("Screen of OK").assertDoesNotExist()
+        assertNotShown("Screen of OK")
         compose.onNode(hasClickAction() and hasText("Today")).assertIsSelected()
         // Again, after Plan then Track (the path Back audits on device).
         compose.onNode(hasClickAction() and hasText("Plan")).performClick()
@@ -319,7 +327,7 @@ class ShellSmokeTest {
         compose.onNode(hasClickAction() and hasText("Today")).performClick()
         compose.waitForIdle()
         compose.onAllNodesWithText(todayHeader()).onFirst().assertIsDisplayed()
-        compose.onNodeWithText("Screen of Cut").assertDoesNotExist()
+        assertNotShown("Screen of Cut")
     }
 
     /** The same from a module laid out in its own graph (Diet, Sleep), reached through Track's tabs. */
@@ -336,7 +344,7 @@ class ShellSmokeTest {
             compose.onNode(hasClickAction() and hasText("Today")).performClick()
             compose.waitForIdle()
             compose.onAllNodesWithText(todayHeader()).onFirst().assertIsDisplayed()
-            compose.onNodeWithText("Open inner").assertDoesNotExist()
+            assertNotShown("Open inner")
         }
     }
 

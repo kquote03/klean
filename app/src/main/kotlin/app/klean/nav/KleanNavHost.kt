@@ -1,6 +1,7 @@
 package app.klean.nav
 
 import androidx.compose.runtime.Composable
+import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -25,6 +26,11 @@ import app.klean.widget.TodayWidgetReceiver
  * lingering link to it. Turning a module off hides its entry points (bottom bar, dashboard, settings
  * list), not its routes.
  *
+ * The root is [PagesRoute], whose screen is the shell's pager ([pages]): Today, then each group's tabs. Every other
+ * destination (details, Settings, the account menu, voice, Arrange Today, the wizard) opens over it. The pages' own
+ * routes (Today, Track's Week, each module's start route) stay registered for links; the shell turns reaching one into
+ * showing its page.
+ *
  * [startWithSetup]: a first run opens on the setup wizard; it is also reachable from Settings.
  */
 @Composable
@@ -33,25 +39,22 @@ fun KleanNavHost(
     shell: ShellViewModel,
     enabled: List<KleanModule>,
     startWithSetup: Boolean = false,
-    onOpenGroup: (NavGroup) -> Unit = {},
-    /** The pages in swipe order; a slide between two of them runs this way. */
-    pageOrder: () -> List<kotlin.reflect.KClass<*>> = { emptyList() },
+    pages: @Composable () -> Unit = {},
 ) {
     val registry = shell.registry
     val ctx = androidx.compose.ui.platform.LocalContext.current
-    // Today, Track's Week and every module's start screen are top level: moving between them slides by page order.
     val motion = androidx.compose.runtime.remember(ctx, registry) {
-        val topLevel = setOf(TodayRoute::class, TrackWeekRoute::class) + registry.all.map { it.startRoute::class }
-        KleanMotion.from(ctx, topLevel, pageOrder = pageOrder)
+        KleanMotion.from(ctx, instant = setOf(TodayRoute::class, TrackWeekRoute::class) + registry.all.map { it.startRoute::class })
     }
     NavHost(
         navController = nav,
-        startDestination = if (startWithSetup) OnboardingRoute else TodayRoute,
+        startDestination = if (startWithSetup) OnboardingRoute else PagesRoute,
         enterTransition = motion.enterTransition,
         exitTransition = motion.exitTransition,
         popEnterTransition = motion.popEnterTransition,
         popExitTransition = motion.popExitTransition,
     ) {
+        composable<PagesRoute> { pages() }
         composable<OnboardingRoute> {
             OnboardingScreen(
                 registry = registry,
@@ -59,8 +62,8 @@ fun KleanNavHost(
                 onboarding = shell.onboarding,
                 permissions = shell.permissions,
                 onFinished = {
-                    // Clears the wizard (and, when re-run from Settings, the stack under it): Today is home.
-                    nav.navigate(TodayRoute) {
+                    // Clears the wizard (and, when re-run from Settings, the stack under it): the pages are home.
+                    nav.navigate(PagesRoute) {
                         popUpTo(nav.graph.id) { inclusive = true }
                         launchSingleTop = true
                     }
@@ -70,38 +73,11 @@ fun KleanNavHost(
                 steps = shell.onboardingSteps.toList(),
             )
         }
-        composable<TodayRoute>(deepLinks = listOf(navDeepLink { uriPattern = "klean://today" })) {
-            // Today's one-tap grid: capture opens the sheet in place (never CaptureActivity, whose Back zooms out),
-            // Speak opens the voice screen.
-            val launcher = app.klean.core.capture.rememberCaptureLauncher()
-            fun capture(target: app.klean.shared.module.ModuleId?) =
-                launcher.open(target, app.klean.shared.diet.CaptureSource.DASHBOARD, false, null)
-            TodayScreen(
-                registry = registry, glance = shell.glance,
-                clock = shell.clock, zone = shell.zone, ticker = shell.ticker,
-                onQuickAction = { a ->
-                    when (a) {
-                        is app.klean.core.ui.module.QuickAction.Capture -> capture(a.module)
-                        is app.klean.core.ui.module.QuickAction.Open -> nav.navigate(a.route)
-                        is app.klean.core.ui.module.QuickAction.Instant -> Unit // runs on Today itself, with Undo
-                    }
-                },
-                onVoice = { nav.navigate(app.klean.core.capture.voice.VoiceRoute()) { launchSingleTop = true } },
-                onType = { capture(null) },
-                onOpen = { link -> runCatching { nav.navigate(android.net.Uri.parse(link)) } },
-                layout = shell.todayLayout,
-                onArrange = { nav.navigate(ArrangeTodayRoute) },
-                onSettings = { nav.navigate(SettingsRoute) { launchSingleTop = true } },
-                account = shell.account,
-                onAccount = { nav.navigate(AccountRoute) { launchSingleTop = true } },
-                leftHandedFlow = shell.devicePrefs?.leftHanded ?: kotlinx.coroutines.flow.flowOf(false),
-            )
-            NewModulesSheet(registry, shell.newModules)
-        }
+        composable<TodayRoute>(deepLinks = listOf(navDeepLink { uriPattern = "klean://today" })) { TodayPage(nav, shell) }
         composable<AccountRoute> {
-            // Settings and Help replace the menu, so Back from them returns to Today (as in Google's apps).
+            // Settings and Help replace the menu, so Back from them returns to the pages (as in Google's apps).
             val leaveMenu: androidx.navigation.NavOptionsBuilder.() -> Unit = {
-                popUpTo<TodayRoute>()
+                popUpTo<PagesRoute>()
                 launchSingleTop = true
             }
             AccountMenuScreen(
@@ -111,9 +87,7 @@ fun KleanNavHost(
                 onHelp = { nav.navigate(AboutSettingsRoute, leaveMenu) },
             )
         }
-        composable<TrackWeekRoute> {
-            TrackWeekScreen(summaries = shell.weekSummaries, clock = shell.clock, zone = shell.zone, ticks = { shell.ticker.ticks() })
-        }
+        composable<TrackWeekRoute> { TrackWeekPage(shell) }
         composable<ArrangeTodayRoute> {
             ArrangeTodayScreen(registry = registry, layout = shell.todayLayout, onDone = { nav.popBackStack() })
         }
@@ -124,4 +98,43 @@ fun KleanNavHost(
         voiceScreen(nav)
         registry.all.forEach { it.registerGraph(this, nav) }
     }
+}
+
+/** Track › Week, as a page and as its route. */
+@Composable
+fun TrackWeekPage(shell: ShellViewModel) {
+    TrackWeekScreen(summaries = shell.weekSummaries, clock = shell.clock, zone = shell.zone, ticks = { shell.ticker.ticks() })
+}
+
+/**
+ * Today, as the pager's first page and as its route. Today's one-tap grid: capture opens the sheet in place (never
+ * CaptureActivity, whose Back zooms out), Speak opens the voice screen.
+ */
+@Composable
+fun TodayPage(nav: NavController, shell: ShellViewModel) {
+    val registry = shell.registry
+    val launcher = app.klean.core.capture.rememberCaptureLauncher()
+    fun capture(target: app.klean.shared.module.ModuleId?) =
+        launcher.open(target, app.klean.shared.diet.CaptureSource.DASHBOARD, false, null)
+    TodayScreen(
+        registry = registry, glance = shell.glance,
+        clock = shell.clock, zone = shell.zone, ticker = shell.ticker,
+        onQuickAction = { a ->
+            when (a) {
+                is app.klean.core.ui.module.QuickAction.Capture -> capture(a.module)
+                is app.klean.core.ui.module.QuickAction.Open -> nav.navigate(a.route)
+                is app.klean.core.ui.module.QuickAction.Instant -> Unit // runs on Today itself, with Undo
+            }
+        },
+        onVoice = { nav.navigate(app.klean.core.capture.voice.VoiceRoute()) { launchSingleTop = true } },
+        onType = { capture(null) },
+        onOpen = { link -> runCatching { nav.navigate(android.net.Uri.parse(link)) } },
+        layout = shell.todayLayout,
+        onArrange = { nav.navigate(ArrangeTodayRoute) },
+        onSettings = { nav.navigate(SettingsRoute) { launchSingleTop = true } },
+        account = shell.account,
+        onAccount = { nav.navigate(AccountRoute) { launchSingleTop = true } },
+        leftHandedFlow = shell.devicePrefs?.leftHanded ?: kotlinx.coroutines.flow.flowOf(false),
+    )
+    NewModulesSheet(registry, shell.newModules)
 }

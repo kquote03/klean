@@ -57,7 +57,7 @@ class ShellSheets {
 @Composable
 fun InAppCaptureSheet(request: CaptureRequest, onDismiss: () -> Unit, onVoice: ((ModuleId?) -> Unit)? = null) {
     val parent = checkNotNull(LocalViewModelStoreOwner.current)
-    val owner = remember(request) { SheetViewModelOwner(parent) }
+    val owner = remember(request) { ScopedViewModelOwner { parent } }
     DisposableEffect(owner) { onDispose { owner.viewModelStore.clear() } }
     val vm = hiltViewModel<CaptureViewModel>(owner)
     LaunchedEffect(vm, request) { vm.start(request.target, request.source, request.voice, eatenAt = request.eatenAt) }
@@ -73,17 +73,20 @@ internal fun ShellSheetsHost(sheets: ShellSheets, sheet: @Composable (CaptureReq
     sheet(request, dismiss)
 }
 
-/** A view-model store for one sheet, created through the activity's (Hilt) factory with no intent arguments. */
-private class SheetViewModelOwner(private val parent: ViewModelStoreOwner) : ViewModelStoreOwner, HasDefaultViewModelProviderFactory {
+/**
+ * A view-model store of its own (one sheet, one pager page), created through [parent]'s (the activity's Hilt) factory
+ * with no intent arguments. [parent] is read on use, so a holder that outlives an activity never keeps the old one.
+ */
+internal class ScopedViewModelOwner(private val parent: () -> ViewModelStoreOwner) : ViewModelStoreOwner, HasDefaultViewModelProviderFactory {
     override val viewModelStore = ViewModelStore()
 
     override val defaultViewModelProviderFactory: ViewModelProvider.Factory
-        get() = (parent as HasDefaultViewModelProviderFactory).defaultViewModelProviderFactory
+        get() = (parent() as HasDefaultViewModelProviderFactory).defaultViewModelProviderFactory
 
     override val defaultViewModelCreationExtras: CreationExtras
-        get() = MutableCreationExtras((parent as HasDefaultViewModelProviderFactory).defaultViewModelCreationExtras).apply {
-            set(VIEW_MODEL_STORE_OWNER_KEY, this@SheetViewModelOwner)
-            // The main activity's intent isn't a capture request.
+        get() = MutableCreationExtras((parent() as HasDefaultViewModelProviderFactory).defaultViewModelCreationExtras).apply {
+            set(VIEW_MODEL_STORE_OWNER_KEY, this@ScopedViewModelOwner)
+            // The main activity's intent isn't a capture request or a page's arguments.
             set(DEFAULT_ARGS_KEY, Bundle())
         }
 }

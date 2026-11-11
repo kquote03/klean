@@ -2,46 +2,63 @@ package app.klean.nav
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** Swiping between pages: Today, Plan's tabs, Track's tabs, People's tabs, left to right. */
+/** The pager's pages: Today, Plan's tabs, Track's tabs, People's tabs, without the modules that are off. */
 class PagesTest {
-    private val pages = listOf("today", "tasks", "calendar", "week", "workout", "sleep", "diet", "contacts")
+    private object Tasks
+    private object Calendar
+    private object Workout
+    private object Sleep
+    private object Diet
+    private object Contacts
+    private object Detail
 
-    @Test fun swipeLeftIsTheNextPage() {
-        assertEquals("tasks", pageAfter(pages, "today", dx = -200f))
-        assertEquals("week", pageAfter(pages, "calendar", dx = -200f))
+    private val all = pageList(
+        listOf(
+            NavGroup.TODAY to emptyList(),
+            NavGroup.PLAN to listOf(Tasks, Calendar),
+            NavGroup.TRACK to listOf(TrackWeekRoute, Workout, Sleep, Diet),
+            NavGroup.PEOPLE to listOf(Contacts),
+        ),
+    )
+
+    @Test fun pagesRunTodayThenEachGroupsTabs() {
+        assertEquals(listOf(TodayRoute, Tasks, Calendar, TrackWeekRoute, Workout, Sleep, Diet, Contacts), all.map { it.route })
+        assertEquals(listOf(0, 0, 1, 0, 1, 2, 3, 0), all.map { it.tab })
+        assertEquals(NavGroup.TRACK, all[5].group)
     }
 
-    @Test fun swipeRightIsThePreviousPage() {
-        assertEquals("today", pageAfter(pages, "tasks", dx = 200f))
-        assertEquals("diet", pageAfter(pages, "contacts", dx = 200f))
+    @Test fun aRouteFindsItsPage() {
+        assertEquals(0, all.indexOfRoute(TodayRoute::class))
+        assertEquals(2, all.indexOfRoute(Calendar::class))
+        assertEquals(7, all.indexOfRoute(Contacts::class))
+        assertEquals("a detail is no page", -1, all.indexOfRoute(Detail::class))
     }
 
-    @Test fun theEndsStayPut() {
-        assertNull(pageAfter(pages, "today", dx = 200f))
-        assertNull(pageAfter(pages, "contacts", dx = -200f))
+    @Test fun aPageFindsItsRouteAndTab() {
+        assertEquals(Sleep, all[all.indexOfTab(NavGroup.TRACK, 2)].route)
+        assertEquals(-1, all.indexOfTab(NavGroup.PEOPLE, 1))
+        assertEquals(4, all.tabCount(NavGroup.TRACK))
     }
 
-    @Test fun aDetailScreenIsNoPage() = assertNull(pageAfter(pages, "task-detail", dx = -200f))
-
-    @Test fun noMovementNoPage() = assertNull(pageAfter(pages, "today", dx = 0f))
-
-    @Test fun aSwipeIsLongAndMostlySideways() {
-        assertTrue(isPageSwipe(dx = -72f, dy = 0f, minPx = 72f))
-        assertTrue(isPageSwipe(dx = 200f, dy = 99f, minPx = 72f))
-        assertFalse("too short", isPageSwipe(dx = -71f, dy = 0f, minPx = 72f))
-        assertFalse("too steep", isPageSwipe(dx = 200f, dy = 100f, minPx = 72f))
+    @Test fun modulesThatAreOffHaveNoPage() {
+        val some = pageList(listOf(NavGroup.TRACK to listOf(Diet), NavGroup.PEOPLE to listOf(Contacts)))
+        assertEquals(listOf(TodayRoute, Diet, Contacts), some.map { it.route })
+        assertEquals(-1, some.indexOfRoute(Tasks::class))
+        assertEquals(1, some.indexOfTab(NavGroup.TRACK, 0))
     }
 
-    /** Page motion follows the order, for pops too: Back from Track to Today brings Today in from the left. */
-    @Test fun directionFollowsThePageOrder() {
-        assertEquals(true, pageForward(pages, "today", "tasks"))
-        assertEquals(false, pageForward(pages, "sleep", "today"))
-        assertEquals(false, pageForward(pages, "calendar", "tasks"))
-        assertNull(pageForward(pages, "today", "settings"))
-        assertNull(pageForward(pages, "today", "today"))
+    @Test fun keysAreStableAcrossModulesTurningOff() {
+        val some = pageList(listOf(NavGroup.TRACK to listOf(Diet)))
+        assertEquals(all[6].key, some[1].key)
+        assertEquals(all.size, all.map { it.key }.toSet().size)
+    }
+
+    @Test fun neighboursSlideFartherPagesJump() {
+        assertTrue(slidesTo(0, 1))
+        assertTrue(slidesTo(3, 2))
+        assertFalse(slidesTo(0, 5))
     }
 }

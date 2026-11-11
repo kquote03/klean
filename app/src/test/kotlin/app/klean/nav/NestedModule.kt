@@ -30,8 +30,13 @@ class NestedModule : KleanModule {
     override val settingsRoute: Any? = null
     override fun registerGraph(builder: NavGraphBuilder, nav: NavController) = with(builder) {
         navigation<NestedGraph>(startDestination = NestedStart) {
-            composable<NestedStart> { Button(onClick = { nav.navigate(NestedInner) }) { Text("Open inner") } }
+            composable<NestedStart> { StartScreen(nav, null) }
             composable<NestedInner> { Text("Inner screen") }
         }
+    }
+
+    @androidx.compose.runtime.Composable
+    override fun StartScreen(nav: NavController, args: android.os.Bundle?) {
+        Button(onClick = { nav.navigate(NestedInner) }) { Text("Open inner") }
     }
 }

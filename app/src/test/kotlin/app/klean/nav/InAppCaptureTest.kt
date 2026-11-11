@@ -53,8 +53,8 @@ class InAppCaptureTest {
         override fun ticks(): Flow<Unit> = flowOf(Unit)
     }
 
-    private val tasks = FakeScreenModule(ModuleId.TASKS, 10, android.R.string.ok, FakeRoute1) {
-        composable<FakeRoute1> { KleanScreen(title = "Fake tasks") { Text("Fake tasks list") } }
+    private val tasks = fakeModule(ModuleId.TASKS, 10, android.R.string.ok, FakeRoute1) {
+        KleanScreen(title = "Fake tasks") { Text("Fake tasks list") }
     }
 
     private fun shell(): ShellViewModel {
