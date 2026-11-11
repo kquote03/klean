@@ -64,6 +64,9 @@ data class GlanceContribution(
 interface TodayGlanceProvider {
     val moduleId: ModuleId
     fun glance(): Flow<GlanceContribution>
+
+    /** A [GlanceRow.checkable] row of this module was ticked on Today (a task done). */
+    suspend fun check(row: GlanceRow) {}
 }
 
 /**
@@ -95,6 +98,11 @@ class TodayGlance @Inject constructor(
                 pairs.groupBy({ it.first }, { it.second }).mapValues { (_, parts) -> parts.merge() }
             }
         }
+    }
+
+    /** Hands a ticked row to the module it came from. */
+    suspend fun check(row: GlanceRow) {
+        providers.filter { it.moduleId == row.module }.forEach { it.check(row) }
     }
 }
 
