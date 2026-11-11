@@ -106,7 +106,7 @@ private fun DietListRow(row: DietRow, onOpenEntry: (String) -> Unit, onAddForGap
     when (row) {
         is DietRow.Entry -> ListRow(
             title = row.text,
-            supporting = row.itemLines.joinToString(" · ").ifEmpty { null },
+            supporting = (listOfNotNull(row.kcalLabel) + row.itemLines).joinToString(" · ").ifEmpty { null },
             meta = row.timeLabel,
             onClick = { onOpenEntry(row.id) },
             trailing = row.photoPath?.let { path -> { PhotoThumbnail(path, contentDescription = stringResource(R.string.diet_has_photo)) } },

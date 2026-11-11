@@ -72,8 +72,19 @@ class DietGlanceProviderTest {
         assertNull(rows.getValue("banana").detail)
         repo.prefs = repo.prefs.copy(showCalories = true)
         val shown = provider().glance().first().done.associateBy { it.text }
-        assertEquals("chicken, garlic sauce · ~530 kcal", shown.getValue("shawarma plate").detail)
-        assertEquals("~100 kcal", shown.getValue("banana").detail)
+        assertEquals("chicken, garlic sauce · ≈ 530 kcal", shown.getValue("shawarma plate").detail)
+        assertEquals("≈ 100 kcal", shown.getValue("banana").detail)
+    }
+
+    @Test fun anEntrysOwnCaloriesWinAndShowPlainly() = runTest {
+        repo.prefs = repo.prefs.copy(showCalories = true)
+        val id = repo.logEntry("oatmeal", CaptureSource.MODULE_SCREEN, eatenAt = at(11, 9))
+        repo.setCalories(id, "150x100x200")
+        val gave = repo.logEntry("rice", CaptureSource.MODULE_SCREEN, eatenAt = at(11, 12))
+        repo.entries.value = repo.entries.value.map { if (it.id == gave) it.copy(kcal = 260, kcalSource = "HISTORY") else it }
+        val rows = provider().glance().first().done.associateBy { it.text }
+        assertEquals("300 kcal", rows.getValue("oatmeal").detail)
+        assertEquals("≈ 260 kcal", rows.getValue("rice").detail)
     }
 
     @Test fun nextCheckInIsComingUpOnlyWhenOn() = runTest {

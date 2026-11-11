@@ -93,7 +93,16 @@
     <string name="diet_provider_local">Local server</string>
     <string name="diet_provider_on_device">On device</string>
     <string name="diet_kcal">~%1$s kcal</string>
-    <string name="diet_kcal_so_far">~%1$s kcal so far</string>
+    <string name="diet_kcal_so_far">%1$s so far</string>
+    <string name="diet_kcal_exact">%1$s kcal</string>
+    <string name="diet_kcal_approx">≈ %1$s kcal</string>
+    <string name="diet_kcal_from_earlier">%1$s · from earlier</string>
+    <string name="diet_kcal_estimate">%1$s · estimate</string>
+    <string name="diet_entry_calories">Calories</string>
+    <plurals name="diet_without_calories">
+        <item quantity="one">%d food without calories</item>
+        <item quantity="other">%d foods without calories</item>
+    </plurals>
     <string name="diet_ai_items_title">Details</string>
     <string name="diet_ai_item_edit">Change %1$s</string>
     <string name="diet_ai_item_not_right">Not right</string>

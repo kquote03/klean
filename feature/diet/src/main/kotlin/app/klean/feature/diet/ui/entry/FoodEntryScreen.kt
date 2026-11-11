@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.foundation.layout.Box
+import app.klean.core.capture.KcalSlot
 import app.klean.core.capture.photo.PhotoMenu
 import app.klean.core.capture.photo.PhotoPicker
 import app.klean.core.capture.photo.rememberPhotoPicker
@@ -102,6 +103,17 @@ fun FoodEntryScreen(onBack: () -> Unit, onRemoved: (String) -> Unit, vm: FoodEnt
                 enabled = !state.deleted,
                 modifier = Modifier.fillMaxWidth(),
             )
+            if (state.showCalories) {
+                Text(stringResource(R.string.diet_entry_calories), style = MaterialTheme.typography.titleSmall)
+                state.kcalLabel?.let { Text(it, style = MaterialTheme.typography.bodyLarge) }
+                KcalSlot(
+                    state.calories,
+                    vm::onCaloriesChange,
+                    enabled = !state.deleted,
+                    onDone = vm::saveCalories,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
             Text(stringResource(R.string.diet_entry_eaten_at), style = MaterialTheme.typography.titleSmall)
             // Wraps the time under the date when large text leaves no room for both.
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

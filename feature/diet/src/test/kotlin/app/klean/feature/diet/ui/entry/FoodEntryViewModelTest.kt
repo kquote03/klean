@@ -65,6 +65,43 @@ class FoodEntryViewModelTest {
         assertTrue(repo.edits.isEmpty())
     }
 
+    @Test fun caloriesShowWhereTheyCameFrom() = runTest {
+        repo.prefs = repo.prefs.copy(showCalories = true)
+        repo.entries.value = repo.entries.value.map { it.copy(kcal = 300, kcalSource = "USER") }
+        assertEquals("300 kcal", vm().uiState.first { it.kcalLabel != null }.kcalLabel)
+        repo.entries.value = repo.entries.value.map { it.copy(kcal = 105, kcalSource = "HISTORY") }
+        assertEquals("≈ 105 kcal · from earlier", vm().uiState.first { it.kcalLabel != null }.kcalLabel)
+        repo.entries.value = repo.entries.value.map { it.copy(kcal = 260, kcalSource = "AI") }
+        val vm = vm()
+        assertEquals("≈ 260 kcal · estimate", vm.uiState.first { it.kcalLabel != null }.kcalLabel)
+        assertEquals("", vm.uiState.value.calories) // a filled-in number isn't put in the slot
+    }
+
+    @Test fun theSlotSavesThroughTheRepositoryAndEmptyClears() = runTest {
+        repo.prefs = repo.prefs.copy(showCalories = true)
+        val vm = vm()
+        vm.uiState.first { it.loaded }
+        vm.onCaloriesChange("150x100x200")
+        vm.saveCalories()
+        assertEquals(listOf("e1" to "150x100x200"), repo.calorieSets)
+        assertEquals("300 kcal", vm.uiState.first { it.kcalLabel == "300 kcal" }.kcalLabel)
+        assertEquals("300", vm.uiState.value.calories)
+
+        vm.onCaloriesChange("")
+        vm.save()
+        assertEquals("e1" to "", repo.calorieSets.last())
+        vm.save() // nothing changed since
+        assertEquals(2, repo.calorieSets.size)
+    }
+
+    @Test fun anUnreadableSlotIsNotSaved() = runTest {
+        val vm = vm()
+        vm.uiState.first { it.loaded }
+        vm.onCaloriesChange("lots")
+        vm.save()
+        assertTrue(repo.calorieSets.isEmpty())
+    }
+
     @Test fun loadsEntry() = runTest {
         val s = vm().uiState.first { it.loaded }
         assertEquals("toast", s.text)

@@ -66,12 +66,16 @@ class AiItemsUiTest {
     @Test fun caloriesAppearOnlyWhenShowCaloriesIsOn() {
         val r = rows(showCalories = true).first { it.id == "e1" }
         assertEquals(listOf("shawarma · 1 wrap · ~450 kcal", "fries · medium · ~1,400 kcal"), r.itemLines)
+        assertEquals("≈ 1,850 kcal", r.kcalLabel)
+        assertNull(rows(showCalories = false).first { it.id == "e1" }.kcalLabel)
     }
 
     @Test fun dayTotalIsOnlyFormattedWhenEnabled() {
-        assertNull(caloriesSoFar(repo.items.value, showCalories = false, fmt))
-        assertEquals("~1,850 kcal so far", caloriesSoFar(repo.items.value, showCalories = true, fmt))
-        assertNull(caloriesSoFar(emptyList(), showCalories = true, fmt))
+        val day = dayCalories(repo.entries.value, repo.items.value)
+        assertEquals(DayCalories(1850, estimated = true, missing = 1), day)
+        assertNull(fmt.daySoFar(day, showCalories = false))
+        assertEquals("≈ 1,850 kcal so far", fmt.daySoFar(day, showCalories = true))
+        assertNull(fmt.daySoFar(dayCalories(emptyList(), emptyList()), showCalories = true))
     }
 
     @Test fun providerLabelsAreHumanNames() {

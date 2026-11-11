@@ -39,6 +39,7 @@ class DietRowBuilder(
                 itemLines = its.map { itemLine(it, prefs.showCalories, fmt) },
                 providerId = providerOf(its),
                 photoPath = e.photoFile?.let { photos.file(it).path },
+                kcalLabel = if (prefs.showCalories) entryKcal(e, its)?.let(fmt::kcalLabel) else null,
             )
         }
         val gapRows = gaps.map { g -> g.start to DietRow.GapRow(fmt.gap(g), g.start, g.midpoint) }

@@ -11,7 +11,9 @@ import app.klean.feature.diet.data.DietRepository
 import app.klean.feature.diet.ui.DietFormatter
 import app.klean.feature.diet.ui.DietRowBuilder
 import app.klean.feature.diet.ui.MinuteTicker
-import app.klean.feature.diet.ui.caloriesSoFar
+import app.klean.feature.diet.ui.DayCalories
+import app.klean.feature.diet.ui.dayCalories
+import app.klean.feature.diet.ui.daySoFar
 import app.klean.shared.diet.CaptureSource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -46,6 +48,8 @@ sealed interface DietRow {
         val providerId: String?,
         /** Absolute path of the photo, for the row thumbnail. */
         val photoPath: String?,
+        /** "300 kcal" / "≈ 105 kcal" when Show calories is on and the entry has some. */
+        val kcalLabel: String? = null,
     ) : DietRow {
         override val key get() = id
         val hasPhoto: Boolean get() = photoPath != null
@@ -65,11 +69,17 @@ data class DietUiState(
     val rows: List<DietRow> = emptyList(),
     val repeats: List<String> = emptyList(),
     val showCalories: Boolean = false,
-    /** "~1,850 kcal so far", only when calories are on and known. */
+    /** "≈ 1,850 kcal so far", only when calories are on and known. */
     val caloriesSoFar: String? = null,
     val loaded: Boolean = false,
     /** The last few entries of the six days before today, newest first (Track › Diet's "Earlier this week"). */
     val earlier: List<EarlierEntry> = emptyList(),
+    /** Today's calories (Show calories on), for the goal bar. */
+    val calories: DayCalories? = null,
+    /** The daily goal; 0 = no bar. */
+    val calorieGoal: Int = 0,
+    /** "2 foods without calories", when some of today's entries have none. */
+    val withoutCalories: String? = null,
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -110,9 +120,13 @@ class DietViewModel @Inject constructor(
             val dayWithRepeats = entriesWithItems(date).map { it to repo.quickRepeats() }
             combine(dayWithRepeats, repo.observeViewPrefs(), nowFlow, earlierThisWeek(date)) { (day, reps), prefs, now, earlier ->
                 val (entries, items) = day
+                val kcal = dayCalories(entries, items)
                 DietUiState(
                     date, rows.build(date, entries, items, prefs, now), reps, prefs.showCalories,
-                    caloriesSoFar(items, prefs.showCalories, fmt), loaded = true, earlier = earlier,
+                    fmt.daySoFar(kcal, prefs.showCalories), loaded = true, earlier = earlier,
+                    calories = kcal.takeIf { prefs.showCalories },
+                    calorieGoal = if (prefs.showCalories) prefs.calorieGoal else 0,
+                    withoutCalories = if (prefs.showCalories && kcal.missing > 0) fmt.withoutCalories(kcal.missing) else null,
                 )
             }
         }

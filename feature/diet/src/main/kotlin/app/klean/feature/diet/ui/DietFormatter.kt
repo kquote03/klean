@@ -23,7 +23,12 @@ interface DietFormatter {
     fun date(date: LocalDate): String
     fun gap(gap: Gap): String
     fun kcal(n: Int): String = "~$n kcal"
-    fun kcalSoFar(n: Int): String = "~$n kcal so far"
+    fun kcalExact(n: Int): String = "$n kcal"
+    fun kcalApprox(n: Int): String = "≈ $n kcal"
+    fun kcalFromEarlier(label: String): String = "$label · from earlier"
+    fun kcalEstimate(label: String): String = "$label · estimate"
+    fun kcalSoFar(label: String): String = "$label so far"
+    fun withoutCalories(n: Int): String = if (n == 1) "1 food without calories" else "$n foods without calories"
 }
 
 class AndroidDietFormatter @Inject constructor(
@@ -46,7 +51,17 @@ class AndroidDietFormatter @Inject constructor(
 
     override fun kcal(n: Int): String = ctx.getString(R.string.diet_kcal, number(n))
 
-    override fun kcalSoFar(n: Int): String = ctx.getString(R.string.diet_kcal_so_far, number(n))
+    override fun kcalExact(n: Int): String = ctx.getString(R.string.diet_kcal_exact, number(n))
+
+    override fun kcalApprox(n: Int): String = ctx.getString(R.string.diet_kcal_approx, number(n))
+
+    override fun kcalFromEarlier(label: String): String = ctx.getString(R.string.diet_kcal_from_earlier, label)
+
+    override fun kcalEstimate(label: String): String = ctx.getString(R.string.diet_kcal_estimate, label)
+
+    override fun kcalSoFar(label: String): String = ctx.getString(R.string.diet_kcal_so_far, label)
+
+    override fun withoutCalories(n: Int): String = ctx.resources.getQuantityString(R.plurals.diet_without_calories, n, n)
 }
 
 @Module

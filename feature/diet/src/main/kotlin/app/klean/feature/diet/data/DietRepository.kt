@@ -47,7 +47,13 @@ import kotlinx.datetime.LocalDate
 data class TodaySummary(val count: Int, val lastText: String?, val lastAt: Long?)
 
 /** Settings the diet screens render with. */
-data class DietViewPrefs(val quietHours: QuietHours, val gapThresholdMinutes: Int, val showCalories: Boolean)
+data class DietViewPrefs(
+    val quietHours: QuietHours,
+    val gapThresholdMinutes: Int,
+    val showCalories: Boolean,
+    /** Daily calorie goal; 0 = none. */
+    val calorieGoal: Int = 0,
+)
 
 /**
  * The only way diet data is written. Every write stamps sync columns inside one transaction and then
@@ -303,6 +309,7 @@ class DefaultDietRepository @Inject constructor(
         settings.observe(SyncedKeys.QuietHoursKey),
         settings.observe(SyncedKeys.DietGapThresholdMinutes),
         settings.observe(SyncedKeys.DietShowCalories),
+        settings.observe(SyncedKeys.DietCalorieGoal),
         ::DietViewPrefs,
     )
 

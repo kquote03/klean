@@ -43,8 +43,9 @@ fun LazyListScope.dietRows(rows: List<DietRow>, onOpenEntry: (String) -> Unit, o
 }
 
 private fun entryMeta(row: DietRow.Entry): (@Composable () -> Unit)? {
-    if (row.itemLines.isEmpty() && row.providerId == null) return null
-    return { AiItemsBlock(row.itemLines, row.providerId) }
+    val lines = listOfNotNull(row.kcalLabel) + row.itemLines
+    if (lines.isEmpty() && row.providerId == null) return null
+    return { AiItemsBlock(lines, row.providerId) }
 }
 
 /** AI items under an entry's raw text, with the chip naming the provider that produced them. */

@@ -9,7 +9,10 @@ import app.klean.core.common.ZoneProvider
 import app.klean.core.data.photo.PhotoStorage
 import app.klean.feature.diet.data.DietRepository
 import app.klean.feature.diet.ui.DietFormatter
+import app.klean.feature.diet.ui.entryKcal
 import app.klean.feature.diet.ui.itemLine
+import app.klean.feature.diet.ui.kcalWithSource
+import app.klean.shared.diet.KcalSource
 import app.klean.feature.diet.ui.providerOf
 import app.klean.shared.diet.FoodItemState
 import app.klean.shared.time.toLocal
@@ -49,6 +52,10 @@ data class FoodEntryUiState(
     /** Wire id of the provider that produced [items], for the chip. */
     val providerId: String? = null,
     val showCalories: Boolean = false,
+    /** "300 kcal", "≈ 105 kcal · from earlier", "≈ 260 kcal · estimate"; null when there are none. */
+    val kcalLabel: String? = null,
+    /** The calorie slot: the user's own number, or the grams they gave; empty for filled-in calories. */
+    val calories: String = "",
 )
 
 @HiltViewModel
@@ -61,6 +68,7 @@ class FoodEntryViewModel @Inject constructor(
 ) : ViewModel() {
     private val id: String = checkNotNull(savedState["entryId"])
     private var savedText: String = ""
+    private var savedCalories: String? = null
     private val state = MutableStateFlow(FoodEntryUiState())
     val uiState: StateFlow<FoodEntryUiState> = state.asStateFlow()
 
@@ -77,6 +85,28 @@ class FoodEntryViewModel @Inject constructor(
                         )
                     }
                 }
+        }
+        viewModelScope.launch {
+            combine(repo.observeEntry(id), repo.observeItems(listOf(id)), repo.observeViewPrefs()) { e, items, prefs ->
+                Triple(e, items.filter { it.state != FoodItemState.REJECTED }, prefs.showCalories)
+            }.collect { (e, items, show) ->
+                if (e == null) return@collect
+                val slot = when {
+                    e.kcal != null && e.kcalSource == KcalSource.USER.name -> e.kcal.toString()
+                    e.grams != null -> "${e.grams}g"
+                    else -> ""
+                }
+                val first = savedCalories == null
+                // Seed the slot once, and again whenever what's stored moves under an untouched slot.
+                val untouched = state.value.calories == savedCalories
+                if (first || untouched) savedCalories = slot
+                state.update {
+                    it.copy(
+                        kcalLabel = if (show) entryKcal(e, items)?.let(fmt::kcalWithSource) else null,
+                        calories = if (first || untouched) slot else it.calories,
+                    )
+                }
+            }
         }
         viewModelScope.launch {
             repo.observeEntry(id).collect { e ->
@@ -108,8 +138,21 @@ class FoodEntryViewModel @Inject constructor(
 
     fun onTextChange(text: String) = state.update { it.copy(text = text) }
 
-    /** Saves the text if it changed. Called by the Save button and on back. */
+    fun onCaloriesChange(text: String) = state.update { it.copy(calories = text) }
+
+    /** Saves the calorie slot if it changed: `300`, `200g`, `150x100x200`; empty lets Klean fill it in again. */
+    fun saveCalories() {
+        val s = state.value
+        if (!s.loaded || s.deleted || savedCalories == null || s.calories.trim() == savedCalories) return
+        val input = s.calories.trim()
+        if (app.klean.shared.diet.CalorieInput.parse(input) == app.klean.shared.diet.CalorieInput.Invalid) return
+        savedCalories = input
+        viewModelScope.launch { repo.setCalories(id, input) }
+    }
+
+    /** Saves the text (and the calorie slot) if they changed. Called by the Save button and on back. */
     fun save() {
+        saveCalories()
         val clean = state.value.text.trim()
         if (!state.value.loaded || state.value.deleted || clean.isEmpty() || clean == savedText) return
         savedText = clean

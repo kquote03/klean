@@ -15,7 +15,8 @@ import app.klean.feature.diet.data.DietRepository
 import app.klean.feature.diet.notification.DietStatusActions
 import app.klean.feature.diet.ui.DietFormatter
 import app.klean.feature.diet.ui.MinuteTicker
-import app.klean.feature.diet.ui.knownCalories
+import app.klean.feature.diet.ui.entryKcal
+import app.klean.feature.diet.ui.kcalLabel
 import app.klean.shared.diet.FoodItemState
 import app.klean.shared.module.ModuleId
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -75,11 +76,11 @@ class DietGlanceProvider(
             )
         }
 
-    /** "chicken, garlic sauce", plus "~450 kcal" when Show calories is on; nothing that repeats the entry's text. */
+    /** "chicken, garlic sauce", plus "300 kcal" / "≈ 450 kcal" when Show calories is on; nothing that repeats the entry's text. */
     private fun detail(e: FoodEntryEntity, items: List<FoodItemEntity>, showCalories: Boolean): String? {
         val names = items.map { it.name }.takeUnless { it.size == 1 && it[0].equals(e.rawText.trim(), ignoreCase = true) }
             ?.joinToString(", ")?.takeIf { it.isNotBlank() }
-        val kcal = if (showCalories) knownCalories(items)?.let { fmt.kcal(it) } else null
+        val kcal = if (showCalories) entryKcal(e, items)?.let(fmt::kcalLabel) else null
         return listOfNotNull(names, kcal).joinToString(" · ").ifEmpty { null }
     }
 

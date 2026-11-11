@@ -32,6 +32,8 @@ object SyncedKeys {
     val DietUnlockSheet = SettingKey("diet.unlockSheet", true, Boolean.serializer())
     val DietStatusNotification = SettingKey("diet.statusNotification", true, Boolean.serializer())
     val DietShowCalories = SettingKey("diet.showCalories", false, Boolean.serializer())
+    /** Daily calorie goal for the Diet progress bar; 0 = no goal. */
+    val DietCalorieGoal = SettingKey("diet.calorieGoal", 0, Int.serializer())
     val DietGapThresholdMinutes = SettingKey("diet.gapThresholdMinutes", 240, Int.serializer())
     val DietDeliveryApps = SettingKey("diet.deliveryApps", DeliveryMatcher.DEFAULT_APPS, ListSerializer(String.serializer()))
     /** Extra words that mark a delivery notification as delivered. Empty = built-in matcher only. */
