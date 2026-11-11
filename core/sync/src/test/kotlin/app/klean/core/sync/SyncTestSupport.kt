@@ -63,12 +63,16 @@ class Phone(val id: String) {
 
     suspend fun task(taskId: String) = db.taskDao().get(taskId)
 
-    suspend fun putFood(entryId: String, text: String, at: Long, photo: String? = null) = db.transact {
+    suspend fun putFood(
+        entryId: String, text: String, at: Long, photo: String? = null,
+        kcal: Int? = null, kcalSource: String? = null, grams: Int? = null,
+    ) = db.transact {
         db.foodEntryDao().upsert(
             FoodEntryEntity(
                 id = entryId, rawText = text, eatenAt = at, eatenAtZone = "Asia/Dubai", photoFile = photo,
                 source = CaptureSource.DASHBOARD, viaVoice = false, mealType = null, mealTypeProvider = null,
-                enrichment = EnrichmentStatus.NOT_REQUESTED, sync = stamp(at),
+                enrichment = EnrichmentStatus.NOT_REQUESTED, kcal = kcal, kcalSource = kcalSource, grams = grams,
+                sync = stamp(at),
             ),
         )
     }

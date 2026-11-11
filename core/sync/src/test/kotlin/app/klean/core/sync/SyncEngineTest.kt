@@ -59,6 +59,23 @@ class SyncEngineTest {
         assertEquals(0, b.engine.sync(apiB).pushed)
     }
 
+    @Test fun foodEntryCaloriesRoundTrip() = withServer {
+        val apiA = pair(a)
+        val apiB = pair(b)
+        a.putFood("f-kcal", "chips", at = 1_100, kcal = 300, kcalSource = "USER", grams = 200)
+        a.putFood("f-none", "salad", at = 1_200)
+        a.engine.sync(apiA)
+        b.engine.sync(apiB)
+
+        val chips = b.db.foodEntryDao().get("f-kcal")!!
+        assertEquals(300, chips.kcal)
+        assertEquals("USER", chips.kcalSource)
+        assertEquals(200, chips.grams)
+        val salad = b.db.foodEntryDao().get("f-none")!!
+        assertEquals(null, salad.kcal)
+        assertEquals(null, salad.grams)
+    }
+
     @Test fun tombstonesPropagateAndAnOlderEditDoesNotResurrect() = withServer {
         val apiA = pair(a)
         val apiB = pair(b)
