@@ -43,7 +43,8 @@ class ScriptedAgent : DelegationAgent {
 }
 
 class RecordingNotices : DelegationNotices {
-    val log = mutableListOf<String>()
+    /** Written on the runner's thread, read on the test's. */
+    val log: MutableList<String> = java.util.Collections.synchronizedList(mutableListOf())
     override fun question(delegationId: String, taskTitle: String, text: String) { log += "question:$text" }
     override fun approval(approvalId: String, taskTitle: String, action: String, recipients: Int) { log += "approval:$recipients" }
     override fun finished(delegationId: String, taskTitle: String, ok: Boolean) { log += "finished:$ok" }
@@ -90,7 +91,7 @@ class DelegationRunnerTest {
         waitFor("approval") { repo.get(id)?.status == DelegationStatus.NEEDS_APPROVAL }
         val pending = repo.observePendingApprovals().first().single()
         assertEquals(six, DelegationRepository.decodeRecipients(pending.recipients))
-        assertTrue("approval:6" in notices.log)
+        waitFor("approval notice") { "approval:6" in notices.log }
 
         runner.decide(pending.id, ApprovalDecision.EDITED, "Hi all, lunch included", six.take(4))
         val decided = repo.approval(pending.id)!!
@@ -148,7 +149,8 @@ class DelegationRunnerTest {
         waitFor("started") { repo.get(id)?.status == DelegationStatus.RUNNING }
         hermes.events.send(AgentEvent.Failed("events 500"))
         waitFor("failed") { repo.get(id)?.status == DelegationStatus.FAILED }
-        assertTrue("finished:false" in notices.log)
+        // The status is written before the notice is posted; wait for both.
+        waitFor("notice") { "finished:false" in notices.log }
         assertEquals("OPEN", tasks.get(taskId)!!.status)
     }
 
