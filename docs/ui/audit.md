@@ -266,3 +266,9 @@ Only 4 of 20 screens meet the budget outright. The common causes, in order of we
 | Sleep: 14 rows with bars, empty nights as "Nothing logged" | Sleep | "Recent nights" list group, "Sunday into Monday · 6 h 50 m"; empty nights collapse; last night is the hero |
 | Sleep: "Add a night" text button | bottom of the list | Sleep overflow → Add a night |
 | Sleep: settings gear | top bar | Sleep overflow → Sleep settings |
+| Diet: pinned capture field, mic and voice status | top of Diet | Add menu → Log food, or "Type or speak…" (capture sheet, with voice) |
+| Diet: "Log again" chips | under the field | Add menu → Log food: the capture sheet's "Log again" chips |
+| Diet: History icon (calendar) | top bar | Diet overflow → History |
+| Diet: calories so far | top bar subtitle | the hero's supporting line ("8:10 · ~1,850 kcal so far") |
+| Diet: entries with gap markers' "Add something" | the list | "Today" list group; a gap row taps to add at that time |
+| Diet: (new) the rest of the week | — | "Earlier this week" list group (last 5 entries of the six days before) |

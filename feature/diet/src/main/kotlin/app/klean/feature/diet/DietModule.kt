@@ -63,6 +63,7 @@ class DietKleanModule @Inject constructor(private val enablement: DietEnablement
     override val startRoute: Any = DietRoute
     override val graphRoute: Any = DietGraph
     override val settingsRoute: Any = DietSettingsRoute
+    override val drawsGroupChrome: Boolean = true
 
     override fun registerGraph(builder: NavGraphBuilder, nav: NavController) = with(builder) {
         navigation<DietGraph>(startDestination = DietRoute) {
@@ -125,6 +126,7 @@ private fun gapCaptureIntent(ctx: Context, gap: DietRow.GapRow) =
 @InstallIn(SingletonComponent::class)
 abstract class DietModuleBindings {
     @Binds @IntoSet abstract fun module(m: DietKleanModule): KleanModule
+    @Binds @IntoSet abstract fun week(s: app.klean.feature.diet.ui.dashboard.DietWeekSummary): app.klean.core.ui.module.WeekSummaryProvider
 }
 
 /** Diet's tiles and week activity on Today. */

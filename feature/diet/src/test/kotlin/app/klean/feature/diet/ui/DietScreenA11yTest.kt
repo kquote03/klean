@@ -7,7 +7,6 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import app.klean.core.capture.voice.VoiceUiState
 import app.klean.core.design.theme.KleanTheme
 import app.klean.feature.diet.ui.today.DietRow
 import app.klean.feature.diet.ui.today.DietScreenContent
@@ -34,17 +33,14 @@ class DietScreenA11yTest {
         )
         compose.setContent {
             KleanTheme {
-                DietScreenContent(
-                    state = state, text = "", voice = VoiceUiState(), onTextChange = {}, onSubmit = {}, onRepeat = {},
-                    onOpenEntry = {}, onOpenHistory = {}, onAddForGap = {}, onMic = {}, onUndoVoice = {},
-                )
+                DietScreenContent(state = state, onOpenEntry = {}, onOpenHistory = {}, onAddForGap = {})
             }
         }
         // Touch bounds, not layout bounds: M3 icon buttons draw 40 dp and pad their touch target to 48 dp.
-        val history = compose.onNodeWithContentDescription("History").fetchSemanticsNode().touchBoundsInRoot
-        with(compose.density) { assertTrue(history.width.toDp() >= 47.5.dp && history.height.toDp() >= 47.5.dp) }
+        val more = compose.onNodeWithContentDescription("More options").fetchSemanticsNode().touchBoundsInRoot
+        with(compose.density) { assertTrue(more.width.toDp() >= 47.5.dp && more.height.toDp() >= 47.5.dp) }
         val clickables = compose.onAllNodes(hasClickAction()).fetchSemanticsNodes()
-        assertTrue(clickables.size >= 6)
+        assertTrue(clickables.size >= 4)
         clickables.forEachIndexed { i, node ->
             val label = node.config.getOrNull(SemanticsProperties.ContentDescription)?.joinToString()
                 ?: node.config.getOrNull(SemanticsProperties.Text)?.joinToString()

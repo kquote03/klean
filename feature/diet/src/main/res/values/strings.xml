@@ -173,4 +173,9 @@
     <string name="diet_summary_next">Next check-in</string>
     <string name="diet_summary_next_value">around %1$s</string>
     <string name="diet_summary_kcal">So far</string>
+    <!-- Track › Diet and Track › Week (UI Phase 3) -->
+    <string name="diet_section_today">Today</string>
+    <string name="diet_section_earlier">Earlier this week</string>
+    <string name="diet_week_label">Food today</string>
+    <string name="diet_week_latest">%1$s at %2$s</string>
 </resources>

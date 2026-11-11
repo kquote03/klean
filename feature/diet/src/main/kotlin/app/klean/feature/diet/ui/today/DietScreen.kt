@@ -1,40 +1,35 @@
 package app.klean.feature.diet.ui.today
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Scaffold
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.CalendarMonth
+import androidx.compose.material.icons.rounded.Restaurant
+import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.navigation.NavBackStackEntry
-import app.klean.feature.diet.ui.RemovedEntrySnackbar
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import app.klean.core.capture.voice.VoiceStatus
-import app.klean.core.capture.voice.VoiceUiState
-import app.klean.core.capture.voice.rememberVoiceInput
-import app.klean.core.design.component.CaptureField
-import app.klean.core.design.component.NeutralEmpty
-import app.klean.core.design.component.RepeatChips
+import androidx.navigation.NavBackStackEntry
+import app.klean.core.design.component.CLUTTER_EXEMPT
+import app.klean.core.design.component.CardTone
+import app.klean.core.design.component.EmptyState
+import app.klean.core.design.component.KleanScreen
+import app.klean.core.design.component.ListRow
+import app.klean.core.design.component.MenuAction
+import app.klean.core.design.component.ModuleCard
+import app.klean.core.design.component.PhotoThumbnail
+import app.klean.core.design.component.SectionHeader
+import app.klean.core.design.component.listGroup
 import app.klean.feature.diet.R
-import app.klean.feature.diet.ui.dietRows
 import app.klean.feature.diet.delivery.DeliveryOfferCard
+import app.klean.feature.diet.ui.RemovedEntrySnackbar
 
 @Composable
 fun DietScreen(
@@ -47,84 +42,81 @@ fun DietScreen(
     val snackbar = remember { SnackbarHostState() }
     backStackEntry?.let { RemovedEntrySnackbar(it, snackbar, onUndo = vm::undoRemove) }
     val state by vm.uiState.collectAsStateWithLifecycle()
-    val text by vm.field.collectAsStateWithLifecycle()
-    val voice by vm.voice.state.collectAsStateWithLifecycle()
     DietScreenContent(
         state = state,
-        text = text,
-        voice = voice,
-        onTextChange = vm::onTextChange,
-        onSubmit = vm::onSubmit,
-        onRepeat = vm::onRepeat,
         onOpenEntry = onOpenEntry,
         onOpenHistory = onOpenHistory,
         onAddForGap = onAddForGap,
-        onMic = rememberVoiceInput(vm.voice),
-        onUndoVoice = vm.voice::undoLast,
         snackbar = snackbar,
-        offer = { DeliveryOfferCard(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) },
+        offer = { DeliveryOfferCard() },
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * Track › Diet (Soft cards): today's latest entry in the hero, today's entries (and calm gap markers), then the rest
+ * of the week with History behind "See all". Logging, voice and "Log again" live in the Add menu's capture sheet.
+ */
 @Composable
 fun DietScreenContent(
     state: DietUiState,
-    text: String,
-    voice: VoiceUiState,
-    onTextChange: (String) -> Unit,
-    onSubmit: (String) -> Unit,
-    onRepeat: (String) -> Unit,
     onOpenEntry: (String) -> Unit,
     onOpenHistory: () -> Unit,
     onAddForGap: (DietRow.GapRow) -> Unit,
-    onMic: () -> Unit,
-    onUndoVoice: () -> Unit,
-    snackbar: SnackbarHostState = remember { SnackbarHostState() },
+    snackbar: SnackbarHostState? = null,
     /** A one-time, dismissible card (the delivery offer); nothing once answered. */
     offer: @Composable () -> Unit = {},
 ) {
-    Scaffold(snackbarHost = { SnackbarHost(snackbar) }, topBar = {
-        TopAppBar(
-            title = {
-                Column {
-                    Text(stringResource(R.string.diet_today_title))
-                    state.caloriesSoFar?.let {
-                        Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
-            },
-            actions = {
-                IconButton(onClick = onOpenHistory) {
-                    Icon(Icons.Rounded.CalendarMonth, contentDescription = stringResource(R.string.diet_history_open))
-                }
-            },
-        )
-    }) { padding ->
-        Column(Modifier.padding(padding).fillMaxSize()) {
-            // Pinned under the top bar: logging is always one action away.
-            CaptureField(
-                value = if (voice.listening && voice.partial.isNotBlank()) voice.partial else text,
-                onValueChange = onTextChange,
-                onSubmit = { onSubmit(text) },
-                onMic = onMic,
-                onPhoto = null,
-                placeholder = stringResource(R.string.diet_capture_placeholder),
-                listening = voice.listening,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            )
-            VoiceStatus(voice, onUndo = onUndoVoice, modifier = Modifier.padding(horizontal = 16.dp))
-            RepeatChips(state.repeats, onRepeat = onRepeat, modifier = Modifier.padding(horizontal = 16.dp))
-            offer()
-            if (state.loaded && state.rows.none { it is DietRow.Entry }) {
-                NeutralEmpty(stringResource(R.string.diet_today_empty))
+    val menu = listOf(MenuAction(stringResource(R.string.diet_history_open), onClick = onOpenHistory))
+    KleanScreen(title = stringResource(R.string.diet_label), menu = menu, snackbarHostState = snackbar) { pad ->
+        if (!state.loaded) return@KleanScreen
+        val entries = state.rows.filterIsInstance<DietRow.Entry>()
+        val latest = entries.lastOrNull()
+        LazyColumn(Modifier.fillMaxSize().testTag(CLUTTER_EXEMPT), contentPadding = pad) {
+            if (entries.isEmpty() && state.earlier.isEmpty()) {
+                item(key = "empty") { EmptyState(stringResource(R.string.diet_today_empty), icon = Icons.Rounded.Restaurant) }
+                item(key = "offer") { offer() }
+                return@LazyColumn
             }
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = 16.dp),
-            ) {
-                dietRows(state.rows, onOpenEntry = onOpenEntry, onGapAdd = onAddForGap)
+            item(key = "hero") {
+                ModuleCard(
+                    label = stringResource(R.string.diet_summary_today),
+                    fact = latest?.text ?: stringResource(R.string.diet_summary_none),
+                    supporting = listOfNotNull(latest?.timeLabel, state.caloriesSoFar).joinToString(" · ").ifEmpty { null },
+                    tone = CardTone.SECONDARY,
+                )
+            }
+            item(key = "offer") { offer() }
+            if (entries.isNotEmpty()) {
+                item(key = "h_today") { SectionHeader(stringResource(R.string.diet_section_today)) }
+                listGroup("today", state.rows, { it.key }) { row -> DietListRow(row, onOpenEntry, onAddForGap) }
+            }
+            if (state.earlier.isNotEmpty()) {
+                item(key = "h_earlier") { SectionHeader(stringResource(R.string.diet_section_earlier)) }
+                listGroup("earlier", state.earlier, { it.id }) { e ->
+                    ListRow(title = e.text, meta = "${e.day}\n${e.time}", onClick = { onOpenEntry(e.id) })
+                }
             }
         }
+    }
+}
+
+/** An entry (text, AI items, time, photo) or a calm gap marker that adds at that time. */
+@Composable
+private fun DietListRow(row: DietRow, onOpenEntry: (String) -> Unit, onAddForGap: (DietRow.GapRow) -> Unit) {
+    when (row) {
+        is DietRow.Entry -> ListRow(
+            title = row.text,
+            supporting = row.itemLines.joinToString(" · ").ifEmpty { null },
+            meta = row.timeLabel,
+            onClick = { onOpenEntry(row.id) },
+            trailing = row.photoPath?.let { path -> { PhotoThumbnail(path, contentDescription = stringResource(R.string.diet_has_photo)) } },
+        )
+        is DietRow.GapRow -> ListRow(
+            title = row.label,
+            leading = { Icon(Icons.Rounded.Schedule, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+            muted = false,
+            onClick = { onAddForGap(row) },
+            onClickLabel = stringResource(app.klean.core.design.R.string.design_gap_add_something),
+        )
     }
 }
