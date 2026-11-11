@@ -117,24 +117,18 @@ fun KleanScreen(
     content: @Composable (PaddingValues) -> Unit,
 ) {
     val group = LocalGroupChrome.current.chromeFor(LocalLifecycleOwner.current)
-    val addSpec = LocalAddMenu.current?.takeIf { showAdd }
+    // Under the shell's pager the toolbar and the Add button float over all pages at once, so they stay put while the
+    // pages slide; this screen only leaves room for them.
+    val host = LocalFloatingChromeHost.current
+    val addSpec = LocalAddMenu.current?.takeIf { showAdd && host == null }
     val leftHanded = LocalLeftHanded.current
-    var addOpen by rememberSaveable { mutableStateOf(false) }
     val allMenu = menu + group?.menu.orEmpty()
-    // The group's tabs move to a floating toolbar at the bottom, by the thumb, with Add at the end of the same row.
-    val tabs = group?.takeIf { it.tabs.size > 1 }
-    val density = LocalDensity.current
-    // Where things sit, in root pixels: the screen, the Add button (collapsed or not, it stays put) and the toolbar.
-    var screenRect by remember { mutableStateOf<Rect?>(null) }
-    var fabRect by remember { mutableStateOf<Rect?>(null) }
-    var toolbarRect by remember { mutableStateOf<Rect?>(null) }
-    val fab = fabRect?.takeIf { addSpec != null }
+    val tabs = group?.takeIf { it.tabs.size > 1 && host == null }
     // Room under the last row: the measured height of whatever floats at the bottom, plus Space.md.
-    val floating = listOfNotNull(fab, toolbarRect?.takeIf { tabs != null })
-    val clearance: Dp? = screenRect?.let { s ->
-        floating.takeIf { it.isNotEmpty() }?.let { r -> with(density) { (s.bottom - r.minOf { it.top }).coerceAtLeast(0f).toDp() } }
-    }
-    Box(modifier.fillMaxSize().onGloballyPositioned { screenRect = it.boundsInRoot() }) {
+    var ownClearance by remember { mutableStateOf<Dp?>(null) }
+    val clearance: Dp? = if (host != null) host.clearance else ownClearance
+    val floats = host != null || addSpec != null || tabs != null
+    Box(modifier.fillMaxSize()) {
         Scaffold(
             topBar = {
                 Column(Modifier.statusBarsPadding()) {
@@ -148,8 +142,8 @@ fun KleanScreen(
             snackbarHost = { snackbarHostState?.let { SnackbarHost(it) } },
         ) { inner ->
             val bottom = when {
-                clearance != null -> maxOf(clearance, inner.calculateBottomPadding()) + Space.md
-                addSpec != null || tabs != null -> inner.calculateBottomPadding() + FLOATING_FALLBACK
+                clearance != null && floats -> maxOf(clearance, inner.calculateBottomPadding()) + Space.md
+                floats -> inner.calculateBottomPadding() + FLOATING_FALLBACK
                 else -> inner.calculateBottomPadding() + Space.md
             }
             content(
@@ -161,74 +155,7 @@ fun KleanScreen(
                 ),
             )
         }
-        if (tabs != null) {
-            val s = screenRect
-            val place = if (addSpec != null && fab != null && s != null) {
-                // One row with the Add button: as tall as the button, centred on it, a small gap before (or after) it.
-                with(density) {
-                    val beside = if (leftHanded) (fab.right - s.left).toDp() + Space.sm else (s.right - fab.left).toDp() + Space.sm
-                    Modifier.padding(
-                        start = if (leftHanded) beside else Space.screenEdge,
-                        end = if (leftHanded) Space.screenEdge else beside,
-                        bottom = (s.bottom - fab.bottom).coerceAtLeast(0f).toDp(),
-                    ).heightIn(min = fab.height.toDp())
-                }
-            } else {
-                Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal))
-                    .padding(start = Space.screenEdge, end = Space.screenEdge, bottom = Space.md)
-            }
-            Box(
-                Modifier.align(Alignment.BottomStart).fillMaxWidth().then(place)
-                    // Hidden for the first frame, until the Add button it lines up with has been placed.
-                    .alpha(if (addSpec != null && fab == null) 0f else 1f),
-                contentAlignment = Alignment.Center,
-            ) {
-                GroupToolbar(tabs, Modifier.onGloballyPositioned { toolbarRect = it.boundsInRoot() })
-            }
-        }
-        if (addSpec != null) {
-            if (addOpen) {
-                BackHandler { addOpen = false }
-                // The screen stays legible behind the menu (surface at 82 %); a tap anywhere closes it.
-                Box(
-                    Modifier.fillMaxSize()
-                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.82f))
-                        .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { addOpen = false },
-                )
-            }
-            val side = if (leftHanded) WindowInsetsSides.Start else WindowInsetsSides.End
-            AddMenu(
-                spec = addSpec,
-                expanded = addOpen,
-                onExpandedChange = { addOpen = it },
-                modifier = Modifier.align(if (leftHanded) Alignment.BottomStart else Alignment.BottomEnd)
-                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom + side)),
-                horizontalAlignment = if (leftHanded) Alignment.Start else Alignment.End,
-                buttonModifier = Modifier.onGloballyPositioned { fabRect = it.boundsInRoot() },
-            )
-        }
-    }
-}
-
-/**
- * The floating toolbar holding a group's tabs: a raised pill on `surfaceContainer` whose segmented tabs fill it. The
- * tabs are navigation, so for the clutter budget the toolbar is one exempt region (like the navigation bar).
- */
-@Composable
-private fun GroupToolbar(group: GroupChrome, modifier: Modifier = Modifier) {
-    Surface(
-        shape = CircleShape,
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        tonalElevation = ToolbarElevation,
-        shadowElevation = ToolbarElevation,
-        modifier = modifier.fillMaxWidth().testTag(CLUTTER_EXEMPT),
-    ) {
-        SegmentedTabs(
-            labels = group.tabs,
-            selected = group.selected,
-            onSelect = group.onSelect,
-            modifier = Modifier.padding(Space.xxs),
-        )
+        if (host == null) FloatingChrome(tabs, addSpec, leftHanded, onClearance = { ownClearance = it })
     }
 }
 
@@ -241,7 +168,6 @@ val LocalLeftHanded = compositionLocalOf { false }
 /** Room under a list's last row before the floating Add button and toolbar have been measured (one frame). */
 private val FLOATING_FALLBACK = 96.dp
 
-private val ToolbarElevation = 3.dp
 
 @Composable
 private fun TopBar(title: String, subtitle: String?, actions: @Composable RowScope.() -> Unit, menu: List<MenuAction>, onBack: (() -> Unit)?) {
