@@ -101,6 +101,10 @@ All in `core/design/src/main/kotlin/app/klean/core/design/component/`.
 | `SegmentedTabs` | `SingleChoiceSegmentedButtonRow`, outline border, selected = group container colour, 48 dp tall | remembers the last choice per group |
 | `WeekBars` | 7 bars, one per day, current day in the accent; days with no data show a short stub, never a gap or a mark | used by Sleep, Workout and Track's Week |
 | `SavedCard` | `large` tonal card, title, one line, a "Start" affordance (accent disc with a play icon + label); horizontal row ends with a "New" card | the whole card starts the workout; no separate filled button |
+| `FactCard` | small `large` card on `surfaceContainerLow`: label, one fact, a supporting line; not tappable | Track › Week's other trackers, two to a row |
+| `WidgetTokens` | the same scales for Glance widgets (no Compose components there): 24 dp corners, `surfaceContainerLow`, card padding, a full pill a touch target tall, sizes from the type scale | `WidgetTokensTest` keeps both widgets on them |
+
+Also: `ModuleCard(hero = …)` puts a week of `WeekBars` inside the tonal hero (Workout, Sleep, Track › Week); `SavedCard(onLongClick)` edits; `KleanScreen(onBack)` gives detail and settings screens a back arrow; `lineLimit(text, max)` gives a single word one line and "…" (never a mid-word break at font 1.5); segment labels shrink to fit before they end in "…".
 
 ## Clutter budget (hard rule)
 

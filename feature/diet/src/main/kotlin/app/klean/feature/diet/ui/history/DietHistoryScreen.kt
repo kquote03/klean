@@ -1,5 +1,6 @@
 package app.klean.feature.diet.ui.history
 
+import app.klean.core.design.theme.Space
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -104,7 +105,7 @@ private fun MonthPage(
     val title = remember(state.month, locale) {
         DateTimeFormatter.ofPattern("LLLL yyyy", locale).format(state.month.toJavaLocalDate())
     }
-    Column(Modifier.fillMaxSize().padding(horizontal = 12.dp)) {
+    Column(Modifier.fillMaxSize().padding(horizontal = Space.sm)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onPrevious, enabled = hasPrevious) {
                 Icon(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, contentDescription = stringResource(R.string.diet_history_previous))
@@ -119,7 +120,7 @@ private fun MonthPage(
                 Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = stringResource(R.string.diet_history_next))
             }
         }
-        Row(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+        Row(Modifier.fillMaxWidth().padding(vertical = Space.xxs)) {
             (0 until 7).forEach { i ->
                 val dow = DayOfWeek.of(((firstDayOfWeek.value - 1 + i) % 7) + 1)
                 Text(
@@ -158,7 +159,7 @@ private fun DayCell(day: HistoryDay, onOpenDay: (LocalDate) -> Unit) {
         modifier = Modifier
             .aspectRatio(1f)
             .heightIn(min = 48.dp)
-            .padding(2.dp)
+            .padding(Space.xxs / 2)
             .then(if (day.isToday) Modifier.border(BorderStroke(1.dp, outline), CircleShape) else Modifier)
             .clickable(enabled = !day.isFuture) { onOpenDay(day.date) }
             .semantics(mergeDescendants = true) { contentDescription = description },

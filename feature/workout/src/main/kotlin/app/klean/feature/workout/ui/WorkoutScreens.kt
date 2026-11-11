@@ -331,7 +331,7 @@ fun TemplateEditScreen(onBack: () -> Unit, vm: TemplateEditViewModel = hiltViewM
             }
         },
     ) { pad ->
-        Column(Modifier.padding(pad).padding(16.dp).verticalScroll(rememberScrollState())) {
+        Column(Modifier.padding(pad).padding(Space.md).verticalScroll(rememberScrollState())) {
             OutlinedTextField(
                 value = s.name, onValueChange = vm::setName, singleLine = true,
                 label = { Text(stringResource(R.string.workout_template_name)) }, modifier = Modifier.fillMaxWidth(),
@@ -340,15 +340,15 @@ fun TemplateEditScreen(onBack: () -> Unit, vm: TemplateEditViewModel = hiltViewM
                 value = s.text, onValueChange = vm::setText, minLines = 3,
                 label = { Text(stringResource(R.string.workout_template_items)) },
                 placeholder = { Text(stringResource(R.string.workout_template_hint)) },
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                modifier = Modifier.fillMaxWidth().padding(top = Space.xs),
             )
-            Text(stringResource(R.string.workout_template_preview), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 16.dp, bottom = 4.dp))
+            Text(stringResource(R.string.workout_template_preview), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = Space.md, bottom = Space.xxs))
             val preview = s.preview
             if (preview.isEmpty()) {
                 Text(stringResource(R.string.workout_template_nothing), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            preview.forEach { Text("· " + TemplateText.formatItem(it), modifier = Modifier.padding(vertical = 2.dp)) }
-            Button(onClick = { vm.save(onBack) }, enabled = s.loaded, modifier = Modifier.padding(top = 16.dp).heightIn(min = 48.dp)) {
+            preview.forEach { Text("· " + TemplateText.formatItem(it), modifier = Modifier.padding(vertical = Space.xxs / 2)) }
+            Button(onClick = { vm.save(onBack) }, enabled = s.loaded, modifier = Modifier.padding(top = Space.md).heightIn(min = 48.dp)) {
                 Text(stringResource(R.string.workout_save))
             }
         }
@@ -387,12 +387,12 @@ fun SessionScreen(onBack: () -> Unit, onDeleted: (String) -> Unit, vm: SessionVi
                 } else {
                     stringResource(R.string.workout_finished_at, if (today != null) fmt.dayTime(session.session.startedAt, today) else "", fmt.summary(session))
                 }
-                Text(header, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(16.dp))
-                session.session.notes?.let { Text(it, modifier = Modifier.padding(horizontal = 16.dp)) }
+                Text(header, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(Space.md))
+                session.session.notes?.let { Text(it, modifier = Modifier.padding(horizontal = Space.md)) }
             }
             if (s.rows.isEmpty()) item { Hint(stringResource(R.string.workout_session_empty)) }
             items(s.rows, key = { "r:" + it.exercise.lowercase() }) { row ->
-                Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+                Column(Modifier.fillMaxWidth().padding(horizontal = Space.md, vertical = Space.xs)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
                             Text(row.exercise, style = MaterialTheme.typography.titleSmall)
@@ -401,7 +401,7 @@ fun SessionScreen(onBack: () -> Unit, onDeleted: (String) -> Unit, vm: SessionVi
                         val add = stringResource(R.string.workout_add_set, row.exercise)
                         FilledTonalButton(
                             onClick = { vm.addSet(row) },
-                            modifier = Modifier.padding(start = 8.dp).heightIn(min = 48.dp).semanticsLabel(add),
+                            modifier = Modifier.padding(start = Space.xs).heightIn(min = 48.dp).semanticsLabel(add),
                         ) { Text(stringResource(R.string.workout_add_set_short)) }
                     }
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -422,15 +422,15 @@ fun SessionScreen(onBack: () -> Unit, onDeleted: (String) -> Unit, vm: SessionVi
                     onMic = {},
                     onPhoto = null,
                     placeholder = stringResource(R.string.workout_add_exercise),
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.padding(Space.md),
                 )
             }
             if (session.isOpen) {
                 item {
-                    Button(onClick = { vm.finish(onBack) }, modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth().heightIn(min = 56.dp)) {
+                    Button(onClick = { vm.finish(onBack) }, modifier = Modifier.padding(horizontal = Space.md).fillMaxWidth().heightIn(min = 56.dp)) {
                         Text(stringResource(R.string.workout_finish))
                     }
-                    Spacer(Modifier.padding(bottom = 24.dp))
+                    Spacer(Modifier.padding(bottom = Space.lg))
                 }
             }
         }

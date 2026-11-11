@@ -1,5 +1,6 @@
 package app.klean.feature.diet.ui.settings
 
+import app.klean.core.design.theme.Space
 import app.klean.core.design.component.SwitchListItem
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -124,30 +125,30 @@ fun DietSettingsContent(
                 modifier = Modifier.clickable(onClick = onOpenPlaces),
             )
             if (state.debug) {
-                HorizontalDivider(Modifier.padding(vertical = 8.dp))
+                HorizontalDivider(Modifier.padding(vertical = Space.xs))
                 Text(
                     stringResource(R.string.diet_debug_title),
                     style = MaterialTheme.typography.titleSmall,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    modifier = Modifier.padding(horizontal = Space.md, vertical = Space.xs),
                 )
-                OutlinedButton(onClick = onFireNow, modifier = Modifier.padding(horizontal = 16.dp)) {
+                OutlinedButton(onClick = onFireNow, modifier = Modifier.padding(horizontal = Space.md)) {
                     Text(stringResource(R.string.diet_debug_fire))
                 }
-                OutlinedButton(onClick = onShowNext, modifier = Modifier.padding(horizontal = 16.dp)) {
+                OutlinedButton(onClick = onShowNext, modifier = Modifier.padding(horizontal = Space.md)) {
                     Text(stringResource(R.string.diet_debug_show_next))
                 }
-                OutlinedButton(onClick = onPretendLongBreak, modifier = Modifier.padding(horizontal = 16.dp)) {
+                OutlinedButton(onClick = onPretendLongBreak, modifier = Modifier.padding(horizontal = Space.md)) {
                     Text(stringResource(R.string.diet_debug_pretend_long_break))
                 }
                 if (state.pretendArmed) {
                     Text(
                         stringResource(R.string.diet_debug_pretend_long_break_done),
                         style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(horizontal = 16.dp),
+                        modifier = Modifier.padding(horizontal = Space.md),
                     )
                 }
                 state.debugInfo?.let {
-                    Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(16.dp))
+                    Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(Space.md))
                 }
             }
         }

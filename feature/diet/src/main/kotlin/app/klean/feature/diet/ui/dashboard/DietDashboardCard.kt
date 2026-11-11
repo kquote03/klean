@@ -1,5 +1,6 @@
 package app.klean.feature.diet.ui.dashboard
 
+import app.klean.core.design.theme.Space
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -79,22 +80,22 @@ fun DietDashboardCard(onOpen: () -> Unit, modifier: Modifier = Modifier, vm: Die
     var text by rememberSaveable { mutableStateOf("") }
     val ctx = LocalContext.current
     KleanCard(title = stringResource(R.string.diet_card_title), onOpen = onOpen, modifier = modifier) {
-        Column(Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp)) {
+        Column(Modifier.padding(start = Space.md, end = Space.md, bottom = Space.md)) {
             if (state.entries.isEmpty()) {
                 Text(
                     stringResource(R.string.diet_card_empty),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(bottom = 8.dp),
+                    modifier = Modifier.padding(bottom = Space.xs),
                 )
             }
             state.entries.forEach { e ->
-                Row(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                Row(Modifier.fillMaxWidth().padding(vertical = Space.xxs)) {
                     Text(
                         e.timeLabel,
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(end = 12.dp),
+                        modifier = Modifier.padding(end = Space.sm),
                     )
                     Text(e.text, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
@@ -110,7 +111,7 @@ fun DietDashboardCard(onOpen: () -> Unit, modifier: Modifier = Modifier, vm: Die
                 onMic = { ctx.startActivity(CaptureActivity.intent(ctx, CaptureSource.DASHBOARD, ModuleId.DIET, startVoice = true)) },
                 onPhoto = null,
                 placeholder = stringResource(R.string.diet_capture_placeholder),
-                modifier = Modifier.padding(top = 8.dp),
+                modifier = Modifier.padding(top = Space.xs),
             )
         }
     }

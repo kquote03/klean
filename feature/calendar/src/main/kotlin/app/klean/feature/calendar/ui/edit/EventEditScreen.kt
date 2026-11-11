@@ -1,5 +1,6 @@
 package app.klean.feature.calendar.ui.edit
 
+import app.klean.core.design.theme.Space
 import android.text.format.DateFormat
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -125,7 +126,7 @@ fun EventEditContent(
         },
     ) { padding ->
         Column(
-            Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
+            Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = Space.md),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             OutlinedTextField(
@@ -144,7 +145,7 @@ fun EventEditContent(
                 date = fmt.shortDay(f.endDate), time = if (f.allDay) null else fmt.minutes(f.endMinutes),
                 onDate = { picker = Picker.END_DATE }, onTime = { picker = Picker.END_TIME },
             )
-            Text(stringResource(R.string.calendar_edit_repeat), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 8.dp))
+            Text(stringResource(R.string.calendar_edit_repeat), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = Space.xs))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 val choices = Repeat.entries.filter { it != Repeat.CUSTOM || f.repeat == Repeat.CUSTOM }
                 choices.forEach { r ->
@@ -155,7 +156,7 @@ fun EventEditContent(
                 }
             }
             if (!f.allDay) {
-                Text(stringResource(R.string.calendar_edit_reminder), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 8.dp))
+                Text(stringResource(R.string.calendar_edit_reminder), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = Space.xs))
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     (CalendarKeys.REMINDER_CHOICES + f.reminder).distinct().forEach { m ->
                         FilterChip(
@@ -252,7 +253,7 @@ private fun DateDialog(initial: LocalDate, onDismiss: () -> Unit, onPick: (Local
             }) { Text(stringResource(R.string.calendar_ok)) }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.calendar_cancel)) } },
-    ) { DatePicker(state = state, title = { Text(stringResource(R.string.calendar_pick_date), Modifier.padding(16.dp)) }) }
+    ) { DatePicker(state = state, title = { Text(stringResource(R.string.calendar_pick_date), Modifier.padding(Space.md)) }) }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

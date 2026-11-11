@@ -1,5 +1,6 @@
 package app.klean.feature.calendar.ui.settings
 
+import app.klean.core.design.theme.Space
 import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -136,9 +137,9 @@ fun CalendarSettingsContent(
             Header(stringResource(R.string.calendar_settings_new_events))
             Text(
                 stringResource(R.string.calendar_settings_default_reminder),
-                style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(horizontal = 16.dp),
+                style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(horizontal = Space.md),
             )
-            FlowRow(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(Modifier.padding(horizontal = Space.md), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 CalendarKeys.REMINDER_CHOICES.forEach { m ->
                     FilterChip(
                         selected = state.defaultReminder == m, onClick = { onDefaultReminder(m) },
@@ -165,6 +166,6 @@ fun CalendarSettingsContent(
 private fun Header(text: String) {
     Text(
         text, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(start = 16.dp, top = 24.dp, bottom = 4.dp).semantics { heading() },
+        modifier = Modifier.padding(start = Space.md, top = Space.lg, bottom = Space.xxs).semantics { heading() },
     )
 }

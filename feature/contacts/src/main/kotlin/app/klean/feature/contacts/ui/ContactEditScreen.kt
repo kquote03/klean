@@ -1,5 +1,6 @@
 package app.klean.feature.contacts.ui
 
+import app.klean.core.design.theme.Space
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -78,7 +79,7 @@ fun ContactEditContent(state: ContactEditUiState, vm: ContactEditViewModel, onBa
         },
     ) { padding ->
         Column(
-            Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
+            Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = Space.md),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             OutlinedTextField(
@@ -179,7 +180,7 @@ private fun daysIn(month: Int) = intArrayOf(31, 29, 31, 30, 31, 30, 31, 31, 30, 
 private fun Section(text: String) {
     Text(
         text, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(top = 12.dp).semantics { heading() },
+        modifier = Modifier.padding(top = Space.sm).semantics { heading() },
     )
 }
 

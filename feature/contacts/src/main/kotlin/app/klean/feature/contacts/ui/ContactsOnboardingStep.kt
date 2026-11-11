@@ -1,5 +1,6 @@
 package app.klean.feature.contacts.ui
 
+import app.klean.core.design.theme.Space
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
@@ -48,14 +49,14 @@ class ContactsOnboardingStep @Inject constructor(
             allowed = granted()
             scope.launch { runCatching { access.onAccessChanged() } }
         }
-        Column(Modifier.padding(horizontal = 8.dp, vertical = 8.dp)) {
+        Column(Modifier.padding(horizontal = Space.xs, vertical = Space.xs)) {
             Text(stringResource(R.string.contacts_setup_body), style = MaterialTheme.typography.bodyLarge)
             if (allowed) {
-                Text(stringResource(R.string.contacts_settings_phone_on), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = 16.dp))
+                Text(stringResource(R.string.contacts_settings_phone_on), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(top = Space.md))
             } else {
                 FilledTonalButton(
                     onClick = { ask.launch(arrayOf(Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS)) },
-                    modifier = Modifier.padding(top = 16.dp).heightIn(min = 48.dp),
+                    modifier = Modifier.padding(top = Space.md).heightIn(min = 48.dp),
                 ) { Text(stringResource(R.string.contacts_setup_allow)) }
             }
         }

@@ -216,7 +216,7 @@ fun SleepEditScreen(onBack: () -> Unit, vm: SleepEditViewModel = hiltViewModel()
                 trailingContent = { Text(s.wakeAt?.let { fmt.time(it) } ?: stringResource(R.string.sleep_still_asleep)) },
                 supportingContent = { s.wakeAt?.let { Text(fmt.duration(it - s.bedAt)) } },
             )
-            Button(onClick = { vm.save(onBack) }, modifier = Modifier.padding(16.dp).heightIn(min = 48.dp)) {
+            Button(onClick = { vm.save(onBack) }, modifier = Modifier.padding(Space.md).heightIn(min = 48.dp)) {
                 Text(stringResource(R.string.sleep_save))
             }
         }
@@ -255,9 +255,9 @@ fun SleepSettingsScreen(onBack: () -> Unit, vm: SleepSettingsViewModel = hiltVie
         Column(Modifier.padding(pad).verticalScroll(rememberScrollState())) {
             Text(
                 stringResource(R.string.sleep_settings_schedule), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(start = 16.dp, top = 8.dp),
+                modifier = Modifier.padding(start = Space.md, top = Space.xs),
             )
-            Text(stringResource(R.string.sleep_settings_schedule_hint), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
+            Text(stringResource(R.string.sleep_settings_schedule_hint), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(horizontal = Space.md, vertical = Space.xxs))
             SleepWindowPicker(
                 s.window,
                 onStart = { vm.setWindow(s.window.copy(startMinute = it)) },

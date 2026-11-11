@@ -1,5 +1,6 @@
 package app.klean.feature.delegation.ui
 
+import app.klean.core.design.theme.Space
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.clickable
@@ -98,7 +99,7 @@ fun ApprovalContent(
 ) {
     var editing by rememberSaveable { mutableStateOf(false) }
     var newRecipient by rememberSaveable { mutableStateOf("") }
-    Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(Space.md), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(s.taskTitle, style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
         Text(stringResource(R.string.delegation_approval_action, s.action.replace('_', ' ')), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         if (s.done) {
@@ -148,7 +149,7 @@ fun ApprovalContent(
             }
         }
         if (!s.done) {
-            Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)) {
+            Row(Modifier.fillMaxWidth().padding(top = Space.xs), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)) {
                 TextButton(onClick = onReject, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.delegation_reject)) }
                 if (!editing) OutlinedButton(onClick = { editing = true }, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.delegation_edit)) }
                 Button(onClick = onApprove, modifier = Modifier.heightIn(min = 48.dp)) {
@@ -166,12 +167,12 @@ fun DelegationScreen(onBack: () -> Unit, onOpenApproval: (String) -> Unit, vm: D
     var reply by rememberSaveable { mutableStateOf("") }
     Scaffold(topBar = { DelegationTopBar(s.taskTitle.ifEmpty { stringResource(R.string.delegation_label) }, onBack) }) { pad ->
         val d = s.delegation ?: return@Scaffold
-        Column(Modifier.padding(pad).fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(Modifier.padding(pad).fillMaxSize().verticalScroll(rememberScrollState()).padding(Space.md), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(statusText(d.status), style = MaterialTheme.typography.titleMedium)
             s.messages.forEach { m ->
                 val mine = m.role == DelegationRole.USER
                 ElevatedCard(Modifier.fillMaxWidth().padding(start = if (mine) 32.dp else 0.dp, end = if (mine) 0.dp else 32.dp)) {
-                    Column(Modifier.padding(12.dp)) {
+                    Column(Modifier.padding(Space.sm)) {
                         Text(stringResource(if (mine) R.string.delegation_you else R.string.delegation_agent), style = MaterialTheme.typography.labelMedium)
                         Text(m.text, style = MaterialTheme.typography.bodyLarge)
                     }
@@ -291,7 +292,7 @@ fun ApprovalsCard(onOpenApproval: (String) -> Unit, modifier: Modifier = Modifie
     val list = pending.orEmpty()
     if (list.isEmpty()) return
     ElevatedCard(modifier.fillMaxWidth()) {
-        Column(Modifier.padding(16.dp)) {
+        Column(Modifier.padding(Space.md)) {
             Text(stringResource(R.string.delegation_card_title), style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
             list.take(5).forEach { p ->
                 ListItem(
@@ -309,7 +310,7 @@ fun HermesSettingsScreen(onBack: () -> Unit, vm: HermesSettingsViewModel = hiltV
     val s by vm.state.collectAsStateWithLifecycle()
     Scaffold(topBar = { DelegationTopBar(stringResource(R.string.delegation_settings_title), onBack) }) { pad ->
         if (!s.loaded) return@Scaffold
-        Column(Modifier.padding(pad).verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(Modifier.padding(pad).verticalScroll(rememberScrollState()).padding(Space.md), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(stringResource(R.string.delegation_settings_body), style = MaterialTheme.typography.bodyMedium)
             OutlinedTextField(value = s.url, onValueChange = vm::setUrl, singleLine = true, modifier = Modifier.fillMaxWidth(), label = { Text(stringResource(R.string.delegation_settings_url)) })
             OutlinedTextField(

@@ -1,5 +1,6 @@
 package app.klean.feature.diet.ui
 
+import app.klean.core.design.theme.Space
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
@@ -55,6 +56,6 @@ fun AiItemsBlock(lines: List<String>, providerId: String?, modifier: Modifier = 
                 Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
-        providerLabelRes(providerId)?.let { ProviderChip(stringResource(it), Modifier.padding(start = 8.dp)) }
+        providerLabelRes(providerId)?.let { ProviderChip(stringResource(it), Modifier.padding(start = Space.xs)) }
     }
 }

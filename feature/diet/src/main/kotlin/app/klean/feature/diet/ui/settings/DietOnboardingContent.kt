@@ -1,5 +1,6 @@
 package app.klean.feature.diet.ui.settings
 
+import app.klean.core.design.theme.Space
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -21,7 +22,7 @@ fun DietOnboardingContent(modifier: Modifier = Modifier, vm: DietSettingsViewMod
         Text(
             stringResource(R.string.diet_onboarding_body),
             style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            modifier = Modifier.padding(horizontal = Space.md, vertical = Space.xs),
         )
         ToggleRow(
             title = stringResource(R.string.diet_settings_prompts),

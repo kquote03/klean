@@ -1,5 +1,6 @@
 package app.klean.feature.tasks.ui
 
+import app.klean.core.design.theme.Space
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -102,7 +103,7 @@ fun TaskEditScreen(
         },
     ) { pad ->
         if (!s.loaded) return@Scaffold
-        Column(Modifier.padding(pad).verticalScroll(rememberScrollState()).padding(16.dp)) {
+        Column(Modifier.padding(pad).verticalScroll(rememberScrollState()).padding(Space.md)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (!s.isNew) CheckCircle(s.done, s.title, vm::setDone)
                 OutlinedTextField(
@@ -112,7 +113,7 @@ fun TaskEditScreen(
             }
             OutlinedTextField(
                 value = s.notes, onValueChange = vm::setNotes, label = { Text(stringResource(R.string.tasks_field_notes)) },
-                minLines = 2, modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                minLines = 2, modifier = Modifier.fillMaxWidth().padding(top = Space.xs),
             )
             // Other modules' additions (Delegation's "Delegate", M23), only for a saved task.
             val taskId = s.id
@@ -122,11 +123,11 @@ fun TaskEditScreen(
                         dagger.hilt.android.EntryPointAccessors.fromApplication(ctx.applicationContext, app.klean.core.ui.module.TaskExtensionsEntryPoint::class.java).taskExtensions()
                     }.getOrDefault(emptySet())
                 }
-                extensions.forEach { it.Content(taskId, s.title, Modifier.padding(top = 8.dp)) }
+                extensions.forEach { it.Content(taskId, s.title, Modifier.padding(top = Space.xs)) }
             }
             // List.
             if (s.parentId == null && !s.google) {
-                Row(Modifier.padding(top = 8.dp)) {
+                Row(Modifier.padding(top = Space.xs)) {
                     OutlinedButton(onClick = { listMenu = true }, modifier = Modifier.heightIn(min = 48.dp)) {
                         Text(stringResource(R.string.tasks_field_list, lists.firstOrNull { it.id == s.listId }?.name ?: lists.firstOrNull()?.name.orEmpty()))
                     }
@@ -136,11 +137,11 @@ fun TaskEditScreen(
                 }
             }
             // Due.
-            Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.padding(top = Space.xs), verticalAlignment = Alignment.CenterVertically) {
                 OutlinedButton(onClick = { pickDate = true }, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) {
                     Text(s.dueDate?.let { fmt.day(it, today) } ?: stringResource(R.string.tasks_field_no_date))
                 }
-                OutlinedButton(onClick = { pickTime = true }, modifier = Modifier.padding(start = 8.dp).weight(1f).heightIn(min = 48.dp)) {
+                OutlinedButton(onClick = { pickTime = true }, modifier = Modifier.padding(start = Space.xs).weight(1f).heightIn(min = 48.dp)) {
                     Text(s.dueMinutes?.let { m -> fmt.time(s.dueDate ?: today, m) } ?: stringResource(R.string.tasks_field_all_day))
                 }
                 if (s.dueDate != null) {
@@ -150,10 +151,10 @@ fun TaskEditScreen(
                 }
             }
             if (s.someday) {
-                Text(stringResource(R.string.tasks_someday_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
+                Text(stringResource(R.string.tasks_someday_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = Space.xxs))
             }
             // Priority (neutral colours, no red).
-            Text(stringResource(R.string.tasks_field_priority), style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 16.dp, bottom = 4.dp))
+            Text(stringResource(R.string.tasks_field_priority), style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = Space.md, bottom = Space.xxs))
             val labels = listOf(R.string.tasks_priority_none, R.string.tasks_priority_low, R.string.tasks_priority_medium, R.string.tasks_priority_high)
             SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
                 labels.forEachIndexed { i, l ->
@@ -162,7 +163,7 @@ fun TaskEditScreen(
                     }
                 }
             }
-            RepeatPicker(s.repeat, onChange = vm::setRepeat, modifier = Modifier.padding(top = 12.dp))
+            RepeatPicker(s.repeat, onChange = vm::setRepeat, modifier = Modifier.padding(top = Space.sm))
 
             // Steps.
             if (s.parentId == null) {
@@ -231,7 +232,7 @@ fun TaskEditScreen(
                     AssistChip(onClick = { s.id?.let { onCustomReminder(it, s.title) } }, label = { Text(stringResource(R.string.tasks_reminder_custom)) })
                 }
             }
-            HorizontalDivider(Modifier.padding(top = 16.dp), color = androidx.compose.ui.graphics.Color.Transparent)
+            HorizontalDivider(Modifier.padding(top = Space.md), color = androidx.compose.ui.graphics.Color.Transparent)
         }
     }
     if (pickDate) DatePickDialog(s.dueDate ?: today, onDismiss = { pickDate = false }, onPicked = { vm.setDue(it); pickDate = false })
@@ -249,7 +250,7 @@ private fun fmtReminder(fmt: TaskFormatter, at: Long): String {
 private fun SectionTitle(res: Int) = Text(
     stringResource(res),
     style = MaterialTheme.typography.titleSmall,
-    modifier = Modifier.padding(top = 20.dp, bottom = 4.dp),
+    modifier = Modifier.padding(top = Space.md + Space.xxs, bottom = Space.xxs),
 )
 
 @Composable

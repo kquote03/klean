@@ -1,5 +1,6 @@
 package app.klean.feature.contacts.ui
 
+import app.klean.core.design.theme.Space
 import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -154,9 +155,9 @@ fun BirthdaysSettingsContent(
         Header(stringResource(R.string.birthdays_settings_defaults))
         Text(
             stringResource(R.string.birthdays_settings_defaults_body), style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(horizontal = 16.dp),
+            modifier = Modifier.padding(horizontal = Space.md),
         )
-        FlowRow(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FlowRow(Modifier.padding(horizontal = Space.md), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             ReminderDays.CHOICES.forEach { n ->
                 FilterChip(
                     selected = n in state.defaultDays, onClick = { onToggleDefault(n) },
@@ -165,7 +166,7 @@ fun BirthdaysSettingsContent(
             }
         }
         Header(stringResource(R.string.birthdays_settings_time))
-        FlowRow(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FlowRow(Modifier.padding(horizontal = Space.md), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             BirthdaysSettingsViewModel.HOURS.forEach { h ->
                 FilterChip(
                     selected = state.hour == h, onClick = { onHour(h) },
@@ -203,6 +204,6 @@ private fun SettingsScaffold(title: String, onBack: () -> Unit, snackbar: Snackb
 private fun Header(text: String) {
     Text(
         text, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(start = 16.dp, top = 24.dp, bottom = 4.dp).semantics { heading() },
+        modifier = Modifier.padding(start = Space.md, top = Space.lg, bottom = Space.xxs).semantics { heading() },
     )
 }

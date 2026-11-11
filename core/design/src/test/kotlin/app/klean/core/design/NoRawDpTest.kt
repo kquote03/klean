@@ -3,7 +3,6 @@ package app.klean.core.design
 import java.io.File
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
-import org.junit.Ignore
 import org.junit.Test
 
 /** Screens space themselves with `Space` (docs/ui/design-system.md), never with raw `NN.dp` paddings. */
@@ -20,6 +19,16 @@ class NoRawDpTest {
         "app/src/main/kotlin/app/klean/today/TodayScreen.kt",
         "feature/tasks/src/main/kotlin/app/klean/feature/tasks/ui/TasksScreen.kt",
         "feature/calendar/src/main/kotlin/app/klean/feature/calendar/ui/CalendarScreen.kt",
+        "app/src/main/kotlin/app/klean/track/TrackWeekScreen.kt",
+        "feature/workout/src/main/kotlin/app/klean/feature/workout/ui/WorkoutScreens.kt",
+        "feature/sleep/src/main/kotlin/app/klean/feature/sleep/ui/SleepScreens.kt",
+        "feature/diet/src/main/kotlin/app/klean/feature/diet/ui/today/DietScreen.kt",
+        "feature/contacts/src/main/kotlin/app/klean/feature/contacts/ui/ContactsScreen.kt",
+        "feature/contacts/src/main/kotlin/app/klean/feature/contacts/ui/ContactDetailScreen.kt",
+        "feature/settings/src/main/kotlin/app/klean/feature/settings/SettingsScreen.kt",
+        "feature/onboarding/src/main/kotlin/app/klean/feature/onboarding/OnboardingScreen.kt",
+        "app/src/main/kotlin/app/klean/widget/TodayWidget.kt",
+        "feature/diet/src/main/kotlin/app/klean/feature/diet/widget/DietWidget.kt",
     )
 
     @Test fun redesignedScreensUseTheSpacingScale() {
@@ -34,8 +43,7 @@ class NoRawDpTest {
         assertFalse(raw.containsMatchIn("Modifier.padding(0.dp)"))
     }
 
-    // TODO(UI overhaul): remove @Ignore at the end of Phase 3, once Track, People, Settings and Onboarding are converted.
-    @Ignore("Until every feature screen is converted (plan §2.2)")
+    /** Every feature screen (UI Phase 3 is done): no raw `NN.dp` padding anywhere under a feature's `ui/`. */
     @Test fun noRawPaddingInFeatureScreens() {
         val files = File(root, "feature").walkTopDown()
             .onEnter { it.name != "build" }

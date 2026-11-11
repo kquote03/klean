@@ -217,7 +217,7 @@ fun ReminderEditScreen(onBack: () -> Unit, vm: ReminderEditViewModel = hiltViewM
         },
     ) { pad ->
         if (!s.loaded) return@Scaffold
-        Column(Modifier.padding(pad).padding(16.dp).verticalScroll(rememberScrollState())) {
+        Column(Modifier.padding(pad).padding(Space.md).verticalScroll(rememberScrollState())) {
             OutlinedTextField(
                 value = s.title, onValueChange = vm::setTitle,
                 label = { Text(stringResource(R.string.reminders_field_title)) },
@@ -225,20 +225,20 @@ fun ReminderEditScreen(onBack: () -> Unit, vm: ReminderEditViewModel = hiltViewM
             )
             val tz = TimeZone.currentSystemDefault()
             val date = s.date
-            Row(Modifier.padding(top = 12.dp)) {
+            Row(Modifier.padding(top = Space.sm)) {
                 OutlinedButton(onClick = { pickDate = true }, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) {
                     Text(date?.let { fmt.day(atMinute(it, s.minute, tz)) } ?: stringResource(R.string.reminders_pick_day))
                 }
-                OutlinedButton(onClick = { pickTime = true }, modifier = Modifier.padding(start = 8.dp).weight(1f).heightIn(min = 48.dp)) {
+                OutlinedButton(onClick = { pickTime = true }, modifier = Modifier.padding(start = Space.xs).weight(1f).heightIn(min = 48.dp)) {
                     Text(date?.let { fmt.time(atMinute(it, s.minute, tz)) } ?: "")
                 }
             }
-            RepeatPicker(s.repeat, onChange = vm::setRepeat, modifier = Modifier.padding(top = 12.dp))
+            RepeatPicker(s.repeat, onChange = vm::setRepeat, modifier = Modifier.padding(top = Space.sm))
             SwitchListItem(
                 checked = s.isAlarm, onCheckedChange = vm::setAlarm,
                 headline = { Text(stringResource(R.string.reminders_field_alarm)) },
                 supporting = { Text(stringResource(R.string.reminders_field_alarm_hint)) },
-                modifier = Modifier.padding(top = 8.dp),
+                modifier = Modifier.padding(top = Space.xs),
             )
         }
     }
@@ -307,7 +307,7 @@ fun RepeatPicker(choice: RepeatChoice, onChange: (RepeatChoice) -> Unit, modifie
                 label = { Text(stringResource(R.string.repeat_n_label)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.padding(top = 8.dp).fillMaxWidth(),
+                modifier = Modifier.padding(top = Space.xs).fillMaxWidth(),
             )
         }
         if (choice.kind == RepeatKind.CUSTOM) {
@@ -319,7 +319,7 @@ fun RepeatPicker(choice: RepeatChoice, onChange: (RepeatChoice) -> Unit, modifie
                 supportingText = { Text(stringResource(if (valid) R.string.repeat_custom_ok else R.string.repeat_custom_hint)) },
                 isError = choice.custom.isNotEmpty() && !valid,
                 singleLine = true,
-                modifier = Modifier.padding(top = 8.dp).fillMaxWidth(),
+                modifier = Modifier.padding(top = Space.xs).fillMaxWidth(),
             )
         }
     }
