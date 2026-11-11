@@ -58,7 +58,8 @@ class ContactsScreenTest {
         rule.onNodeWithText("Sara Dav").performClick()
         assertEquals(listOf<Pair<String?, Long?>>(null to 3L), opened)
         rule.onNodeWithContentDescription("More options").assertHeightIsAtLeast(48.dp).performClick()
-        rule.onNodeWithText("New contact").assertIsDisplayed()
+        // New contact lives in the Add menu (its last line in People), not the overflow.
+        rule.onNodeWithText("New contact").assertDoesNotExist()
         rule.onNodeWithText("Contacts settings").assertIsDisplayed()
     }
 

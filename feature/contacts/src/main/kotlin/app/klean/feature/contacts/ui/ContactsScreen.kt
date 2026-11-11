@@ -105,7 +105,7 @@ fun ContactsContent(
     var merging by rememberSaveable { mutableStateOf(false) }
     val shown = if (!state.birthdaysOn) ContactsTab.CONTACTS else tab
     val menu = buildList {
-        add(MenuAction(stringResource(R.string.contacts_new), onClick = onNew))
+        // New contact is the Add menu's last line in People (plan 2026-11-11, D2), so it isn't here too.
         if (state.birthdaysOn && shown == ContactsTab.CONTACTS) add(MenuAction(stringResource(R.string.birthdays_label)) { tab = ContactsTab.BIRTHDAYS })
         add(MenuAction(stringResource(R.string.contacts_settings_title), onClick = onSettings))
     }

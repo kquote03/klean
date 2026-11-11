@@ -57,6 +57,7 @@ import app.klean.core.design.component.OverflowMenu
 import app.klean.core.design.component.SegmentedTabs
 import app.klean.core.design.theme.Space
 import app.klean.core.ui.module.KleanModule
+import app.klean.feature.contacts.ContactEditRoute
 import app.klean.feature.onboarding.OnboardingRoute
 import app.klean.shared.diet.CaptureSource
 import kotlinx.coroutines.flow.Flow
@@ -142,11 +143,17 @@ fun KleanAppUi(vm: ShellViewModel = hiltViewModel(), deepLinks: Flow<Intent> = e
     val resolver = GroupChromeResolver { owner -> (owner as? NavBackStackEntry)?.destination?.let(::chromeFor)?.let { (g, i) -> chrome(g, i) } }
 
     val enabledIds = enabled.map { it.id }.toSet()
+    // The module whose screens are showing; its own Add line sits nearest the button.
+    val here = enabled.firstOrNull { current.isOn(it.graphRoute) }?.id
     val addSpec = AddMenuSpec(
-        items = addMenuEntries(enabledIds).map { e ->
+        items = addMenuEntries(enabledIds, current = here).map { e ->
             val label = stringResource(e.label)
             AddMenuItem(e.module.value, label, e.icon) {
-                ctx.startActivity(CaptureActivity.intent(ctx, CaptureSource.DASHBOARD, target = e.module))
+                if (e.opensContactEditor) {
+                    nav.navigate(ContactEditRoute())
+                } else {
+                    ctx.startActivity(CaptureActivity.intent(ctx, CaptureSource.DASHBOARD, target = e.module))
+                }
             }
         },
         onCapture = { ctx.startActivity(CaptureActivity.intent(ctx, CaptureSource.DASHBOARD)) },
