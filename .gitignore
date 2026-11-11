@@ -9,3 +9,6 @@ captures/
 .cxx/
 result
 .direnv/
+
+# Local secrets and credentials (OAuth client JSON, keys). Never committed, never in the Docker context.
+.donotship/
