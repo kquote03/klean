@@ -69,11 +69,11 @@ fun KleanNavHost(
             )
         }
         composable<TodayRoute>(deepLinks = listOf(navDeepLink { uriPattern = "klean://today" })) {
-            // Today's one-tap grid (lane GLANCE). Capture still opens CaptureActivity here; the in-app sheet (lane NAV)
-            // and the voice screen (lane VOICE) replace these two lambdas when they merge.
-            fun capture(target: app.klean.shared.module.ModuleId?, voice: Boolean = false) = ctx.startActivity(
-                app.klean.core.capture.CaptureActivity.intent(ctx, app.klean.shared.diet.CaptureSource.DASHBOARD, target = target, startVoice = voice),
-            )
+            // Today's one-tap grid: capture opens the sheet in place (never CaptureActivity, whose Back zooms out),
+            // Speak opens the voice screen.
+            val launcher = app.klean.core.capture.rememberCaptureLauncher()
+            fun capture(target: app.klean.shared.module.ModuleId?) =
+                launcher.open(target, app.klean.shared.diet.CaptureSource.DASHBOARD, false, null)
             TodayScreen(
                 registry = registry, glance = shell.glance,
                 clock = shell.clock, zone = shell.zone, ticker = shell.ticker,
@@ -84,7 +84,7 @@ fun KleanNavHost(
                         is app.klean.core.ui.module.QuickAction.Instant -> Unit // runs on Today itself, with Undo
                     }
                 },
-                onVoice = { capture(null, voice = true) },
+                onVoice = { nav.navigate(app.klean.core.capture.voice.VoiceRoute()) { launchSingleTop = true } },
                 onType = { capture(null) },
                 onOpen = { link -> runCatching { nav.navigate(android.net.Uri.parse(link)) } },
                 layout = shell.todayLayout,

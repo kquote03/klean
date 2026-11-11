@@ -92,7 +92,7 @@ fun KleanAppUi(
     vm: ShellViewModel = hiltViewModel(),
     deepLinks: Flow<Intent> = emptyFlow(),
     /** The capture sheet shown in place (tests pass a stand-in: the real one needs Hilt). */
-    captureSheet: @Composable (CaptureRequest, () -> Unit) -> Unit = { r, d -> InAppCaptureSheet(r, d) },
+    captureSheet: (@Composable (CaptureRequest, () -> Unit) -> Unit)? = null,
 ) {
     val sheets = remember { ShellSheets() }
     val registry = vm.registry
@@ -213,7 +213,16 @@ fun KleanAppUi(
                     }
                 }
             }
-            ShellSheetsHost(sheets, captureSheet)
+            // The sheet's mic closes it and opens the voice screen as its own page (it slides up; Back slides it down).
+            ShellSheetsHost(
+                sheets,
+                captureSheet ?: { r, d ->
+                    InAppCaptureSheet(r, d, onVoice = { t ->
+                        sheets.capture = null
+                        nav.navigate(app.klean.core.capture.voice.VoiceRoute(t?.value)) { launchSingleTop = true }
+                    })
+                },
+            )
         }
     }
 }

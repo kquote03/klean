@@ -55,13 +55,13 @@ class ShellSheets {
  * sheet closes (so an unsaved photo is cleaned up and no view model outlives its sheet).
  */
 @Composable
-fun InAppCaptureSheet(request: CaptureRequest, onDismiss: () -> Unit) {
+fun InAppCaptureSheet(request: CaptureRequest, onDismiss: () -> Unit, onVoice: ((ModuleId?) -> Unit)? = null) {
     val parent = checkNotNull(LocalViewModelStoreOwner.current)
     val owner = remember(request) { SheetViewModelOwner(parent) }
     DisposableEffect(owner) { onDispose { owner.viewModelStore.clear() } }
     val vm = hiltViewModel<CaptureViewModel>(owner)
     LaunchedEffect(vm, request) { vm.start(request.target, request.source, request.voice, eatenAt = request.eatenAt) }
-    CaptureSheet(vm = vm, onDismiss = onDismiss)
+    CaptureSheet(vm = vm, onDismiss = onDismiss, onVoice = onVoice)
 }
 
 /** Shows [ShellSheets.capture] with [sheet]; Back closes it (and only it) even if the sheet doesn't take Back itself. */

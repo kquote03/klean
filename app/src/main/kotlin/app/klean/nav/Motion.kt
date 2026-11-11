@@ -32,7 +32,7 @@ enum class MotionKind {
 }
 
 /** Full-screen pages: they slide up from the bottom and back down. The voice screen's route joins this set. */
-val FULL_SCREEN_ROUTES: Set<KClass<*>> = setOf(AccountRoute::class)
+val FULL_SCREEN_ROUTES: Set<KClass<*>> = setOf(AccountRoute::class, app.klean.core.capture.voice.VoiceRoute::class)
 
 /** The motion between [from] and [to] (either order: Back reverses the same motion). Unknown screens use the axis. */
 fun motionKind(
