@@ -109,4 +109,10 @@
     <string name="tasks_view_finished">Finished</string>
     <string name="tasks_section_coming_up">Coming up</string>
     <string name="tasks_all_clear">Nothing planned. Add a task with the Add button.</string>
+    <!-- Today at a glance -->
+    <string name="tasks_glance_quick">Task</string>
+    <plurals name="tasks_glance_earlier">
+        <item quantity="one">1 from an earlier day</item>
+        <item quantity="other">%d from earlier days</item>
+    </plurals>
 </resources>
