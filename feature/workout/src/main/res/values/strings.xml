@@ -106,4 +106,28 @@
     <string name="workout_run_pace">%1$s /km</string>
     <string name="workout_run_waiting">Waiting for GPS…</string>
     <string name="workout_run_needs_location">Runs need location access while they\'re on. Klean doesn\'t use it otherwise.</string>
+    <!-- Track › Week and the Workout screen's hero (UI Phase 3) -->
+    <string name="workout_week_label">Workouts</string>
+    <string name="workout_week_this">This week</string>
+    <plurals name="workout_week_sessions">
+        <item quantity="one">%1$d session</item>
+        <item quantity="other">%1$d sessions</item>
+    </plurals>
+    <string name="workout_week_headline">%1$s, %2$s</string>
+    <string name="workout_week_supporting">%1$s, %2$s</string>
+    <string name="workout_week_last_today">last today</string>
+    <string name="workout_week_last_yesterday">last yesterday</string>
+    <string name="workout_week_last_on">last on %1$s</string>
+    <string name="workout_week_bars">Workouts over the last 7 days: %1$s</string>
+    <string name="workout_week_none">No sessions this week</string>
+    <string name="workout_empty_title">Your workouts will show up here.</string>
+    <string name="workout_empty_action">Start a workout</string>
+    <string name="workout_new_short">New</string>
+    <string name="workout_empty_card">Empty workout</string>
+    <string name="workout_empty_card_line">Add exercises as you go</string>
+    <string name="workout_run_card">Run</string>
+    <string name="workout_run_card_line">Outdoors, with GPS</string>
+    <string name="workout_edit_saved">Edit</string>
+    <string name="workout_in_progress_label">In progress</string>
+    <string name="workout_started_at">Started %1$s</string>
 </resources>

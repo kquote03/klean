@@ -26,7 +26,9 @@ class WorkoutFormatter @Inject constructor(@ApplicationContext private val ctx: 
     fun localDate(at: Long): LocalDate = at.toLocal(zone.current()).date
 
     private fun pattern(skeleton: String, at: Long): String {
-        val f = SimpleDateFormat(DateFormat.getBestDateTimePattern(Locale.getDefault(), skeleton), Locale.getDefault())
+        // Stand-alone letters (c, L) from the best pattern aren't java.text letters (the JVM, Robolectric); E and M read the same.
+        val best = DateFormat.getBestDateTimePattern(Locale.getDefault(), skeleton).replace('c', 'E').replace('L', 'M')
+        val f = SimpleDateFormat(best, Locale.getDefault())
         f.timeZone = TimeZone.getTimeZone(zone.current().id)
         return f.format(Date(at))
     }

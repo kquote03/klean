@@ -33,6 +33,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.minus
 
 /** The clock, once a [periodMs]: elapsed timers and "today" follow it without a write. */
 open class WorkoutTicker @Inject constructor(private val clock: Clock) {
@@ -54,7 +55,12 @@ data class WorkoutHomeState(
     val open: SessionWithSets? = null,
     val templates: List<TemplateRow> = emptyList(),
     val recent: List<SessionWithSets> = emptyList(),
+    /** The last seven days, for the hero's bars. */
+    val week: WorkoutWeek? = null,
 )
+
+/** The last seven days ending on [today], oldest first. */
+fun lastSevenDays(today: LocalDate): List<LocalDate> = (6 downTo 0).map { today.minus(kotlinx.datetime.DatePeriod(days = it)) }
 
 sealed interface WorkoutEvent {
     data class Logged(val sessionId: String) : WorkoutEvent
@@ -75,9 +81,11 @@ class WorkoutHomeViewModel @Inject constructor(
     }
 
     val state: StateFlow<WorkoutHomeState> = combine(repo.observeSessions(), repo.observeTemplates(), ticker.ticks()) { sessions, templates, now ->
+        val today = now.toLocal(zone.current()).date
         WorkoutHomeState(
             loaded = true,
-            today = now.toLocal(zone.current()).date,
+            today = today,
+            week = WorkoutWeek.of(sessions, lastSevenDays(today)) { it.toLocal(zone.current()).date },
             open = sessions.firstOrNull { it.isOpen },
             templates = templates.map { TemplateRow(it, WorkoutItem.decode(it.items)) },
             recent = sessions.filter { !it.isOpen }.take(RECENT),

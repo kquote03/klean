@@ -108,6 +108,7 @@ class WorkoutKleanModule @Inject constructor(
     override val graphRoute: Any = WorkoutGraph
     override val settingsRoute: Any = WorkoutSettingsRoute
     override val capturePlaceholderRes: Int = R.string.workout_capture_placeholder
+    override val drawsGroupChrome: Boolean = true
 
     override fun registerGraph(builder: NavGraphBuilder, nav: NavController) = with(builder) {
         navigation<WorkoutGraph>(startDestination = WorkoutRoute) {
@@ -328,6 +329,7 @@ abstract class WorkoutModuleBindings {
     @Binds @IntoSet abstract fun summary(s: WorkoutSurfaces): DashboardSummaryProvider
     @Binds @IntoSet abstract fun activity(s: WorkoutSurfaces): DayActivityProvider
     @Binds @IntoSet abstract fun listener(s: WorkoutSurfaces): WorkoutChangeListener
+    @Binds @IntoSet abstract fun week(s: app.klean.feature.workout.ui.WorkoutWeekSummary): app.klean.core.ui.module.WeekSummaryProvider
     @Binds abstract fun healthConnect(b: app.klean.feature.workout.health.HealthConnectWorkoutBridge): HealthConnectBridge
     @Binds abstract fun locationFeed(f: app.klean.feature.workout.jog.AndroidLocationFeed): app.klean.feature.workout.jog.LocationFeed
 }

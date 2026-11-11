@@ -254,3 +254,11 @@ Only 4 of 20 screens meet the budget outright. The common causes, in order of we
 | Calendar: "Your phone's calendars" banner (Not now / Show them) | above the agenda | Calendar overflow → Show phone calendars, the empty agenda's action, Settings › Calendar |
 | Calendar: a header per day | agenda | four calm sections: Earlier, Today, This week, Later (rows carry the weekday) |
 | Track: opened on Workout | Track tab | Track › **Week** first (a neutral summary of sleep, workouts and food; no links, the segments lead on), until a tracker is picked; then the last one |
+| Workout: "Start a workout" filled button | top of Workout | the saved row's "Empty workout" card (and the empty state's one action) |
+| Workout: "Start a run" outlined button | top of Workout | the saved row's "Run" card; a run in progress becomes the hero with "Finish run" |
+| Workout: "Log a workout…" field and its mic | top of Workout | Add menu → Log workout (capture sheet) |
+| Workout: saved-workout rows with a Start button each; tap to edit | Saved workouts list | tonal `SavedCard`s in a row: tap starts, long press edits; "New" card at the end |
+| Workout: "New saved workout" text button | under the list | the row's "New" card |
+| Workout: settings gear | top bar | Workout overflow → Workout settings (and Settings › Workout) |
+| Workout: "Exercises" row | bottom of the list | Workout overflow → Exercises |
+| Workout: two grey empty sentences | Saved workouts, Recent | one `EmptyState` ("Your workouts will show up here.", action "Start a workout") |

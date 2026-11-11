@@ -73,6 +73,25 @@ import app.klean.feature.workout.model.TemplateText
 import app.klean.shared.diet.CaptureSource
 import app.klean.shared.module.ModuleId
 import kotlinx.datetime.TimeZone
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.material.icons.rounded.FitnessCenter
+import androidx.compose.ui.platform.testTag
+import app.klean.core.design.component.CLUTTER_EXEMPT
+import app.klean.core.design.component.CardTone
+import app.klean.core.design.component.EmptyState
+import app.klean.core.design.component.KleanScreen
+import app.klean.core.design.component.ListRow
+import app.klean.core.design.component.MenuAction
+import app.klean.core.design.component.ModuleCard
+import app.klean.core.design.component.NewSavedCard
+import app.klean.core.design.component.SavedCard
+import app.klean.core.design.component.SectionHeader
+import app.klean.core.design.component.WeekBars
+import app.klean.core.design.component.listGroup
+import app.klean.core.design.theme.Space
+import java.time.format.TextStyle
+import java.util.Locale
+import kotlinx.datetime.isoDayNumber
 
 /** The device zone for screens built without Hilt (formatter in previews and screen tests). */
 internal object SystemZone : ZoneProvider {
@@ -101,7 +120,7 @@ private fun WorkoutTopBar(title: String, onBack: (() -> Unit)?, actions: @Compos
     )
 }
 
-/** Workout home: quick start, saved workouts, a freeform log field, recent sessions, exercises. */
+/** Workout home (Track › Workout): this week, saved workouts that start with one tap, recent sessions. */
 @Composable
 fun WorkoutScreen(
     onOpenSession: (String) -> Unit,
@@ -112,12 +131,13 @@ fun WorkoutScreen(
     run: app.klean.feature.workout.jog.RunViewModel = hiltViewModel(),
 ) {
     val s by vm.state.collectAsStateWithLifecycle()
-    val fmt = rememberFormatter()
+    val runState by run.state.collectAsStateWithLifecycle()
+    val starter = app.klean.feature.workout.jog.rememberRunStarter(run)
     val ctx = LocalContext.current
     val snackbar = remember { SnackbarHostState() }
-    var text by rememberSaveable { mutableStateOf("") }
     val logged = stringResource(R.string.workout_logged)
     val undo = stringResource(R.string.workout_undo)
+    val needsLocation = stringResource(R.string.workout_run_needs_location)
     LaunchedEffect(vm) {
         vm.events.collect { e ->
             if (e is WorkoutEvent.Logged && snackbar.showSnackbar(logged, undo, duration = SnackbarDuration.Short) == SnackbarResult.ActionPerformed) {
@@ -125,102 +145,175 @@ fun WorkoutScreen(
             }
         }
     }
-    Scaffold(
-        topBar = {
-            WorkoutTopBar(stringResource(R.string.workout_label), onBack = null) {
-                IconButton(onClick = onSettings, modifier = Modifier.size(48.dp)) {
-                    Icon(Icons.Rounded.Settings, contentDescription = stringResource(R.string.workout_settings))
-                }
-            }
-        },
-        snackbarHost = { SnackbarHost(snackbar) },
-    ) { pad ->
-        LazyColumn(Modifier.padding(pad).fillMaxSize()) {
-            item {
-                Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                    val open = s.open
-                    if (open != null) {
-                        Text(stringResource(R.string.workout_in_progress, fmt.time(open.session.startedAt)), style = MaterialTheme.typography.bodyLarge)
-                        Button(onClick = { onOpenSession(open.session.id) }, modifier = Modifier.padding(top = 8.dp).heightIn(min = 48.dp)) {
-                            Text(stringResource(R.string.workout_continue))
-                        }
-                    } else {
-                        Button(onClick = { vm.start(null, onOpenSession) }, modifier = Modifier.heightIn(min = 48.dp)) {
-                            Icon(Icons.Rounded.PlayArrow, contentDescription = null)
-                            Text(stringResource(R.string.workout_start_empty), Modifier.padding(start = 8.dp))
-                        }
-                    }
-                    if (s.open == null) app.klean.feature.workout.jog.RunSection(run, Modifier.padding(top = 8.dp))
-                    CaptureField(
-                        value = text,
-                        onValueChange = { text = it },
-                        onSubmit = {
-                            vm.log(text)
-                            text = ""
-                        },
-                        onMic = { ctx.startActivity(CaptureActivity.intent(ctx, CaptureSource.MODULE_SCREEN, ModuleId.WORKOUT, startVoice = true)) },
-                        onPhoto = null,
-                        placeholder = stringResource(R.string.workout_log_placeholder),
-                        modifier = Modifier.padding(top = 12.dp),
+    LaunchedEffect(starter.refused) { if (starter.refused) snackbar.showSnackbar(needsLocation) }
+    WorkoutContent(
+        state = s,
+        run = runState,
+        fmt = rememberFormatter(),
+        actions = WorkoutActions(
+            start = { id -> vm.start(id, onOpenSession) },
+            openSession = onOpenSession,
+            editTemplate = onEditTemplate,
+            exercises = onExercises,
+            settings = onSettings,
+            startRun = starter.start,
+            finishRun = { run.finish(ctx) },
+        ),
+        snackbar = snackbar,
+    )
+}
+
+/** What the Workout screen can do; apart from the view models so the screen renders in screenshot tests. */
+data class WorkoutActions(
+    val start: (templateId: String?) -> Unit = {},
+    val openSession: (String) -> Unit = {},
+    val editTemplate: (String?) -> Unit = {},
+    val exercises: () -> Unit = {},
+    val settings: () -> Unit = {},
+    val startRun: () -> Unit = {},
+    val finishRun: () -> Unit = {},
+)
+
+/**
+ * The plan's worked example: a "This week" card (sessions, minutes, a bar a day), then saved workouts as tonal cards
+ * that start with one tap (long press to edit; a Run card, an empty workout and New at the end), then Recent.
+ * Logging moves to the Add menu; Exercises and Workout settings to the overflow. With nothing logged or saved,
+ * one empty state with one action.
+ */
+@Composable
+fun WorkoutContent(
+    state: WorkoutHomeState,
+    run: app.klean.feature.workout.jog.RunUi,
+    fmt: WorkoutFormatter,
+    actions: WorkoutActions,
+    snackbar: SnackbarHostState? = null,
+) {
+    val ctx = LocalContext.current
+    val text = remember(fmt) { WorkoutWeekText(ctx.applicationContext, fmt) }
+    val menu = listOf(
+        MenuAction(stringResource(R.string.workout_exercises), onClick = actions.exercises),
+        MenuAction(stringResource(R.string.workout_settings), onClick = actions.settings),
+    )
+    val open = state.open
+    // A session already running: every start goes back to it.
+    val start: (String?) -> Unit = { id -> if (open != null) actions.openSession(open.session.id) else actions.start(id) }
+    KleanScreen(title = stringResource(R.string.workout_label), menu = menu, snackbarHostState = snackbar) { pad ->
+        if (!state.loaded) return@KleanScreen
+        val nothingYet = state.templates.isEmpty() && state.recent.isEmpty() && open == null && !run.running
+        LazyColumn(Modifier.fillMaxSize().testTag(CLUTTER_EXEMPT), contentPadding = pad) {
+            if (nothingYet) {
+                item(key = "empty") {
+                    EmptyState(
+                        stringResource(R.string.workout_empty_title),
+                        icon = Icons.Rounded.FitnessCenter,
+                        action = MenuAction(stringResource(R.string.workout_empty_action)) { start(null) },
                     )
                 }
+            } else {
+                item(key = "hero") { Hero(state, run, fmt, text, actions) }
             }
-            item { SectionTitle(stringResource(R.string.workout_templates)) }
-            if (s.loaded && s.templates.isEmpty()) {
-                item { Hint(stringResource(R.string.workout_templates_empty)) }
-            }
-            items(s.templates, key = { "t:" + it.template.id }) { t ->
-                ListItem(
-                    modifier = Modifier.clickable { onEditTemplate(t.template.id) }.heightIn(min = 56.dp),
-                    headlineContent = { Text(t.template.name) },
-                    supportingContent = { Text(t.text, maxLines = 2, overflow = TextOverflow.Ellipsis) },
-                    trailingContent = {
-                        FilledTonalButton(onClick = { vm.start(t.template.id, onOpenSession) }, enabled = s.open == null, modifier = Modifier.heightIn(min = 48.dp)) {
-                            Text(stringResource(R.string.workout_start))
-                        }
-                    },
-                )
-            }
-            item {
-                TextButton(onClick = { onEditTemplate(null) }, modifier = Modifier.padding(horizontal = 8.dp).heightIn(min = 48.dp)) {
-                    Icon(Icons.Rounded.Add, contentDescription = null)
-                    Text(stringResource(R.string.workout_new_template), Modifier.padding(start = 8.dp))
+            item(key = "h_saved") { SectionHeader(stringResource(R.string.workout_templates)) }
+            item(key = "saved") { SavedRow(state, showEmptyWorkout = !nothingYet, showRun = !run.running, start = start, actions = actions) }
+            if (state.recent.isNotEmpty()) {
+                val today = state.today
+                item(key = "h_recent") { SectionHeader(stringResource(R.string.workout_recent)) }
+                listGroup("recent", state.recent, { it.session.id }) { r ->
+                    ListRow(
+                        title = fmt.names(r),
+                        supporting = fmt.summary(r),
+                        meta = if (today != null) fmt.day(r.session.startedAt, today) else null,
+                        titleMaxLines = 1,
+                        onClick = { actions.openSession(r.session.id) },
+                    )
                 }
-            }
-            item { SectionTitle(stringResource(R.string.workout_recent)) }
-            if (s.loaded && s.recent.isEmpty()) {
-                item { Hint(stringResource(R.string.workout_recent_empty)) }
-            }
-            items(s.recent, key = { "s:" + it.session.id }) { r ->
-                val today = s.today
-                EntryRow(
-                    time = if (today != null) fmt.day(r.session.startedAt, today) else "",
-                    text = fmt.names(r),
-                    meta = { Text(fmt.summary(r), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) },
-                    onClick = { onOpenSession(r.session.id) },
-                )
-            }
-            item {
-                HorizontalDivider(Modifier.padding(top = 8.dp))
-                ListItem(
-                    modifier = Modifier.clickable(onClick = onExercises).heightIn(min = 56.dp),
-                    headlineContent = { Text(stringResource(R.string.workout_exercises)) },
-                )
             }
         }
     }
 }
 
 @Composable
-private fun SectionTitle(text: String) = Text(
-    text, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary,
-    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
-)
+private fun Hero(state: WorkoutHomeState, run: app.klean.feature.workout.jog.RunUi, fmt: WorkoutFormatter, text: WorkoutWeekText, actions: WorkoutActions) {
+    val open = state.open
+    when {
+        run.running -> {
+            val pace = run.paceSecPerKm?.let { stringResource(R.string.workout_run_pace, app.klean.feature.workout.jog.clock(it.toLong())) }
+            ModuleCard(
+                label = stringResource(R.string.workout_run_notification_title),
+                fact = app.klean.feature.workout.jog.JogTrackingService.formatKm(LocalContext.current, run.distanceM),
+                supporting = if (run.waitingForGps) {
+                    stringResource(R.string.workout_run_waiting)
+                } else {
+                    listOfNotNull(app.klean.feature.workout.jog.clock(run.elapsedS), pace).joinToString(" · ")
+                },
+                tone = CardTone.SECONDARY,
+                action = MenuAction(stringResource(R.string.workout_run_finish), onClick = actions.finishRun),
+            )
+        }
+        open != null -> ModuleCard(
+            label = stringResource(R.string.workout_in_progress_label),
+            fact = fmt.names(open),
+            supporting = stringResource(R.string.workout_started_at, fmt.time(open.session.startedAt)),
+            tone = CardTone.SECONDARY,
+            onClick = { actions.openSession(open.session.id) },
+            onClickLabel = stringResource(R.string.workout_continue),
+        )
+        else -> {
+            val week = state.week
+            val today = state.today
+            ModuleCard(
+                label = stringResource(R.string.workout_week_this),
+                fact = if (week == null || week.sessions == 0) stringResource(R.string.workout_week_none) else text.headline(week),
+                supporting = if (week != null && today != null) text.supporting(week, today, minutes = false) else null,
+                tone = CardTone.SECONDARY,
+                hero = if (week == null) {
+                    null
+                } else {
+                    {
+                        WeekBars(
+                            values = week.bars,
+                            labels = week.days.map { java.time.DayOfWeek.of(it.dayOfWeek.isoDayNumber).getDisplayName(TextStyle.NARROW, Locale.getDefault()) },
+                            today = week.bars.lastIndex,
+                            description = text.description(week),
+                        )
+                    }
+                },
+            )
+        }
+    }
+}
+
+/** Saved workouts, then Run, an empty workout (when there is anything else on the screen) and New. */
+@Composable
+private fun SavedRow(state: WorkoutHomeState, showEmptyWorkout: Boolean, showRun: Boolean, start: (String?) -> Unit, actions: WorkoutActions) {
+    val startLabel = stringResource(R.string.workout_start)
+    val edit = stringResource(R.string.workout_edit_saved)
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(Space.cardGap)) {
+        items(state.templates, key = { "t:" + it.template.id }) { t ->
+            SavedCard(
+                title = t.template.name,
+                line = t.text,
+                startLabel = startLabel,
+                onClick = { start(t.template.id) },
+                onLongClick = { actions.editTemplate(t.template.id) },
+                onLongClickLabel = edit,
+            )
+        }
+        if (showRun) item(key = "run") {
+            SavedCard(stringResource(R.string.workout_run_card), stringResource(R.string.workout_run_card_line), startLabel, onClick = actions.startRun)
+        }
+        if (showEmptyWorkout) {
+            item(key = "empty") {
+                SavedCard(stringResource(R.string.workout_empty_card), stringResource(R.string.workout_empty_card_line), startLabel, onClick = { start(null) })
+            }
+        }
+        item(key = "new") { NewSavedCard(stringResource(R.string.workout_new_short), onClick = { actions.editTemplate(null) }) }
+    }
+}
 
 @Composable
 private fun Hint(text: String) = Text(
     text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
-    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+    modifier = Modifier.padding(horizontal = Space.md, vertical = Space.xxs),
 )
 
 /** A saved workout: name and the text, with a live reading of what it parses to. */
