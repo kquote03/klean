@@ -180,7 +180,7 @@ fun KleanAppUi(
                     selected = g.group == selectedGroup,
                     onClick = {
                         if (g.group == NavGroup.TODAY) {
-                            nav.navigateTopLevel(TodayRoute)
+                            nav.goToday()
                         } else {
                             g.landing(last)?.let { open(it) }
                         }
@@ -265,6 +265,20 @@ private fun NavController.navigateTopLevel(route: Any) = navigate(route) {
     launchSingleTop = true
     restoreState = true
     popUpTo(TodayRoute) { saveState = true }
+}
+
+/**
+ * The one way to Today (the bar, a swipe, anything else): pop back to it, since it is the root of every stack. Only when
+ * it isn't on the stack does it start a new stack on Today. [navigateTopLevel] can't do it: its `popUpTo(Today)` saves
+ * the page being left under Today's id, and `restoreState` then put that page straight back, so Today did nothing.
+ */
+fun NavController.goToday() {
+    if (!popBackStack(TodayRoute, inclusive = false)) {
+        navigate(TodayRoute) {
+            popUpTo(graph.id) { inclusive = true }
+            launchSingleTop = true
+        }
+    }
 }
 
 /** A bar label on one line: at large font scales it shrinks to fit rather than breaking a word. */

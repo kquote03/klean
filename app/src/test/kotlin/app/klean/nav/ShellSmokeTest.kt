@@ -13,6 +13,12 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.swipeLeft
+import androidx.compose.ui.test.swipe
+import androidx.compose.ui.test.swipeRight
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
@@ -200,6 +206,11 @@ class ShellSmokeTest {
         compose.waitForIdle()
         compose.onNodeWithText("Open inner").assertExists()
         compose.onNode(hasClickAction() and hasText("Track")).assertIsSelected()
+        // Today in the bar comes back from a page a tile opened.
+        compose.onNode(hasClickAction() and hasText("Today")).performClick()
+        compose.waitForIdle()
+        compose.onNodeWithText("Open inner").assertDoesNotExist()
+        compose.onNodeWithText("shawarma").assertExists()
     }
 
     private fun dietGlance(action: QuickAction? = null) = object : TodayGlanceProvider {
@@ -282,6 +293,51 @@ class ShellSmokeTest {
         compose.onNode(hasClickAction() and hasText("Week")).performClick()
         compose.waitForIdle()
         assertEquals(WEEK_KEY, memory.last.value["track"])
+    }
+
+    private fun todayHeader() = app.klean.today.weekday(Clock.System.todayIn(TimeZone.currentSystemDefault()))
+
+    /** Seen on device: Today in the bar did nothing from another page (its saved state was the page being left). */
+    @Test fun todayInTheBarReturnsToToday() {
+        val vm = shell(fiveFakeModules())
+        compose.setContent { KleanTheme { KleanAppUi(vm) } }
+        compose.waitForIdle()
+        compose.onNode(hasClickAction() and hasText("Plan")).performClick()
+        compose.waitForIdle()
+        compose.onNodeWithText("Screen of OK").assertIsDisplayed()
+        compose.onNode(hasClickAction() and hasText("Today")).performClick()
+        compose.waitForIdle()
+        compose.onAllNodesWithText(todayHeader()).onFirst().assertIsDisplayed()
+        compose.onNodeWithText("Screen of OK").assertDoesNotExist()
+        compose.onNode(hasClickAction() and hasText("Today")).assertIsSelected()
+        // Again, after Plan then Track (the path Back audits on device).
+        compose.onNode(hasClickAction() and hasText("Plan")).performClick()
+        compose.waitForIdle()
+        compose.onNode(hasClickAction() and hasText("Track")).performClick()
+        compose.waitForIdle()
+        compose.onNodeWithText("Screen of Cut").assertIsDisplayed()
+        compose.onNode(hasClickAction() and hasText("Today")).performClick()
+        compose.waitForIdle()
+        compose.onAllNodesWithText(todayHeader()).onFirst().assertIsDisplayed()
+        compose.onNodeWithText("Screen of Cut").assertDoesNotExist()
+    }
+
+    /** The same from a module laid out in its own graph (Diet, Sleep), reached through Track's tabs. */
+    @Test fun todayInTheBarReturnsFromANestedModule() {
+        val vm = shell(fiveFakeModules() + NestedModule())
+        compose.setContent { KleanTheme { KleanAppUi(vm) } }
+        compose.waitForIdle()
+        repeat(2) {
+            compose.onNode(hasClickAction() and hasText("Track")).performClick()
+            compose.waitForIdle()
+            compose.onNode(hasClickAction() and hasText("Diet")).performClick()
+            compose.waitForIdle()
+            compose.onNodeWithText("Open inner").assertIsDisplayed()
+            compose.onNode(hasClickAction() and hasText("Today")).performClick()
+            compose.waitForIdle()
+            compose.onAllNodesWithText(todayHeader()).onFirst().assertIsDisplayed()
+            compose.onNodeWithText("Open inner").assertDoesNotExist()
+        }
     }
 
     @Test fun aGroupWithEveryModuleOffLeavesTheBar() {

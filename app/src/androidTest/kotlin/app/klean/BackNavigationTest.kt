@@ -11,6 +11,8 @@ import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.isRoot
+import androidx.compose.ui.test.isSelectable
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.printToString
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onFirst
@@ -357,6 +359,18 @@ class BackNavigationTest {
         InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
         // Android 12+ moves a launcher task to the back instead of finishing it; either way the app has left.
         compose.waitUntil(TIMEOUT) { !scenario.state.isAtLeast(Lifecycle.State.STARTED) }
+    }
+
+    /** Seen on device: Today in the bar did nothing from another page. */
+    @Test fun todayInTheBarFromTrackIsToday() {
+        launch()
+        bar("Plan")
+        awaitGone(TODAY)
+        bar("Track")
+        awaitGone(TODAY)
+        tap(hasText("Today") and hasClickAction() and isSelectable() and SemanticsMatcher.expectValue(SemanticsProperties.Selected, false))
+        await(TODAY, "Today after its bar item")
+        assertStillOpen()
     }
 
     @Test fun arrangeTodayBackIsToday() {
