@@ -700,3 +700,6 @@ Direction: navigation A (grouped tabs) + Soft cards, the recommended default (no
 1. Phase 3 is done on `ui` (lane UI-P3B). The parent merges `ui`, runs the gate, and tags `ui1` (lanes don't tag).
 2. Open: the container transform from Today's cards (shared axis only); place both widgets on the Pixel to check the new look (Waydroid can't place widgets); the CI workflow's gate step needs `:wear:testDebugUnitTest verifyRoborazziDebug` (`.github/workflows` is the parent's); AGENTS.md updates are in the lane report (protected file).
 3. Next: Phase 4 (the web client follows the same structure: Track › Week, People with Birthdays as a view).
+
+## Follow-ups (from the user, to do while working nearby)
+- [ ] AI settings: a "Get a free key" button that opens https://aistudio.google.com/apikey, plus a three-line how-to (create key → copy → paste here). The key stays in `SecretStore`. Calm copy; no sign-in-for-quota (Gemini has no consumer OAuth quota path).
