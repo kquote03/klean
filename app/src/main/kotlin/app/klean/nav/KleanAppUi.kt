@@ -29,6 +29,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import kotlin.reflect.KClass
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -76,6 +77,9 @@ private data class BarGroup(val group: NavGroup, val modules: List<KleanModule>)
     /** The tab index of module [i]. */
     fun tabOf(i: Int): Int = i + offset
 
+    /** How many tabs the group shows (the overview, then its modules). */
+    val tabCount: Int get() = modules.size + offset
+
     fun landing(last: Map<String, String>): Any? = when (val k = landingKey(group, modules.map { it.id.value }, last)) {
         null -> null
         WEEK_KEY -> TrackWeekRoute
@@ -121,11 +125,25 @@ fun KleanAppUi(
         ?: NavGroup.TRACK.takeIf { current.isOn(TrackWeekRoute) }
         ?: NavGroup.TODAY
 
+    // The pages, left to right: Today, then each group's tabs (modules that are off are already left out). A sideways
+    // swipe moves along them.
+    val pages: List<Any> = remember(groups) {
+        listOf<Any>(TodayRoute) + groups.filter { it.group != NavGroup.TODAY }.flatMap { g -> List(g.tabCount) { g.route(it) } }
+    }
+    val pageClasses: List<KClass<*>> = remember(pages) { pages.map { it::class } }
+    val currentPage = pageClasses.firstOrNull { current?.hasRoute(it) == true }
+
     val settings = MenuAction(stringResource(R.string.nav_settings)) { nav.navigate(SettingsRoute) { launchSingleTop = true } }
     val titles = NavGroup.entries.associateWith { stringResource(it.labelRes) }
     val moduleLabels = enabled.associate { it.id to stringResource(it.labelRes) }
     val weekLabel = stringResource(R.string.track_week)
     fun open(route: Any) = nav.navigateTopLevel(route)
+
+    /** To page [cls]: Today the one way to Today, any other page as its tab would. */
+    fun openPage(cls: KClass<*>) {
+        val route = pages[pageClasses.indexOf(cls)]
+        if (route == TodayRoute) nav.goToday() else open(route)
+    }
 
     /** The group and tab index of a group's start screen (a module's, or Track's Week), or null. */
     fun chromeFor(destination: NavDestination?): Pair<BarGroup, Int>? {
@@ -203,7 +221,9 @@ fun KleanAppUi(
         ) {
             Column {
                 if (legacy != null) LegacyGroupHeader(chrome(legacy.first, legacy.second))
-                Box(if (legacy != null) Modifier.weight(1f).consumeWindowInsets(WindowInsets.statusBars) else Modifier.weight(1f)) {
+                // Full width whatever the page draws, so a swipe anywhere across it lands here.
+                val host = Modifier.fillMaxWidth().weight(1f).let { if (legacy != null) it.consumeWindowInsets(WindowInsets.statusBars) else it }
+                Box(host.pageSwipe(isPage = currentPage != null && !inSetup) { dx -> pageAfter(pageClasses, currentPage, dx)?.let(::openPage) }) {
                     startWithSetup?.let {
                         KleanNavHost(
                             nav = nav, shell = vm, enabled = enabled, startWithSetup = it,

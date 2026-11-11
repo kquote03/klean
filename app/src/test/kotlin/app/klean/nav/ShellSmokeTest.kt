@@ -340,6 +340,30 @@ class ShellSmokeTest {
         }
     }
 
+    /** Pages left to right: Today, Plan's tabs, Track's tabs, People's tabs; a sideways swipe moves one page. */
+    @Test fun swipingMovesBetweenPages() {
+        val vm = shell(fiveFakeModules())
+        compose.setContent { KleanTheme { KleanAppUi(vm) } }
+        compose.waitForIdle()
+        compose.onRoot().performTouchInput { swipeLeft() }
+        compose.waitForIdle()
+        compose.onNodeWithText("Screen of OK").assertIsDisplayed()
+        compose.onNode(hasClickAction() and hasText("Plan")).assertIsSelected()
+        compose.onRoot().performTouchInput { swipeLeft() }
+        compose.waitForIdle()
+        compose.onNodeWithText("Screen of Cancel").assertIsDisplayed()
+        compose.onRoot().performTouchInput { swipeRight() }
+        compose.waitForIdle()
+        compose.onNodeWithText("Screen of OK").assertIsDisplayed()
+        compose.onRoot().performTouchInput { swipeRight() }
+        compose.waitForIdle()
+        compose.onAllNodesWithText(todayHeader()).onFirst().assertIsDisplayed()
+        // A short or steep drag is not a swipe.
+        compose.onRoot().performTouchInput { swipe(center, center + androidx.compose.ui.geometry.Offset(-20f, 0f)) }
+        compose.waitForIdle()
+        compose.onAllNodesWithText(todayHeader()).onFirst().assertIsDisplayed()
+    }
+
     @Test fun aGroupWithEveryModuleOffLeavesTheBar() {
         val vm = shell(fiveFakeModules(), FakeModuleGate(setOf(ModuleId.WORKOUT)))
         compose.setContent { KleanTheme { KleanAppUi(vm) } }
