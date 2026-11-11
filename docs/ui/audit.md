@@ -283,3 +283,4 @@ Only 4 of 20 screens meet the budget outright. The common causes, in order of we
 | Settings sub-screens: Material top app bar | each sub-screen | `KleanScreen` with a back arrow and no Add button (`SettingsSubScaffold`) |
 | Onboarding: "1 of 10" as plain text | top of each page | a thin progress bar with "1 of 4" under it |
 | Onboarding: "Set up AI providers", "Add widget" tonal buttons | AI and widget pages | outlined buttons, so Next stays each page's one primary action (Skip is outlined, same width) |
+| Widgets: 20 dp corners on `surfaceContainer`, 13–16 sp ad-hoc sizes | Klean Today, Diet | Soft-card tokens (`WidgetTokens`): `large` 24 dp corners on `surfaceContainerLow`, card padding, a full pill a touch target tall, type sizes from the scale (titleMedium, bodyLarge, bodyMedium, labelLarge) |

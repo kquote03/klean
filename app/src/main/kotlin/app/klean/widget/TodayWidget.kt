@@ -49,6 +49,7 @@ import app.klean.core.capture.CaptureActivity
 import app.klean.core.common.ZoneProvider
 import app.klean.core.data.prefs.DevicePrefs
 import app.klean.core.design.theme.KleanColors
+import app.klean.core.design.theme.WidgetTokens
 import app.klean.core.ui.module.StatusSurface
 import app.klean.core.ui.module.TodayItems
 import app.klean.shared.diet.CaptureSource
@@ -79,8 +80,8 @@ interface TodayWidgetEntryPoint {
 
 private val Colors = ColorProviders(light = KleanColors.lightScheme, dark = KleanColors.darkScheme)
 private val Surface = DayNightColorProvider(
-    day = KleanColors.light.getValue("surfaceContainer"),
-    night = KleanColors.dark.getValue("surfaceContainer"),
+    day = KleanColors.light.getValue(WidgetTokens.SURFACE),
+    night = KleanColors.dark.getValue(WidgetTokens.SURFACE),
 )
 
 /**
@@ -140,11 +141,12 @@ private fun openAction(context: Context, route: String): Action =
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
     )
 
+/** A small Soft card (docs/ui/design-system.md): the date as its title, the capture pill, then the next items. */
 @Composable
 private fun TodayWidgetContent(state: TodayWidgetState, date: String, surface: ColorProvider) {
     val size = LocalSize.current
     Column(
-        modifier = GlanceModifier.fillMaxSize().background(surface).cornerRadius(20.dp).padding(8.dp),
+        modifier = GlanceModifier.fillMaxSize().background(surface).cornerRadius(WidgetTokens.cardRadius).padding(WidgetTokens.cardPadding),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (size.height < TodayWidget.MEDIUM.height || size.width < TodayWidget.MEDIUM.width) {
@@ -159,13 +161,13 @@ private fun TodayWidgetContent(state: TodayWidgetState, date: String, surface: C
 private fun Pill(modifier: GlanceModifier) {
     val ctx = LocalContext.current
     Row(
-        modifier.height(48.dp).background(GlanceTheme.colors.primaryContainer).cornerRadius(24.dp)
-            .padding(horizontal = 16.dp).clickable(captureAction(ctx)),
+        modifier.height(WidgetTokens.pillHeight).background(GlanceTheme.colors.primaryContainer).cornerRadius(WidgetTokens.pillRadius)
+            .padding(horizontal = WidgetTokens.pillPadding).clickable(captureAction(ctx)),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             ctx.getString(R.string.today_widget_add),
-            style = TextStyle(color = GlanceTheme.colors.onPrimaryContainer, fontSize = 15.sp, fontWeight = FontWeight.Medium),
+            style = TextStyle(color = GlanceTheme.colors.onPrimaryContainer, fontSize = WidgetTokens.label, fontWeight = FontWeight.Bold),
             maxLines = 1,
         )
     }
@@ -177,10 +179,10 @@ private fun CompactContent(state: TodayWidgetState) {
     Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Pill(GlanceModifier.defaultWeight())
         if (state.total > 0) {
-            Spacer(GlanceModifier.width(8.dp))
+            Spacer(GlanceModifier.width(WidgetTokens.gap))
             Text(
                 ctx.resources.getQuantityString(R.plurals.today_widget_count, state.total, state.total),
-                style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = 13.sp),
+                style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = WidgetTokens.meta),
                 maxLines = 2,
             )
         }
@@ -193,28 +195,31 @@ private fun FullContent(state: TodayWidgetState, date: String) {
     Column(GlanceModifier.fillMaxSize()) {
         Text(
             date,
-            modifier = GlanceModifier.padding(horizontal = 8.dp, vertical = 4.dp),
-            style = TextStyle(color = GlanceTheme.colors.onSurface, fontSize = 16.sp, fontWeight = FontWeight.Medium),
+            modifier = GlanceModifier.padding(horizontal = WidgetTokens.rowPadding, vertical = WidgetTokens.rowPadding),
+            style = TextStyle(color = GlanceTheme.colors.onSurface, fontSize = WidgetTokens.title, fontWeight = FontWeight.Bold),
             maxLines = 1,
         )
-        Spacer(GlanceModifier.height(4.dp))
+        Spacer(GlanceModifier.height(WidgetTokens.gap))
         Pill(GlanceModifier.fillMaxWidth())
-        Spacer(GlanceModifier.height(8.dp))
+        Spacer(GlanceModifier.height(WidgetTokens.gap))
         if (state.isEmpty) {
             Text(
                 ctx.getString(R.string.today_widget_empty),
-                modifier = GlanceModifier.padding(horizontal = 8.dp),
-                style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = 14.sp),
+                modifier = GlanceModifier.padding(horizontal = WidgetTokens.rowPadding),
+                style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = WidgetTokens.meta),
             )
         } else {
             LazyColumn(GlanceModifier.fillMaxSize()) {
                 items(state.rows, itemId = { it.key.hashCode().toLong() }) { row ->
-                    Row(GlanceModifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp).clickable(openAction(ctx, row.route))) {
+                    Row(
+                        GlanceModifier.fillMaxWidth().padding(horizontal = WidgetTokens.rowPadding, vertical = WidgetTokens.rowPadding)
+                            .clickable(openAction(ctx, row.route)),
+                    ) {
                         row.timeLabel?.let {
-                            Text(it, style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = 13.sp))
-                            Spacer(GlanceModifier.width(10.dp))
+                            Text(it, style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = WidgetTokens.meta))
+                            Spacer(GlanceModifier.width(WidgetTokens.gap))
                         }
-                        Text(row.text, style = TextStyle(color = GlanceTheme.colors.onSurface, fontSize = 14.sp), maxLines = 1)
+                        Text(row.text, style = TextStyle(color = GlanceTheme.colors.onSurface, fontSize = WidgetTokens.body), maxLines = 1)
                     }
                 }
             }

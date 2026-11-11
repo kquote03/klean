@@ -50,6 +50,7 @@ import app.klean.core.capture.CaptureActivity
 import app.klean.core.data.module.ModuleGate
 import app.klean.core.data.prefs.DevicePrefs
 import app.klean.core.design.theme.KleanColors
+import app.klean.core.design.theme.WidgetTokens
 import app.klean.feature.diet.R
 import app.klean.feature.diet.data.DietRepository
 import app.klean.feature.diet.notification.PromptHighlight
@@ -80,8 +81,8 @@ val KleanGlanceColors = ColorProviders(light = KleanColors.lightScheme, dark = K
  * secondaryContainer (the green accent), which looked off next to the lavender app.
  */
 private val WidgetSurface = DayNightColorProvider(
-    day = KleanColors.light.getValue("surfaceContainer"),
-    night = KleanColors.dark.getValue("surfaceContainer"),
+    day = KleanColors.light.getValue(WidgetTokens.SURFACE),
+    night = KleanColors.dark.getValue(WidgetTokens.SURFACE),
 )
 
 /** Home-screen widget: today's food, a one-tap capture pill and a mic (plan §5.4). */
@@ -138,7 +139,7 @@ private fun openAppAction(context: Context): Action =
 private fun DietWidgetContent(state: DietWidgetState, surface: ColorProvider) {
     val size = LocalSize.current
     Column(
-        modifier = GlanceModifier.fillMaxSize().background(surface).cornerRadius(20.dp).padding(8.dp),
+        modifier = GlanceModifier.fillMaxSize().background(surface).cornerRadius(WidgetTokens.cardRadius).padding(WidgetTokens.cardPadding),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         when {
@@ -156,16 +157,16 @@ private fun CompactContent(state: DietWidgetState) {
     Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         val text = compactText(ctx, state)
         Column(GlanceModifier.defaultWeight().clickable(captureAction(ctx, voice = false))) {
-            Text(text.primary, style = TextStyle(color = GlanceTheme.colors.onSurface, fontSize = 14.sp), maxLines = 3)
+            Text(text.primary, style = TextStyle(color = GlanceTheme.colors.onSurface, fontSize = WidgetTokens.meta), maxLines = 3)
             text.secondary?.let {
-                Text(it, style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = 12.sp), maxLines = 1)
+                Text(it, style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = WidgetTokens.meta), maxLines = 1)
             }
         }
         SquareIconButton(
             imageProvider = ImageProvider(R.drawable.ic_widget_add),
             contentDescription = ctx.getString(R.string.diet_widget_add),
             onClick = captureAction(ctx, voice = false),
-            modifier = GlanceModifier.size(48.dp),
+            modifier = GlanceModifier.size(WidgetTokens.icon),
         )
     }
 }
@@ -178,38 +179,38 @@ private fun FullContent(state: DietWidgetState) {
     Column(GlanceModifier.fillMaxSize()) {
         Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Row(
-                GlanceModifier.defaultWeight().height(48.dp).background(pillBg).cornerRadius(24.dp)
-                    .padding(horizontal = 16.dp).clickable(captureAction(ctx, voice = false)),
+                GlanceModifier.defaultWeight().height(WidgetTokens.pillHeight).background(pillBg).cornerRadius(WidgetTokens.pillRadius)
+                    .padding(horizontal = WidgetTokens.pillPadding).clickable(captureAction(ctx, voice = false)),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     state.highlightText ?: ctx.getString(R.string.diet_widget_prompt),
-                    style = TextStyle(color = pillFg, fontSize = 15.sp, fontWeight = FontWeight.Medium),
+                    style = TextStyle(color = pillFg, fontSize = WidgetTokens.label, fontWeight = FontWeight.Bold),
                     maxLines = 1,
                 )
             }
-            Spacer(GlanceModifier.width(8.dp))
+            Spacer(GlanceModifier.width(WidgetTokens.gap))
             SquareIconButton(
                 imageProvider = ImageProvider(R.drawable.ic_widget_mic),
                 contentDescription = ctx.getString(R.string.diet_widget_speak),
                 onClick = captureAction(ctx, voice = true),
-                modifier = GlanceModifier.size(48.dp),
+                modifier = GlanceModifier.size(WidgetTokens.icon),
             )
         }
-        Spacer(GlanceModifier.height(8.dp))
+        Spacer(GlanceModifier.height(WidgetTokens.gap))
         if (state.entries.isEmpty()) {
             Text(
                 ctx.getString(R.string.diet_widget_empty),
-                modifier = GlanceModifier.padding(horizontal = 8.dp),
-                style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = 14.sp),
+                modifier = GlanceModifier.padding(horizontal = WidgetTokens.rowPadding),
+                style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = WidgetTokens.meta),
             )
         } else {
             LazyColumn(GlanceModifier.fillMaxSize()) {
                 items(state.entries, itemId = { it.id.hashCode().toLong() }) { e ->
-                    Row(GlanceModifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp)) {
-                        Text(e.time, style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = 13.sp))
-                        Spacer(GlanceModifier.width(10.dp))
-                        Text(e.text, style = TextStyle(color = GlanceTheme.colors.onSurface, fontSize = 14.sp), maxLines = 1)
+                    Row(GlanceModifier.fillMaxWidth().padding(horizontal = WidgetTokens.rowPadding, vertical = WidgetTokens.rowPadding)) {
+                        Text(e.time, style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = WidgetTokens.meta))
+                        Spacer(GlanceModifier.width(WidgetTokens.gap))
+                        Text(e.text, style = TextStyle(color = GlanceTheme.colors.onSurface, fontSize = WidgetTokens.body), maxLines = 1)
                     }
                 }
             }
@@ -220,17 +221,17 @@ private fun FullContent(state: DietWidgetState) {
 @Composable
 private fun DisabledContent() {
     val ctx = LocalContext.current
-    Row(GlanceModifier.fillMaxWidth().padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(GlanceModifier.fillMaxWidth().padding(horizontal = WidgetTokens.rowPadding), verticalAlignment = Alignment.CenterVertically) {
         Text(
             ctx.getString(R.string.diet_widget_disabled_title),
             modifier = GlanceModifier.defaultWeight(),
-            style = TextStyle(color = GlanceTheme.colors.onSurface, fontSize = 16.sp, fontWeight = FontWeight.Medium),
+            style = TextStyle(color = GlanceTheme.colors.onSurface, fontSize = WidgetTokens.title, fontWeight = FontWeight.Bold),
         )
         Text(
             ctx.getString(R.string.diet_widget_open),
-            modifier = GlanceModifier.background(GlanceTheme.colors.primaryContainer).cornerRadius(16.dp)
-                .padding(horizontal = 14.dp, vertical = 8.dp).clickable(openAppAction(ctx)),
-            style = TextStyle(color = GlanceTheme.colors.onPrimaryContainer, fontSize = 14.sp),
+            modifier = GlanceModifier.height(WidgetTokens.pillHeight).background(GlanceTheme.colors.primaryContainer).cornerRadius(WidgetTokens.pillRadius)
+                .padding(horizontal = WidgetTokens.pillPadding, vertical = WidgetTokens.gap).clickable(openAppAction(ctx)),
+            style = TextStyle(color = GlanceTheme.colors.onPrimaryContainer, fontSize = WidgetTokens.label, fontWeight = FontWeight.Bold),
         )
     }
 }
