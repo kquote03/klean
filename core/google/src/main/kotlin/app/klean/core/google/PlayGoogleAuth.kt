@@ -1,5 +1,6 @@
 package app.klean.core.google
 
+import android.accounts.Account
 import android.content.Context
 import android.content.Intent
 import android.util.Log
@@ -36,18 +37,29 @@ class PlayGoogleAuth @Inject constructor(
 
     @Volatile private var token: String? = null
     @Volatile private var tokenAt: Long = 0
+    /** Whether [token] was granted with [PROFILE_SCOPES] too. */
+    @Volatile private var tokenHasProfile = false
 
-    private val request: AuthorizationRequest
-        get() = AuthorizationRequest.builder().setRequestedScopes(listOf(Scope(TASKS_SCOPE))).build()
+    /**
+     * [withProfile]: Tasks plus the profile scopes (connecting, the daily profile refresh). Silent token refreshes
+     * ask for Tasks only, so an install connected before the profile scopes keeps syncing without a consent screen.
+     */
+    private fun request(account: String?, withProfile: Boolean, pickAccount: Boolean = false): AuthorizationRequest {
+        val scopes = listOf(Scope(TASKS_SCOPE)) + if (withProfile) PROFILE_SCOPES.map(::Scope) else emptyList()
+        return AuthorizationRequest.builder().setRequestedScopes(scopes).apply {
+            account?.let { setAccount(Account(it, ACCOUNT_TYPE)) }
+            if (pickAccount) setPrompt(AuthorizationRequest.Prompt.SELECT_ACCOUNT)
+        }.build()
+    }
 
     override fun available(): Boolean = runCatching {
         GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(ctx) == ConnectionResult.SUCCESS
     }.getOrDefault(false)
 
-    override suspend fun connect(): AuthStep {
+    override suspend fun connect(account: String?, pickAccount: Boolean): AuthStep {
         if (!available()) return AuthStep.Unavailable("Google Play services missing")
         return try {
-            accept(Identity.getAuthorizationClient(ctx).authorize(request).await())
+            accept(Identity.getAuthorizationClient(ctx).authorize(request(account, withProfile = true, pickAccount = pickAccount && account == null)).await())
         } catch (e: Exception) {
             Log.w(TAG, "authorize failed", e)
             AuthStep.Unavailable(e.message ?: e.javaClass.simpleName)
@@ -66,7 +78,8 @@ class PlayGoogleAuth @Inject constructor(
     private suspend fun accept(r: AuthorizationResult): AuthStep {
         if (r.hasResolution()) return r.pendingIntent?.let { AuthStep.NeedsConsent(it.intentSender) } ?: AuthStep.Declined
         val t = r.accessToken ?: return AuthStep.Declined
-        remember(t)
+        // Connecting always asks for the profile scopes; Google reports them as "profile" or ".../userinfo.profile".
+        remember(t, withProfile = r.grantedScopes.any { it.contains("profile") })
         state.setConnected(true)
         return AuthStep.Granted
     }
@@ -75,17 +88,28 @@ class PlayGoogleAuth @Inject constructor(
         if (!state.connected.first()) return null
         token?.takeIf { clock.now().toEpochMilliseconds() - tokenAt < TOKEN_TTL_MS }?.let { return it }
         if (!available()) return null
-        return try {
-            val r = Identity.getAuthorizationClient(ctx).authorize(request).await()
-            if (r.hasResolution()) null else r.accessToken?.also(::remember)
-        } catch (e: Exception) {
-            Log.w(TAG, "silent authorize failed", e)
-            null
-        }
+        return silent(withProfile = false)
     }
 
-    private fun remember(t: String) {
+    override suspend fun profileToken(): String? {
+        if (!state.connected.first()) return null
+        token?.takeIf { tokenHasProfile && clock.now().toEpochMilliseconds() - tokenAt < TOKEN_TTL_MS }?.let { return it }
+        if (!available()) return null
+        return silent(withProfile = true)
+    }
+
+    /** A token for the current account without UI; null when Google wants consent first. */
+    private suspend fun silent(withProfile: Boolean): String? = try {
+        val r = Identity.getAuthorizationClient(ctx).authorize(request(state.currentEmail(), withProfile)).await()
+        if (r.hasResolution()) null else r.accessToken?.also { remember(it, withProfile) }
+    } catch (e: Exception) {
+        Log.w(TAG, "silent authorize failed", e)
+        null
+    }
+
+    private fun remember(t: String, withProfile: Boolean) {
         token = t
+        tokenHasProfile = withProfile
         tokenAt = clock.now().toEpochMilliseconds()
     }
 
@@ -100,6 +124,7 @@ class PlayGoogleAuth @Inject constructor(
 
     private companion object {
         const val TAG = "KleanGoogle"
+        const val ACCOUNT_TYPE = "com.google"
         /** Google access tokens last an hour; refresh a little early. */
         const val TOKEN_TTL_MS = 50 * 60_000L
     }

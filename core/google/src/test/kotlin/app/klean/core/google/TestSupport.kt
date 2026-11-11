@@ -67,6 +67,8 @@ class FakeGoogleServer {
     val items = mutableListOf<Item>()
     val requests = mutableListOf<HttpRequestData>()
     val patches = mutableListOf<Pair<String, JsonObject>>()
+    /** The bearer token each PATCH carried, in order (cross-account checks). */
+    val patchTokens = mutableListOf<String?>()
     var offline = false
     var failStatus: Int? = null
     /** Tokens the server accepts. */
@@ -106,6 +108,7 @@ class FakeGoogleServer {
                     ?: return@MockEngine respond("{}", HttpStatusCode.NotFound, headers)
                 val body = Json.parseToJsonElement((req.body as TextContent).text).jsonObject
                 patches += item.task.id to body
+                patchTokens += auth
                 fun str(k: String) = body[k]?.takeUnless { it is JsonNull }?.jsonPrimitive?.content
                 item.task = item.task.copy(
                     title = str("title") ?: item.task.title, notes = str("notes"), due = str("due"),
@@ -119,3 +122,42 @@ class FakeGoogleServer {
 
     fun client(auth: GoogleAuth) = GoogleTasksClient(HttpClient(engine), auth)
 }
+
+/**
+ * A fake OpenID `userinfo` endpoint and photo host: each token maps to a profile JSON body; tokens without one get
+ * 401 (no profile scopes). Photos are served from [photos] by URL.
+ */
+class FakeProfileServer {
+    val profiles = mutableMapOf<String, String>()
+    val photos = mutableMapOf<String, ByteArray>()
+    val requested = mutableListOf<String>()
+    var offline = false
+
+    fun profile(token: String, email: String, name: String? = null, given: String? = null, picture: String? = null) {
+        profiles[token] = buildString {
+            append("{\"sub\":\"1\",\"email\":\"$email\",\"email_verified\":true")
+            name?.let { append(",\"name\":\"$it\"") }
+            given?.let { append(",\"given_name\":\"$it\"") }
+            picture?.let { append(",\"picture\":\"$it\"") }
+            append("}")
+        }
+    }
+
+    val engine = MockEngine { req ->
+        requested += req.url.toString()
+        GoogleRequestLog.all += req.method to req.url.encodedPath
+        if (offline) throw IOException("offline")
+        if (req.url.encodedPath.endsWith("/userinfo")) {
+            val token = req.headers["Authorization"]?.removePrefix("Bearer ")
+            val body = profiles[token] ?: return@MockEngine respond("{}", HttpStatusCode.Unauthorized)
+            return@MockEngine respond(body, HttpStatusCode.OK, headersOf("Content-Type", "application/json"))
+        }
+        val bytes = photos[req.url.toString()] ?: return@MockEngine respond("", HttpStatusCode.NotFound)
+        respond(bytes, HttpStatusCode.OK, headersOf("Content-Type", "image/png"))
+    }
+
+    fun client() = GoogleProfileClient(HttpClient(engine))
+}
+
+/** The 8-byte PNG signature plus padding: enough for [looksLikeImage]. */
+val FAKE_PNG = byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 1, 2, 3, 4)

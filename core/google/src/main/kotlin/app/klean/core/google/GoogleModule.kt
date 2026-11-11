@@ -101,10 +101,16 @@ class GoogleTasksWorker @AssistedInject constructor(
     @Assisted ctx: Context,
     @Assisted params: WorkerParameters,
     private val sync: GoogleTasksSync,
+    private val accounts: GoogleAccounts,
 ) : CoroutineWorker(ctx, params) {
-    override suspend fun doWork(): Result = when (val r = sync.run()) {
-        is GoogleSyncResult.Failed -> if (r.retry && runAttemptCount < 5) Result.retry() else Result.failure()
-        else -> Result.success()
+    override suspend fun doWork(): Result {
+        val r = sync.run()
+        // The account's name and photo, at most daily; a failure here never fails the sync.
+        if (r is GoogleSyncResult.Done) runCatching { accounts.refreshIfStale() }
+        return when (r) {
+            is GoogleSyncResult.Failed -> if (r.retry && runAttemptCount < 5) Result.retry() else Result.failure()
+            else -> Result.success()
+        }
     }
 }
 
@@ -121,6 +127,19 @@ object GoogleProvides {
     fun api(auth: GoogleAuth): GoogleTasksApi = GoogleTasksClient(HttpClient(OkHttp), auth)
 
     @Provides @Singleton
+    fun profile(): GoogleProfileApi = GoogleProfileClient(HttpClient(OkHttp))
+
+    @Provides @Singleton
+    fun accounts(
+        @ApplicationContext ctx: Context,
+        auth: GoogleAuth,
+        profile: GoogleProfileApi,
+        state: GoogleLocalState,
+        sync: GoogleTasksSync,
+        clock: Clock,
+    ): GoogleAccounts = GoogleAccounts(auth, profile, state, sync, java.io.File(ctx.filesDir, GoogleAccounts.PHOTO_DIR), clock)
+
+    @Provides @Singleton
     fun sync(db: KleanDatabase, stamper: SyncStamper, auth: GoogleAuth, api: GoogleTasksApi, state: GoogleLocalState, clock: Clock): GoogleTasksSync =
         GoogleTasksSync(db, stamper, auth, api, state, clock)
 }
@@ -130,4 +149,5 @@ object GoogleProvides {
 abstract class GoogleBinds {
     @Binds abstract fun auth(impl: PlayGoogleAuth): GoogleAuth
     @Binds @IntoSet abstract fun edits(impl: OutboxGoogleTaskEdits): GoogleTaskEdits
+    @Binds abstract fun accountSource(impl: GoogleAccounts): AccountSource
 }

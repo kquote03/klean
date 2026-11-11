@@ -11,6 +11,8 @@ import java.io.IOException
 import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /** Where a task or list lives (`task.origin`, `task_list.source`). */
 object TaskOrigin {
@@ -42,7 +44,15 @@ class GoogleTasksSync(
     private val tasks get() = db.taskDao()
     private val lists get() = db.taskListDao()
 
-    suspend fun run(): GoogleSyncResult {
+    /** One sync or account switch at a time, so a switch never lands in the middle of a replay. */
+    private val mutex = Mutex()
+
+    /** Runs [block] while no sync runs (switching the current account). */
+    suspend fun <T> exclusive(block: suspend () -> T): T = mutex.withLock { block() }
+
+    suspend fun run(): GoogleSyncResult = mutex.withLock { runLocked() }
+
+    private suspend fun runLocked(): GoogleSyncResult {
         if (!auth.connected.first()) return GoogleSyncResult.NotConnected
         return try {
             val pushed = replay()
@@ -86,6 +96,8 @@ class GoogleTasksSync(
     private suspend fun pull(): Pair<Int, Int> {
         val remote = lists()
         val pending = state.outbox().mapTo(HashSet()) { it.remoteTaskId }
+        // The lists this account chose before (kept across account switches); new lists are shown.
+        val chosen = state.selections(state.currentEmail())
         var written = 0
         val known = lists.observeAll().first().filter { it.source == TaskOrigin.GOOGLE }
         db.transact {
@@ -95,7 +107,7 @@ class GoogleTasksSync(
                 val wanted = TaskListEntity(
                     id = id, name = rl.title.ifBlank { "Google" }, kind = "CUSTOM", position = GOOGLE_POSITION + i,
                     source = TaskOrigin.GOOGLE, remoteId = rl.id,
-                    selected = prev?.takeUnless { it.sync.deleted }?.selected ?: true,
+                    selected = prev?.takeUnless { it.sync.deleted }?.selected ?: chosen[rl.id] ?: true,
                     sync = prev?.sync ?: PLACEHOLDER,
                 )
                 if (prev == null || prev.sync.deleted || prev != wanted) lists.upsert(wanted.copy(sync = stamper.stamp(prev?.sync, deleted = false)))
@@ -174,6 +186,22 @@ class GoogleTasksSync(
     /** Disconnect: Google lists and tasks leave Klean on this account. Nothing changes in Google. */
     suspend fun forget() {
         state.clearOutbox()
+        tombstoneGoogleRows()
+    }
+
+    /**
+     * Before another account becomes current: remembers which of the current account's lists are shown, then
+     * takes its cached lists and tasks out of Klean. Its unsent edits stay queued under its own email, so they are
+     * only ever sent to it (when it is current again). Call inside [exclusive].
+     */
+    suspend fun parkCurrentAccount() {
+        val email = state.currentEmail()
+        val google = lists.observeAll().first().filter { it.source == TaskOrigin.GOOGLE && !it.sync.deleted }
+        if (email != null) state.saveSelections(email, google.mapNotNull { l -> l.remoteId?.let { it to l.selected } }.toMap())
+        tombstoneGoogleRows()
+    }
+
+    private suspend fun tombstoneGoogleRows() {
         val google = lists.observeAll().first().filter { it.source == TaskOrigin.GOOGLE }
         db.transact {
             google.forEach { l ->
@@ -185,11 +213,14 @@ class GoogleTasksSync(
 
     /** Shows or hides one Google list in Klean (Settings › Tasks). */
     suspend fun setSelected(listId: String, selected: Boolean) {
+        val l = lists.get(listId)?.takeIf { it.source == TaskOrigin.GOOGLE } ?: return
         db.transact {
-            val l = lists.get(listId)?.takeIf { it.source == TaskOrigin.GOOGLE } ?: return@transact
             lists.upsert(l.copy(selected = selected, sync = stamper.stamp(l.sync)))
             if (!selected) tasks.inList(l.id).forEach { tombstone(it) }
         }
+        val email = state.currentEmail()
+        val remote = l.remoteId
+        if (email != null && remote != null) state.saveSelections(email, mapOf(remote to selected))
     }
 
     companion object {
