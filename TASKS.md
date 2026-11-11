@@ -718,7 +718,7 @@ Plan `.hermes/plans/2026-11-11_090844-today-at-a-glance-voice-back.md`.
 - [x] A1 `TodayGlanceProvider`, `GlanceContribution`, `QuickAction`, gate-filtered `TodayGlance` (`core/ui`)
 - [x] A2/A3 `buildGlance` + `GlanceTest`
 - [x] B1 Diet glance · [x] B2 Tasks · [x] B3 Reminders · [x] B4 Calendar · [x] B5 People · [x] B6 Sleep · [x] B7 Workout · [x] B8 Delegation
-- [ ] C1 design components (`QuickActionGrid`, `GlanceSection`, `TimelineRow`)
+- [x] C1 design components (`QuickActionGrid`, `GlanceSection`, `TimelineRow`)
 - [ ] C2/C3 Today whiteboard screen
 - [ ] C4 Track › Week independent of `TodayCards`
 - [ ] C5 Today widget: mini whiteboard
